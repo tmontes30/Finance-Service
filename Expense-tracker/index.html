@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+  <!-- ===== AUTH SCREEN ===== -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-card" id="auth-card">
+      <div class="auth-logo">
+        <span class="auth-logo-icon">⚡</span>
+        <h1 class="auth-logo-name">Finance</h1>
+        <p class="auth-logo-sub">Tus finanzas personales en la nube</p>
+      </div>
+
+      <h2 class="auth-title" id="auth-title">Iniciar sesión</h2>
+
+      <form id="auth-form" novalidate>
+
+        <!-- Campos solo para registro -->
+        <div class="form-row register-only" style="display:none">
+          <div class="form-group">
+            <label for="auth-nombre">Nombre</label>
+            <input type="text" id="auth-nombre" class="form-input" placeholder="Juan" autocomplete="given-name">
+          </div>
+          <div class="form-group">
+            <label for="auth-apellido">Apellido</label>
+            <input type="text" id="auth-apellido" class="form-input" placeholder="Pérez" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="form-group register-only" style="display:none">
+          <label for="auth-rut">RUT <span class="label-hint">(opcional)</span></label>
+          <input type="text" id="auth-rut" class="form-input" placeholder="12.345.678-9" maxlength="12" autocomplete="off">
+        </div>
+        <div class="form-group register-only" style="display:none">
+          <label for="auth-telefono">Teléfono <span class="label-hint">(opcional)</span></label>
+          <input type="tel" id="auth-telefono" class="form-input" placeholder="+56 9 1234 5678" autocomplete="tel">
+        </div>
+
+        <!-- Siempre visibles -->
+        <div class="form-group">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" class="form-input" placeholder="tu@email.com"
+                 required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Contraseña</label>
+          <input type="password" id="auth-password" class="form-input" placeholder="••••••••"
+                 required autocomplete="current-password">
+        </div>
+
+        <div id="auth-error" class="auth-error" style="display:none"></div>
+        <button type="submit" class="btn btn-primary auth-submit-btn" id="auth-submit">Entrar</button>
+      </form>
+
+      <button class="auth-toggle-link" id="auth-mode-toggle">¿No tienes cuenta? Regístrate</button>
+    </div>
+  </div>
+
+  <!-- ===== APP WRAPPER (oculto hasta iniciar sesión) ===== -->
+  <div id="app-wrapper" style="display:none">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-name">Finance</span>
+      </div>
+      <div class="navbar-nav" id="navbar-nav">
+        <a href="#" class="nav-link active" data-view="dashboard">Dashboard</a>
+        <a href="#" class="nav-link" data-view="accounts">Cuentas</a>
+        <a href="#" class="nav-link" data-view="expenses">Gastos</a>
+        <a href="#" class="nav-link" data-view="categories">Categorías</a>
+        <a href="#" class="nav-link" data-view="projection">Proyección</a>
+      </div>
+      <div class="navbar-user">
+        <span class="nav-user-email" id="nav-user-email"></span>
+        <button class="btn btn-outline btn-sm btn-logout" id="btn-logout">Salir</button>
+      </div>
+      <button class="btn btn-primary navbar-add-btn" id="btn-add-expense">+ Agregar Gasto</button>
+      <button class="navbar-toggle" id="navbar-toggle" aria-label="Menú">☰</button>
+    </nav>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ===== DASHBOARD VIEW ===== -->
+      <section class="view" id="view-dashboard">
+        <div class="view-header">
+          <h1>Dashboard</h1>
+          <div class="period-selector">
+            <button class="period-btn active" data-period="month">Este mes</button>
+            <button class="period-btn" data-period="3months">3 meses</button>
+            <button class="period-btn" data-period="year">Este año</button>
+            <button class="period-btn" data-period="all">Todo</button>
+          </div>
+        </div>
+
+        <!-- Fila principal: 4 tarjetas grandes -->
+        <div class="stat-cards stat-cards-primary" id="stat-cards">
+          <div class="stat-card stat-card-highlight">
+            <div class="stat-icon">💎</div>
+            <div class="stat-info">
+              <div class="stat-label-row">
+                <div class="stat-label">Patrimonio total</div>
+                <button class="btn-toggle-patrimonio" title="Ocultar patrimonio" aria-label="Ocultar patrimonio"></button>
+              </div>
+              <div class="stat-value" id="stat-patrimonio">$0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-info">
+              <div class="stat-label">Gasto de hoy</div>
+              <div class="stat-value" id="stat-today">$0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-info">
+              <div class="stat-label">Gasto del mes</div>
+              <div class="stat-value" id="stat-month">$0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-info">
+              <div class="stat-label">Gasto del año</div>
+              <div class="stat-value" id="stat-year">$0</div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="charts-grid" id="charts-grid">
+          <div class="chart-card">
+            <h3>Gasto por mes (últimos 12 meses)</h3>
+            <div class="chart-wrapper">
+              <canvas id="chart-monthly"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Por categoría</h3>
+            <div class="chart-wrapper">
+              <canvas id="chart-category"></canvas>
+            </div>
+          </div>
+          <div class="chart-card chart-card-wide">
+            <h3>Gasto diario — este mes (diario + acumulado)</h3>
+            <div class="chart-wrapper">
+              <canvas id="chart-daily"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div id="accounts-analysis-section" style="display:none">
+          <div class="section-divider">
+            <h2 class="section-title">Análisis de cuentas</h2>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3>Balance por cuenta</h3>
+              <div class="chart-wrapper">
+                <canvas id="chart-accounts-balance"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Ingresos vs Gastos — últimos 6 meses</h3>
+              <div class="chart-wrapper">
+                <canvas id="chart-flow"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dashboard-empty" class="empty-state" style="display:none">
+          <div class="empty-icon">🤖</div>
+          <h3>Sin datos aún</h3>
+          <p>Agrega tu primer gasto para ver las estadísticas aquí.</p>
+          <button class="btn btn-primary" id="btn-add-first">+ Agregar primer gasto</button>
+        </div>
+      </section>
+
+      <!-- ===== EXPENSES VIEW ===== -->
+      <section class="view" id="view-expenses" style="display:none">
+        <div class="view-header">
+          <h1>Finance</h1>
+          <div class="view-actions">
+            <button class="btn btn-outline" id="btn-toggle-filters">🔎 Filtros</button>
+            <button class="btn btn-outline" id="btn-export-csv">💾 Exportar CSV</button>
+            <button class="btn btn-danger" id="btn-delete-selected" style="display:none">💥 Eliminar seleccionados</button>
+            <button class="btn btn-primary mobile-add-btn" id="btn-add-expense-mobile">+ Agregar</button>
+          </div>
+        </div>
+
+        <div class="filter-panel" id="filter-panel" style="display:none">
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label>Desde</label>
+              <input type="date" id="filter-date-from" class="form-input">
+            </div>
+            <div class="filter-group">
+              <label>Hasta</label>
+              <input type="date" id="filter-date-to" class="form-input">
+            </div>
+            <div class="filter-group">
+              <label>Categoría</label>
+              <select id="filter-category" class="form-select">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Monto mínimo</label>
+              <input type="number" id="filter-amount-min" class="form-input" placeholder="0" min="0">
+            </div>
+            <div class="filter-group">
+              <label>Monto máximo</label>
+              <input type="number" id="filter-amount-max" class="form-input" placeholder="Sin límite" min="0">
+            </div>
+            <div class="filter-group">
+              <label>Descripción</label>
+              <input type="text" id="filter-text" class="form-input" placeholder="Buscar...">
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-primary" id="btn-apply-filters">Aplicar filtros</button>
+            <button class="btn btn-outline" id="btn-reset-filters">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="list-header" id="list-header">
+          <span id="list-count" class="list-count">0 gastos</span>
+          <div class="sort-controls">
+            <label>Ordenar:</label>
+            <select id="sort-field" class="form-select form-select-sm">
+              <option value="date">Fecha</option>
+              <option value="amount">Monto</option>
+              <option value="category">Categoría</option>
+            </select>
+            <button class="btn-sort" id="btn-sort-dir" title="Cambiar orden">↓</button>
+          </div>
+        </div>
+
+        <div id="expenses-list"></div>
+
+        <div id="expenses-empty" class="empty-state" style="display:none">
+          <div class="empty-icon">📡</div>
+          <h3>Sin gastos registrados</h3>
+          <p>Agrega tu primer gasto con el botón de arriba.</p>
+        </div>
+
+        <div class="pagination" id="pagination" style="display:none">
+          <button class="btn btn-outline btn-sm" id="btn-prev">← Anterior</button>
+          <span id="page-info">Página 1 de 1</span>
+          <button class="btn btn-outline btn-sm" id="btn-next">Siguiente →</button>
+        </div>
+      </section>
+
+      <!-- ===== CATEGORIES VIEW ===== -->
+      <section class="view" id="view-categories" style="display:none">
+        <div class="view-header">
+          <h1>Categorías</h1>
+        </div>
+
+        <div class="card category-add-form">
+          <h3>Nueva categoría</h3>
+          <div class="category-form-row">
+            <input type="text" id="new-cat-name" class="form-input" placeholder="Nombre de la categoría" maxlength="50">
+            <div class="color-input-wrapper">
+              <label>Color</label>
+              <input type="color" id="new-cat-color" class="form-color" value="#6366f1">
+            </div>
+            <button class="btn btn-primary" id="btn-save-category">Guardar</button>
+          </div>
+          <div id="cat-form-error" class="form-error" style="display:none"></div>
+        </div>
+
+        <div id="categories-list"></div>
+      </section>
+
+      <!-- ===== PROJECTION VIEW ===== -->
+      <section class="view" id="view-projection" style="display:none">
+        <div class="view-header">
+          <h1>Proyección</h1>
+        </div>
+
+        <!-- Parámetros -->
+        <div class="card projection-inputs">
+          <h3>Parámetros mensuales</h3>
+
+          <div id="projection-avg-hint" class="projection-hint">
+            💡 Basado en tu historial, tu gasto promedio mensual es <strong id="projection-avg-value"></strong>.
+            <button class="btn btn-outline btn-sm" id="btn-use-avg">Usar este valor</button>
+          </div>
+          <div id="projection-no-hist" class="projection-no-hist" style="display:none"></div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="proj-income">Ingreso mensual líquido</label>
+              <input type="number" id="proj-income" class="form-input" placeholder="0" min="0" step="1">
+            </div>
+            <div class="form-group">
+              <label for="proj-expenses">Gasto mensual aproximado</label>
+              <input type="number" id="proj-expenses" class="form-input" placeholder="0" min="0" step="1">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-proj-save">Calcular proyección</button>
+        </div>
+
+        <!-- Resultados -->
+        <div id="projection-results" style="display:none">
+          <div class="projection-summary">
+            <div class="proj-sum-card">
+              <div class="proj-sum-label">Patrimonio hoy</div>
+              <div class="proj-sum-value" id="proj-sum-inicio">$0</div>
+            </div>
+            <div class="proj-sum-card">
+              <div class="proj-sum-label">Balance mensual</div>
+              <div class="proj-sum-value" id="proj-sum-balance">$0</div>
+            </div>
+            <div class="proj-sum-card">
+              <div class="proj-sum-label">Patrimonio en 12 meses</div>
+              <div class="proj-sum-value" id="proj-sum-final">$0</div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3>Patrimonio proyectado — próximos 12 meses</h3>
+            <div class="chart-wrapper chart-wrapper-tall">
+              <canvas id="chart-projection"></canvas>
+            </div>
+          </div>
+
+          <div class="card projection-table-card">
+            <h3>Detalle mes a mes</h3>
+            <div class="projection-table-wrapper">
+              <table class="projection-table" id="projection-table"></table>
+            </div>
+          </div>
+        </div>
+
+        <div id="projection-empty" class="empty-state" style="display:none">
+          <div class="empty-icon">📈</div>
+          <h3>Ingresa tus parámetros</h3>
+          <p>Completa tu ingreso y gasto mensual estimado para ver la proyección de tu patrimonio a 12 meses.</p>
+        </div>
+      </section>
+
+      <!-- ===== ACCOUNTS VIEW ===== -->
+      <section class="view" id="view-accounts" style="display:none">
+        <div class="view-header">
+          <h1>Mis Cuentas</h1>
+          <div class="view-actions">
+            <button class="btn btn-success" id="btn-add-income">+ Ingreso</button>
+            <button class="btn btn-primary" id="btn-add-account">+ Nueva cuenta</button>
+          </div>
+        </div>
+
+        <div class="accounts-summary card" id="accounts-summary">
+          <div class="accounts-summary-inner">
+            <div>
+              <div class="stat-label-row">
+                <div class="stat-label">Patrimonio total</div>
+                <button class="btn-toggle-patrimonio" title="Ocultar patrimonio" aria-label="Ocultar patrimonio"></button>
+              </div>
+              <div class="accounts-total" id="accounts-total">$0</div>
+            </div>
+            <div class="accounts-breakdown" id="accounts-breakdown"></div>
+          </div>
+        </div>
+
+        <div id="accounts-list"></div>
+
+        <div id="accounts-empty" class="empty-state" style="display:none">
+          <div class="empty-icon">🏦</div>
+          <h3>Sin cuentas registradas</h3>
+          <p>Agrega tus cuentas bancarias, ahorros e inversiones para llevar el control de tu patrimonio.</p>
+          <button class="btn btn-primary" id="btn-add-account-empty">+ Nueva cuenta</button>
+        </div>
+
+        <div id="income-history-section" style="display:none">
+          <div class="section-divider">
+            <h2 class="section-title">Historial de ingresos</h2>
+            <span id="income-list-count" class="list-count"></span>
+          </div>
+          <div id="income-list"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== ADD/EDIT INCOME MODAL ===== -->
+    <div class="modal-overlay" id="modal-income" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-income-title">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-income-title">Registrar Ingreso</h2>
+          <button class="modal-close" id="modal-income-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form class="modal-body" id="income-form" novalidate>
+          <input type="hidden" id="income-id">
+          <div class="form-group">
+            <label for="income-account">Cuenta *</label>
+            <select id="income-account" class="form-select" required>
+              <option value="">Seleccionar cuenta</option>
+            </select>
+            <div class="form-error" id="error-income-account" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label for="income-amount">Monto *</label>
+            <input type="number" id="income-amount" class="form-input" placeholder="0" min="1" step="1" required>
+            <div class="form-error" id="error-income-amount" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label for="income-description">Descripción</label>
+            <input type="text" id="income-description" class="form-input" placeholder="Ej: Sueldo, Freelance, Dividendos..." maxlength="200">
+          </div>
+          <div class="form-group">
+            <label for="income-date">Fecha *</label>
+            <input type="date" id="income-date" class="form-input" required>
+            <div class="form-error" id="error-income-date" style="display:none"></div>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="btn-income-cancel">Cancelar</button>
+          <button class="btn btn-success" id="btn-income-save">Guardar ingreso</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADD/EDIT ACCOUNT MODAL ===== -->
+    <div class="modal-overlay" id="modal-account" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-account-title">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-account-title">Nueva Cuenta</h2>
+          <button class="modal-close" id="modal-account-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form class="modal-body" id="account-form" novalidate>
+          <input type="hidden" id="account-id">
+          <div class="form-group">
+            <label for="account-name">Nombre *</label>
+            <input type="text" id="account-name" class="form-input" placeholder="Ej: BBVA Nómina, ETF S&P500..." maxlength="100" required>
+            <div class="form-error" id="error-account-name" style="display:none"></div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="account-type">Tipo *</label>
+              <select id="account-type" class="form-select" required>
+                <option value="bank">🏦 Cuenta bancaria</option>
+                <option value="savings">💎 Ahorro</option>
+                <option value="investment">🚀 Inversión</option>
+                <option value="cash">💸 Efectivo</option>
+                <option value="credit">🔐 Crédito</option>
+                <option value="other">🔮 Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="account-color">Color</label>
+              <input type="color" id="account-color" class="form-color form-color-lg" value="#6366f1">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="account-balance">Saldo actual *</label>
+            <input type="number" id="account-balance" class="form-input" placeholder="0" step="0.01" required>
+            <div class="form-error" id="error-account-balance" style="display:none"></div>
+            <div class="form-hint">Puedes ingresar valores negativos para créditos o deudas.</div>
+          </div>
+          <div class="form-group">
+            <label for="account-notes">Notas</label>
+            <textarea id="account-notes" class="form-input form-textarea" placeholder="Banco, número de cuenta, observaciones..." maxlength="300" rows="2"></textarea>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="btn-account-cancel">Cancelar</button>
+          <button class="btn btn-primary" id="btn-account-save">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADD/EDIT EXPENSE MODAL ===== -->
+    <div class="modal-overlay" id="modal-expense" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-expense-title">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-expense-title">Agregar Gasto</h2>
+          <button class="modal-close" id="modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <form class="modal-body" id="expense-form" novalidate>
+          <input type="hidden" id="expense-id">
+          <div class="form-group">
+            <label for="expense-amount">Monto *</label>
+            <input type="number" id="expense-amount" class="form-input" placeholder="0" min="0.01" step="0.01" required>
+            <div class="form-error" id="error-amount" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label for="expense-category">Categoría *</label>
+            <select id="expense-category" class="form-select" required>
+              <option value="">Seleccionar categoría</option>
+            </select>
+            <div class="form-error" id="error-category" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label for="expense-account">Descontado de <span class="label-optional">opcional</span></label>
+            <select id="expense-account" class="form-select">
+              <option value="">Sin cuenta específica</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="expense-description">Descripción</label>
+            <textarea id="expense-description" class="form-input form-textarea" placeholder="¿En qué gastaste?" maxlength="200" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="expense-date">Fecha *</label>
+            <input type="date" id="expense-date" class="form-input" required>
+            <div class="form-error" id="error-date" style="display:none"></div>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="btn-modal-cancel">Cancelar</button>
+          <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONFIRM DIALOG ===== -->
+    <div class="modal-overlay" id="modal-confirm" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h2 id="modal-confirm-title">Confirmar acción</h2>
+        </div>
+        <div class="modal-body">
+          <p id="confirm-message">¿Estás seguro?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="btn-confirm-cancel">Cancelar</button>
+          <button class="btn btn-danger" id="btn-confirm-ok">Eliminar</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /app-wrapper -->
+
+  <!-- Scripts (el orden importa) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/expenses.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/projection.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/accounts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

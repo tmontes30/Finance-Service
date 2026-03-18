@@ -183,6 +183,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     async () => UI.openExpenseModal());
   document.getElementById('btn-add-expense-mobile').addEventListener('click',
     async () => UI.openExpenseModal());
+  document.getElementById('btn-add-expense-fab').addEventListener('click',
+    async () => UI.openExpenseModal());
 
   /* ----- Expense modal: close ----- */
   document.getElementById('modal-close').addEventListener('click', () => UI.closeExpenseModal());

@@ -412,6 +412,7 @@ body {
 }
 
 .mobile-add-btn { display: none; }
+.fab-add-expense { display: none; }
 
 /* ===== PROJECTION ===== */
 .projection-inputs {

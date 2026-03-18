@@ -41,6 +41,33 @@
   .navbar-add-btn { display: none; }
   .mobile-add-btn { display: inline-flex; }
 
+  .fab-add-expense {
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    position:        fixed;
+    bottom:          1.5rem;
+    right:           1.25rem;
+    width:           52px;
+    height:          52px;
+    border-radius:   50%;
+    background:      var(--color-primary);
+    color:           #fff;
+    font-size:       1.75rem;
+    font-weight:     300;
+    line-height:     1;
+    border:          none;
+    box-shadow:      0 4px 16px rgba(124, 58, 237, 0.5);
+    cursor:          pointer;
+    z-index:         900;
+    transition:      transform 0.15s, box-shadow 0.15s;
+  }
+
+  .fab-add-expense:active {
+    transform:  scale(0.92);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+  }
+
   /* Main content */
   .main-content {
     padding: 1rem;

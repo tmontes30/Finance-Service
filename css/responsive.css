@@ -1,0 +1,225 @@
+/* ===== TABLET (≤ 900px) ===== */
+@media (max-width: 900px) {
+  .stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== MOBILE (≤ 640px) ===== */
+@media (max-width: 640px) {
+  :root { --nav-height: 56px; }
+
+  /* Navbar */
+  .navbar {
+    padding: 0 1rem;
+    height: var(--nav-height);
+    position: relative;
+    flex-wrap: wrap;
+    height: auto;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .navbar-brand { flex: 1; }
+
+  .navbar-nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-bottom: 0.5rem;
+    order: 10;
+  }
+
+  .navbar-nav.open { display: flex; }
+  .navbar-toggle { display: flex; }
+
+  .navbar-add-btn { display: none; }
+  .mobile-add-btn { display: inline-flex; }
+
+  /* Main content */
+  .main-content {
+    padding: 1rem;
+    margin-top: 56px;
+  }
+
+  /* Stat cards */
+  .stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+
+  /* Apilado vertical en móvil: icono arriba, label + valor abajo */
+  .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.875rem 1rem;
+    gap: 0.3rem;
+  }
+
+  .stat-icon { font-size: 1.4rem; }
+
+  .stat-value {
+    font-size: clamp(1rem, 5.5vw, 1.3rem);
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .stat-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 0.65rem;
+  }
+
+  /* Primary cards: misma lógica vertical */
+  .stat-cards-primary .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.875rem 1rem;
+    gap: 0.3rem;
+  }
+
+  .stat-cards-primary .stat-icon { font-size: 1.4rem; }
+
+  .stat-cards-primary .stat-value {
+    font-size: clamp(1.05rem, 5.5vw, 1.35rem);
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .stat-cards-primary .stat-label { font-size: 0.65rem; }
+
+  /* View header */
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .view-header h1 { font-size: 1.4rem; }
+
+  /* Period selector */
+  .period-selector { flex-wrap: wrap; }
+  .period-btn { font-size: 0.78rem; padding: 0.3rem 0.6rem; }
+
+  /* View actions */
+  .view-actions { gap: 0.4rem; }
+
+  /* Filter grid */
+  .filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Sort controls */
+  .sort-controls label { display: none; }
+
+  /* Expense table → card layout on mobile */
+  .expense-table thead { display: none; }
+
+  .expense-table,
+  .expense-table tbody,
+  .expense-table tr,
+  .expense-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .expense-table tr {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    box-shadow: var(--shadow);
+  }
+
+  .expense-table tbody tr:hover td { background: transparent; }
+
+  .expense-table td {
+    padding: 0.2rem 0;
+    border-bottom: none;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .expense-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  .expense-table .col-check { display: none; }
+  .expense-table .col-amount { font-weight: 700; }
+  .expense-table .col-actions { justify-content: flex-end; }
+  .expense-table .col-actions::before { display: none; }
+
+  /* Modal → bottom sheet on mobile */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-sm {
+    max-width: 100%;
+  }
+
+  /* Categories */
+  .category-form-row { gap: 0.5rem; }
+  .category-list-item { padding: 0.75rem; }
+
+  /* Accounts */
+  .accounts-summary-inner { flex-direction: column; gap: 0.75rem; }
+  .accounts-breakdown { min-width: unset; width: 100%; }
+  .account-card { padding: 0.875rem 1rem; }
+  .acc-icon { width: 36px; height: 36px; font-size: 1.2rem; }
+  .acc-balance { font-size: 1rem; }
+  .form-row-2 { grid-template-columns: 1fr auto; }
+
+  /* Charts */
+  .chart-wrapper { height: 220px; }
+
+  /* Toast */
+  .toast-container {
+    left: 1rem;
+    right: 1rem;
+  }
+
+  .toast {
+    min-width: unset;
+    max-width: 100%;
+  }
+
+  /* Pagination */
+  .pagination { gap: 0.75rem; }
+}
+
+/* ===== VERY SMALL (≤ 380px) ===== */
+@media (max-width: 380px) {
+  .stat-cards { grid-template-columns: 1fr; }
+  .stat-value,
+  .stat-cards-primary .stat-value { font-size: clamp(1rem, 6vw, 1.2rem); }
+  .period-selector { flex-direction: column; gap: 0.15rem; }
+}

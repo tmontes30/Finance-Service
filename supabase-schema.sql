@@ -69,3 +69,15 @@ CREATE POLICY "own_accounts"   ON accounts   FOR ALL USING (auth.uid() = user_id
 CREATE POLICY "own_expenses"   ON expenses   FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "own_incomes"    ON incomes    FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "own_settings"   ON settings   FOR ALL USING (auth.uid() = user_id);
+
+-- ---- Migraciones (ejecutar si las tablas ya existen) ----
+-- Gastos previstos
+ALTER TABLE expenses
+  ADD COLUMN IF NOT EXISTS is_planned BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Proyección fija + parámetros de proyección
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS proj_income             NUMERIC(14,2),
+  ADD COLUMN IF NOT EXISTS proj_expenses           NUMERIC(14,2),
+  ADD COLUMN IF NOT EXISTS proj_snapshot_patrimony NUMERIC(14,2),
+  ADD COLUMN IF NOT EXISTS proj_snapshot_date      DATE;

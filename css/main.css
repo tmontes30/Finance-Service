@@ -532,3 +532,25 @@ body {
 }
 
 .chart-wrapper-tall { height: 260px; }
+
+.planned-badge {
+  display:        inline-block;
+  margin-left:    0.4rem;
+  padding:        0.1rem 0.45rem;
+  background:     rgba(245, 158, 11, 0.15);
+  color:          #f59e0b;
+  border-radius:  99px;
+  font-size:      0.68rem;
+  font-weight:    600;
+  vertical-align: middle;
+}
+
+.proj-snapshot-info {
+  margin-top:  0.75rem;
+  font-size:   0.8rem;
+  color:       var(--color-text-muted);
+  padding:     0.5rem 0.75rem;
+  background:  rgba(124, 58, 237, 0.07);
+  border:      1px solid rgba(124, 58, 237, 0.15);
+  border-radius: var(--radius);
+}

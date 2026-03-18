@@ -30,6 +30,7 @@ const Expenses = {
         document.getElementById(id).value = '';
       });
       document.getElementById('filter-category').value = '';
+      document.getElementById('filter-planned').value  = '';
       this._filters = {};
       this._page    = 1;
       this._selectedIds.clear();
@@ -108,7 +109,8 @@ const Expenses = {
       categoryId: document.getElementById('filter-category').value,
       amountMin:  document.getElementById('filter-amount-min').value,
       amountMax:  document.getElementById('filter-amount-max').value,
-      text:       document.getElementById('filter-text').value.trim().toLowerCase()
+      text:       document.getElementById('filter-text').value.trim().toLowerCase(),
+      planned:    document.getElementById('filter-planned').value
     };
   },
 
@@ -122,6 +124,8 @@ const Expenses = {
       if (f.amountMin  && e.amount < parseFloat(f.amountMin)) return false;
       if (f.amountMax  && e.amount > parseFloat(f.amountMax)) return false;
       if (f.text && !(e.description || '').toLowerCase().includes(f.text)) return false;
+      if (f.planned === 'planned' && !e.isPlanned) return false;
+      if (f.planned === 'real'    &&  e.isPlanned) return false;
       return true;
     });
   },
@@ -270,9 +274,12 @@ const Expenses = {
     const cat     = catMap[e.categoryId];
     const acc     = e.accountId ? accMap[e.accountId] : null;
     const checked = this._selectedIds.has(e.id) ? 'checked' : '';
+    const plannedBadge = e.isPlanned
+      ? ` <span class="planned-badge">${e.date.slice(0, 7).replace('-', '/')}</span>`
+      : '';
     const descHtml = e.description
-      ? UI._esc(e.description)
-      : `<span style="color:var(--color-text-muted);font-style:italic">Sin descripción</span>`;
+      ? UI._esc(e.description) + plannedBadge
+      : `<span style="color:var(--color-text-muted);font-style:italic">Sin descripción</span>` + plannedBadge;
     const accHtml  = acc
       ? `<span class="category-badge" style="background:${acc.color}22;color:${acc.color}">
            <span class="category-dot" style="background:${acc.color}"></span>${UI._esc(acc.name)}

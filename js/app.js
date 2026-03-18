@@ -197,13 +197,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saveBtn = document.getElementById('btn-modal-save');
     saveBtn.disabled = true;
     try {
-      const id      = document.getElementById('expense-id').value;
+      const id         = document.getElementById('expense-id').value;
+      const isPlanned  = document.getElementById('expense-is-planned').checked;
+      const plannedMonth = document.getElementById('expense-planned-month').value;
       const payload = {
         amount:      document.getElementById('expense-amount').value,
         categoryId:  document.getElementById('expense-category').value,
         accountId:   document.getElementById('expense-account').value || null,
         description: document.getElementById('expense-description').value,
-        date:        document.getElementById('expense-date').value
+        date:        isPlanned ? plannedMonth + '-01' : document.getElementById('expense-date').value,
+        isPlanned
       };
       try {
         if (id) {

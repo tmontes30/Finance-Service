@@ -23,6 +23,7 @@ const Storage = {
       accountId:   r.account_id || null,
       description: r.description || '',
       date:        r.date,
+      isPlanned:   r.is_planned  || false,
       createdAt:   new Date(r.created_at).getTime()
     }));
   },
@@ -31,23 +32,27 @@ const Storage = {
     const { data, error } = await _sb.from('expenses').insert({
       id: r.id, user_id: _uid, amount: r.amount,
       category_id: r.categoryId, account_id: r.accountId || null,
-      description: r.description || '', date: r.date
+      description: r.description || '', date: r.date,
+      is_planned: r.isPlanned || false
     }).select().single();
     if (error) throw error;
     return { id: data.id, amount: parseFloat(data.amount), categoryId: data.category_id,
              accountId: data.account_id || null, description: data.description || '',
-             date: data.date, createdAt: new Date(data.created_at).getTime() };
+             date: data.date, isPlanned: data.is_planned || false,
+             createdAt: new Date(data.created_at).getTime() };
   },
 
   async updateExpense(id, r) {
     const { data, error } = await _sb.from('expenses').update({
       amount: r.amount, category_id: r.categoryId, account_id: r.accountId || null,
-      description: r.description || '', date: r.date
+      description: r.description || '', date: r.date,
+      is_planned: r.isPlanned || false
     }).eq('id', id).eq('user_id', _uid).select().single();
     if (error) throw error;
     return { id: data.id, amount: parseFloat(data.amount), categoryId: data.category_id,
              accountId: data.account_id || null, description: data.description || '',
-             date: data.date, createdAt: new Date(data.created_at).getTime() };
+             date: data.date, isPlanned: data.is_planned || false,
+             createdAt: new Date(data.created_at).getTime() };
   },
 
   async deleteExpense(id) {
@@ -183,13 +188,15 @@ const Storage = {
 
   async getSettings() {
     const { data } = await _sb.from('settings').select('*').eq('user_id', _uid).maybeSingle();
-    if (!data) return { currency: '$', dashboardPeriod: 'month', version: 1, projIncome: null, projExpenses: null };
+    if (!data) return { currency: '$', dashboardPeriod: 'month', version: 1, projIncome: null, projExpenses: null, projSnapshotPatrimony: null, projSnapshotDate: null };
     return {
-      currency:        data.currency,
-      dashboardPeriod: data.dashboard_period,
-      version:         data.version,
-      projIncome:      data.proj_income  != null ? data.proj_income  : null,
-      projExpenses:    data.proj_expenses != null ? data.proj_expenses : null
+      currency:             data.currency,
+      dashboardPeriod:      data.dashboard_period,
+      version:              data.version,
+      projIncome:           data.proj_income    != null ? parseFloat(data.proj_income)    : null,
+      projExpenses:         data.proj_expenses  != null ? parseFloat(data.proj_expenses)  : null,
+      projSnapshotPatrimony: data.proj_snapshot_patrimony != null ? parseFloat(data.proj_snapshot_patrimony) : null,
+      projSnapshotDate:     data.proj_snapshot_date || null
     };
   },
 
@@ -200,8 +207,10 @@ const Storage = {
       dashboard_period: s.dashboardPeriod,
       version:          s.version || 1
     };
-    if (s.projIncome   != null) payload.proj_income   = s.projIncome;
-    if (s.projExpenses != null) payload.proj_expenses = s.projExpenses;
+    if (s.projIncome          != null) payload.proj_income             = s.projIncome;
+    if (s.projExpenses        != null) payload.proj_expenses           = s.projExpenses;
+    if (s.projSnapshotPatrimony != null) payload.proj_snapshot_patrimony = s.projSnapshotPatrimony;
+    if (s.projSnapshotDate    != null) payload.proj_snapshot_date      = s.projSnapshotDate;
     const { error } = await _sb.from('settings').upsert(payload);
     if (error) throw error;
   }

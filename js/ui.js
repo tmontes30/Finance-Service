@@ -63,6 +63,19 @@ const UI = {
         return `<option value="${a.id}"${sel}>${info.icon} ${this._esc(a.name)}</option>`;
       }).join('');
 
+    // Planned expense fields
+    const plannedCb  = document.getElementById('expense-is-planned');
+    const monthGroup = document.getElementById('expense-planned-month-group');
+    const monthInput = document.getElementById('expense-planned-month');
+
+    plannedCb.checked = expense ? (expense.isPlanned || false) : false;
+    monthInput.value  = (expense && expense.isPlanned) ? expense.date.slice(0, 7) : '';
+    monthGroup.style.display = plannedCb.checked ? 'block' : 'none';
+
+    plannedCb.onchange = () => {
+      monthGroup.style.display = plannedCb.checked ? 'block' : 'none';
+    };
+
     // Clear errors
     this._clearAllErrors();
 
@@ -130,6 +143,15 @@ const UI = {
       this._clearError('date');
     }
 
+    const isPlanned   = document.getElementById('expense-is-planned').checked;
+    const plannedMonth = document.getElementById('expense-planned-month').value;
+    if (isPlanned && !plannedMonth) {
+      this._showError('planned-month', 'Selecciona el mes del gasto previsto');
+      valid = false;
+    } else {
+      this._clearError('planned-month');
+    }
+
     return valid;
   },
 
@@ -162,7 +184,7 @@ const UI = {
   },
 
   _clearAllErrors() {
-    ['amount', 'category', 'date'].forEach(f => this._clearError(f));
+    ['amount', 'category', 'date', 'planned-month'].forEach(f => this._clearError(f));
   },
 
   _setupFocusTrap(modal) {

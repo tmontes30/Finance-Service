@@ -11,6 +11,17 @@ const Projection = {
         document.getElementById('proj-expenses').value = Math.round(this._avgMonthly);
       }
     });
+    document.getElementById('btn-reset-snapshot').addEventListener('click', () => {
+      UI.confirm(
+        '¿Actualizar la base de proyección al patrimonio actual? Esto reinicia el punto de partida.',
+        async () => {
+          await Data.resetProjectionSnapshot();
+          const s = Data.getSettings();
+          UI.toast('Base de proyección actualizada', 'success');
+          await this._renderProjection(s.projIncome, s.projExpenses);
+        }
+      );
+    });
   },
 
   async render() {
@@ -54,7 +65,14 @@ const Projection = {
   async _save() {
     const income   = parseFloat(document.getElementById('proj-income').value)   || 0;
     const expenses = parseFloat(document.getElementById('proj-expenses').value) || 0;
+    const isFirst  = Data.getSettings().projSnapshotPatrimony == null;
     await Data.updateSettings({ projIncome: income, projExpenses: expenses });
+    if (isFirst) {
+      await Data.resetProjectionSnapshot();
+      UI.toast('Proyección guardada. Patrimonio actual tomado como base fija.', 'success');
+    } else {
+      UI.toast('Parámetros actualizados.', 'success');
+    }
     await this._renderProjection(income, expenses);
   },
 
@@ -69,12 +87,22 @@ const Projection = {
       Data.getAccounts(), Data.getExpenses(), Data.getIncomes()
     ]);
 
+    const settings         = Data.getSettings();
     const currentPatrimony = accounts.reduce((s, a) => s + a.balance, 0);
+    // Use frozen snapshot as base; fall back to live value if no snapshot yet
+    const projBase         = settings.projSnapshotPatrimony != null
+      ? settings.projSnapshotPatrimony
+      : currentPatrimony;
     const balance          = monthlyIncome - monthlyExpenses;
     const now              = new Date();
     const nowKey           = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    // Build 13 points: current month + 12 future months
+    // Separate real vs planned expenses
+    const realExpenses    = allExpenses.filter(e => !e.isPlanned);
+    const plannedExpenses = allExpenses.filter(e =>  e.isPlanned);
+
+    // Build 13 points: current month + 12 future months (projected computed cumulatively)
+    let runningProjected = projBase;
     const months = [];
     for (let i = 0; i <= 12; i++) {
       const d   = new Date(now.getFullYear(), now.getMonth() + i, 1);
@@ -83,22 +111,30 @@ const Projection = {
       const key = `${y}-${String(mo).padStart(2, '0')}`;
       const isCurrent = i === 0;
 
-      // Projected patrimony at start of this month
-      const projected = parseFloat((currentPatrimony + balance * i).toFixed(2));
+      let projected;
+      if (i === 0) {
+        projected = parseFloat(projBase.toFixed(2));
+      } else {
+        // Subtract any planned one-off expenses for this future month
+        const plannedThisMonth = plannedExpenses
+          .filter(e => e.date.slice(0, 7) === key)
+          .reduce((s, e) => s + e.amount, 0);
+        runningProjected += balance - plannedThisMonth;
+        projected = parseFloat(runningProjected.toFixed(2));
+      }
 
-      // Real patrimony: reconstruct by working backwards from current balance
-      // real_at_end_of_month = currentPatrimony - sum(incomes after month) + sum(expenses after month)
+      // Real patrimony: reconstruct using real (non-planned) expenses only
       let actual = null;
       if (isCurrent) {
         actual = currentPatrimony;
       } else if (key < nowKey) {
         // Past month — reconstruct
-        const nextMo    = mo === 12 ? 1       : mo + 1;
-        const nextY     = mo === 12 ? y + 1   : y;
+        const nextMo    = mo === 12 ? 1     : mo + 1;
+        const nextY     = mo === 12 ? y + 1 : y;
         const nextStart = `${nextY}-${String(nextMo).padStart(2, '0')}-01`;
 
         const incomesAfter  = allIncomes.filter(x => x.date >= nextStart).reduce((s, x) => s + x.amount, 0);
-        const expensesAfter = allExpenses.filter(x => x.date >= nextStart).reduce((s, x) => s + x.amount, 0);
+        const expensesAfter = realExpenses.filter(x => x.date >= nextStart).reduce((s, x) => s + x.amount, 0);
         actual = parseFloat((currentPatrimony - incomesAfter + expensesAfter).toFixed(2));
       }
 
@@ -108,8 +144,20 @@ const Projection = {
       });
     }
 
+    // Show snapshot info
+    const infoEl   = document.getElementById('proj-snapshot-info');
+    const resetBtn = document.getElementById('btn-reset-snapshot');
+    if (settings.projSnapshotDate) {
+      infoEl.textContent   = `Base fija desde ${Data.formatDate(settings.projSnapshotDate)} — ${Data.formatAmount(projBase)}`;
+      infoEl.style.display   = 'block';
+      resetBtn.style.display = 'inline-block';
+    } else {
+      infoEl.style.display   = 'none';
+      resetBtn.style.display = 'none';
+    }
+
     // Summary cards
-    document.getElementById('proj-sum-inicio').textContent = Data.formatAmount(currentPatrimony);
+    document.getElementById('proj-sum-inicio').textContent = Data.formatAmount(projBase);
 
     const finalVal = months[12].projected;
     const finalEl  = document.getElementById('proj-sum-final');

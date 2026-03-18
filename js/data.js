@@ -36,10 +36,12 @@ const Data = {
 
   async init() {
     const settings = await Storage.getSettings();
-    this._currency        = settings.currency;
-    this._dashboardPeriod = settings.dashboardPeriod;
-    this._projIncome      = settings.projIncome;
-    this._projExpenses    = settings.projExpenses;
+    this._currency             = settings.currency;
+    this._dashboardPeriod      = settings.dashboardPeriod;
+    this._projIncome           = settings.projIncome;
+    this._projExpenses         = settings.projExpenses;
+    this._projSnapshotPatrimony = settings.projSnapshotPatrimony;
+    this._projSnapshotDate     = settings.projSnapshotDate;
 
     // Sembrar categorías predefinidas si el usuario no tiene ninguna
     const cats = await Storage.getCategories();
@@ -54,28 +56,41 @@ const Data = {
 
   getSettings() {
     return {
-      currency:        this._currency,
-      dashboardPeriod: this._dashboardPeriod,
-      version:         1,
-      projIncome:      this._projIncome,
-      projExpenses:    this._projExpenses
+      currency:              this._currency,
+      dashboardPeriod:       this._dashboardPeriod,
+      version:               1,
+      projIncome:            this._projIncome,
+      projExpenses:          this._projExpenses,
+      projSnapshotPatrimony: this._projSnapshotPatrimony,
+      projSnapshotDate:      this._projSnapshotDate
     };
   },
 
   async updateSettings(partial) {
     const updated = {
-      currency:        this._currency,
-      dashboardPeriod: this._dashboardPeriod,
-      version:         1,
-      projIncome:      this._projIncome,
-      projExpenses:    this._projExpenses,
+      currency:              this._currency,
+      dashboardPeriod:       this._dashboardPeriod,
+      version:               1,
+      projIncome:            this._projIncome,
+      projExpenses:          this._projExpenses,
+      projSnapshotPatrimony: this._projSnapshotPatrimony,
+      projSnapshotDate:      this._projSnapshotDate,
       ...partial
     };
-    this._currency        = updated.currency;
-    this._dashboardPeriod = updated.dashboardPeriod;
-    this._projIncome      = updated.projIncome;
-    this._projExpenses    = updated.projExpenses;
+    this._currency              = updated.currency;
+    this._dashboardPeriod       = updated.dashboardPeriod;
+    this._projIncome            = updated.projIncome;
+    this._projExpenses          = updated.projExpenses;
+    this._projSnapshotPatrimony = updated.projSnapshotPatrimony;
+    this._projSnapshotDate      = updated.projSnapshotDate;
     await Storage.saveSettings(updated);
+  },
+
+  async resetProjectionSnapshot() {
+    const patrimony = await this.getTotalPatrimonio();
+    const date      = new Date().toISOString().split('T')[0];
+    await this.updateSettings({ projSnapshotPatrimony: patrimony, projSnapshotDate: date });
+    return { patrimony, date };
   },
 
   /* ---------- Expenses ---------- */
@@ -84,42 +99,44 @@ const Data = {
     return Storage.getExpenses();
   },
 
-  async addExpense({ amount, categoryId, description, date, accountId }) {
+  async addExpense({ amount, categoryId, description, date, accountId, isPlanned }) {
     const amt    = parseFloat(parseFloat(amount).toFixed(2));
     const record = {
       id: genId(), amount: amt, categoryId,
       accountId: accountId || null,
-      description: (description || '').trim().slice(0, 200), date
+      description: (description || '').trim().slice(0, 200),
+      date, isPlanned: isPlanned || false
     };
     const saved = await Storage.addExpense(record);
-    if (accountId) await Storage.adjustAccountBalance(accountId, -amt);
+    if (accountId && !isPlanned) await Storage.adjustAccountBalance(accountId, -amt);
     return saved;
   },
 
-  async updateExpense(id, { amount, categoryId, description, date, accountId }) {
+  async updateExpense(id, { amount, categoryId, description, date, accountId, isPlanned }) {
     const all = await this.getExpenses();
     const old = all.find(e => e.id === id);
     if (!old) return null;
     const newAmt = parseFloat(parseFloat(amount).toFixed(2));
-    if (old.accountId) await Storage.adjustAccountBalance(old.accountId, old.amount);
-    if (accountId)     await Storage.adjustAccountBalance(accountId, -newAmt);
+    if (old.accountId && !old.isPlanned) await Storage.adjustAccountBalance(old.accountId, old.amount);
+    if (accountId     && !isPlanned)     await Storage.adjustAccountBalance(accountId, -newAmt);
     return Storage.updateExpense(id, {
       amount: newAmt, categoryId, accountId: accountId || null,
-      description: (description || '').trim().slice(0, 200), date
+      description: (description || '').trim().slice(0, 200),
+      date, isPlanned: isPlanned || false
     });
   },
 
   async deleteExpense(id) {
     const all = await this.getExpenses();
     const rec = all.find(e => e.id === id);
-    if (rec && rec.accountId) await Storage.adjustAccountBalance(rec.accountId, rec.amount);
+    if (rec && rec.accountId && !rec.isPlanned) await Storage.adjustAccountBalance(rec.accountId, rec.amount);
     await Storage.deleteExpense(id);
   },
 
   async deleteExpenses(ids) {
     const set = new Set(ids);
     const all = await this.getExpenses();
-    for (const e of all.filter(e => set.has(e.id) && e.accountId)) {
+    for (const e of all.filter(e => set.has(e.id) && e.accountId && !e.isPlanned)) {
       await Storage.adjustAccountBalance(e.accountId, e.amount);
     }
     await Storage.deleteExpenses(ids);

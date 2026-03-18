@@ -38,36 +38,21 @@
   .navbar-nav.open { display: flex; }
   .navbar-toggle { display: flex; }
 
-  .navbar-add-btn { display: none; }
+  .navbar-add-btn {
+    display:     inline-flex;
+    font-size:   0.78rem;
+    padding:     0.3rem 0.65rem;
+    background:  rgba(124, 58, 237, 0.18);
+    border:      1px solid rgba(124, 58, 237, 0.35);
+    color:       #c4b5fd;
+    font-weight: 600;
+    border-radius: 99px;
+  }
+  .navbar-add-btn:hover, .navbar-add-btn:active {
+    background: rgba(124, 58, 237, 0.3);
+  }
   .mobile-add-btn { display: inline-flex; }
-
-  .fab-add-expense {
-    display:         flex;
-    align-items:     center;
-    justify-content: center;
-    position:        fixed;
-    bottom:          1.25rem;
-    left:            50%;
-    transform:       translateX(-50%);
-    height:          48px;
-    padding:         0 1.5rem;
-    border-radius:   99px;
-    background:      var(--color-primary);
-    color:           #fff;
-    font-size:       0.95rem;
-    font-weight:     600;
-    white-space:     nowrap;
-    border:          none;
-    box-shadow:      0 4px 20px rgba(124, 58, 237, 0.55);
-    cursor:          pointer;
-    z-index:         900;
-    transition:      transform 0.15s, box-shadow 0.15s;
-  }
-
-  .fab-add-expense:active {
-    transform:      translateX(-50%) scale(0.95);
-    box-shadow:     0 2px 8px rgba(124, 58, 237, 0.4);
-  }
+  .nav-user-email { display: none; }
 
   /* Main content */
   .main-content {

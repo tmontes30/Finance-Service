@@ -46,26 +46,27 @@
     align-items:     center;
     justify-content: center;
     position:        fixed;
-    bottom:          1.5rem;
-    right:           1.25rem;
-    width:           52px;
-    height:          52px;
-    border-radius:   50%;
+    bottom:          1.25rem;
+    left:            50%;
+    transform:       translateX(-50%);
+    height:          48px;
+    padding:         0 1.5rem;
+    border-radius:   99px;
     background:      var(--color-primary);
     color:           #fff;
-    font-size:       1.75rem;
-    font-weight:     300;
-    line-height:     1;
+    font-size:       0.95rem;
+    font-weight:     600;
+    white-space:     nowrap;
     border:          none;
-    box-shadow:      0 4px 16px rgba(124, 58, 237, 0.5);
+    box-shadow:      0 4px 20px rgba(124, 58, 237, 0.55);
     cursor:          pointer;
     z-index:         900;
     transition:      transform 0.15s, box-shadow 0.15s;
   }
 
   .fab-add-expense:active {
-    transform:  scale(0.92);
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+    transform:      translateX(-50%) scale(0.95);
+    box-shadow:     0 2px 8px rgba(124, 58, 237, 0.4);
   }
 
   /* Main content */

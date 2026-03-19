@@ -86,10 +86,12 @@ const Auth = {
   _showAuth() {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-wrapper').style.display = 'none';
+    document.getElementById('btn-fab').classList.remove('fab-active');
   },
 
   _hideAuth() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display  = 'block';
+    document.getElementById('btn-fab').classList.add('fab-active');
   }
 };

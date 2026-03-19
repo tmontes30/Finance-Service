@@ -123,6 +123,30 @@ body {
 
 .mobile-only { display: none; }
 
+/* ===== FAB (Floating Action Button) ===== */
+.fab {
+  position: fixed;
+  bottom: 1.75rem;
+  right: 1.25rem;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  z-index: 500;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, background var(--transition);
+}
+.fab:active { transform: scale(0.92); }
+
 /* ===== MAIN CONTENT ===== */
 .main-content {
   max-width: 1200px;

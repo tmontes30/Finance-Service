@@ -52,6 +52,9 @@
     padding-top: 0.6rem;
   }
 
+  /* FAB visible en mobile cuando el usuario está logueado */
+  .fab.fab-active { display: flex; }
+
   /* Main content */
   .main-content {
     padding: 1rem;

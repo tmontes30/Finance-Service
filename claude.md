@@ -43,12 +43,15 @@ The app is a vanilla JS single-page application backed by Supabase (PostgreSQL +
 
 ## Gastos Previstos
 
-Expenses can be marked as **planned** (`isPlanned: true`). Key behaviours:
+A "Gasto Previsto" is an expense the user knows will happen in a future month — registered now to track it in the expense flow, but **it does not deduct from account balances yet**. This distinction must be clear in any UI copy (hint text, labels, badges).
+
+Key behaviours:
 - Planned expenses do not deduct from account balances (money hasn't moved yet).
 - `updateExpense` compares old/new `isPlanned` state to correctly apply or reverse balance adjustments.
 - In `projection.js`, planned expenses for future months are subtracted as one-off deductions from the projected line; they are excluded from the real-line reconstruction.
 - A yellow `.planned-badge` is rendered in the expenses list row showing the target month (`YYYY/MM`).
-- The expense modal has a "Gasto Previsto" checkbox; when checked, a `type="month"` picker replaces the date field and `date` is set to `YYYY-MM-01` of the chosen month on save.
+- The expense modal has a "Gasto Previsto" checkbox with a hint explaining the concept; when checked, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?") replaces the date field and `date` is set to `YYYY-MM-01` of the chosen month on save.
+- The expenses list filter uses "Solo previstos (futuros)" / "Solo reales (realizados)" to reinforce the distinction.
 
 ## Proyección Fija (Frozen Projection)
 
@@ -69,5 +72,5 @@ The `expenses` table has:
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
-- On mobile, the `navbar-add-btn` (the existing "+ Agregar Gasto" button) is shown as a compact dark pill in the navbar. The user's display name (`nav-user-email`) is hidden to save space.
-- The `mobile-add-btn` inside the expenses view is also shown on mobile as a secondary shortcut.
+- Mobile navbar is a single clean row `[⚡ Finance] [☰]`. Both `navbar-add-btn` and `navbar-user` are hidden. The hamburger expands a dropdown with nav links + "Agregar Gasto" + "Salir" (`.mobile-only` links wired in `app.js`). Tapping any link closes the menu.
+- **FAB**: a 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Lives outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. Tapping opens the expense modal.

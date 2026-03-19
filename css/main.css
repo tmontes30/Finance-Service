@@ -121,6 +121,8 @@ body {
 
 .navbar-toggle:hover { background: var(--color-bg); }
 
+.mobile-only { display: none; }
+
 /* ===== MAIN CONTENT ===== */
 .main-content {
   max-width: 1200px;

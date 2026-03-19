@@ -166,9 +166,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* ----- Nav links ----- */
-  document.querySelectorAll('.nav-link').forEach(link => {
+  document.querySelectorAll('.nav-link[data-view]').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
+      document.getElementById('navbar-nav').classList.remove('open');
       Router.navigate(link.dataset.view);
     });
   });
@@ -176,6 +177,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ----- Hamburger ----- */
   document.getElementById('navbar-toggle').addEventListener('click', () => {
     document.getElementById('navbar-nav').classList.toggle('open');
+  });
+
+  /* ----- Mobile nav links (hamburger menu) ----- */
+  document.getElementById('nav-mobile-add').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('navbar-nav').classList.remove('open');
+    UI.openExpenseModal();
+  });
+  document.getElementById('nav-mobile-logout').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('navbar-nav').classList.remove('open');
+    document.getElementById('btn-logout').click();
   });
 
   /* ----- Add expense buttons ----- */

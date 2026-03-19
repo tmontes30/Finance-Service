@@ -17,42 +17,40 @@
   .navbar {
     padding: 0 1rem;
     height: var(--nav-height);
-    position: relative;
-    flex-wrap: wrap;
-    height: auto;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
   }
 
   .navbar-brand { flex: 1; }
 
   .navbar-nav {
     display: none;
-    width: 100%;
+    position: absolute;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
     flex-direction: column;
     gap: 0.25rem;
-    padding-bottom: 0.5rem;
-    order: 10;
+    padding: 0.5rem 1rem 0.75rem;
+    background: rgba(17, 19, 34, 0.97);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 99;
   }
 
   .navbar-nav.open { display: flex; }
   .navbar-toggle { display: flex; }
 
-  .navbar-add-btn {
-    display:     inline-flex;
-    font-size:   0.78rem;
-    padding:     0.3rem 0.65rem;
-    background:  rgba(124, 58, 237, 0.18);
-    border:      1px solid rgba(124, 58, 237, 0.35);
-    color:       #c4b5fd;
-    font-weight: 600;
-    border-radius: 99px;
-  }
-  .navbar-add-btn:hover, .navbar-add-btn:active {
-    background: rgba(124, 58, 237, 0.3);
-  }
+  .navbar-add-btn { display: none; }
+  .navbar-user    { display: none; }
   .mobile-add-btn { display: inline-flex; }
-  .nav-user-email { display: none; }
+
+  /* Links extra dentro del menú hamburguesa */
+  .mobile-only { display: flex; }
+  .nav-link-add {
+    color: #a78bfa;
+    font-weight: 700;
+    border-top: 1px solid var(--color-border);
+    margin-top: 0.25rem;
+    padding-top: 0.6rem;
+  }
 
   /* Main content */
   .main-content {

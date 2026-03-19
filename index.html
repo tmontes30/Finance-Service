@@ -237,8 +237,8 @@
               <label>Tipo</label>
               <select id="filter-planned" class="form-select">
                 <option value="">Todos</option>
-                <option value="planned">Solo previstos</option>
-                <option value="real">Solo reales</option>
+                <option value="planned">Solo previstos (futuros)</option>
+                <option value="real">Solo reales (realizados)</option>
               </select>
             </div>
           </div>
@@ -539,10 +539,10 @@
               <input type="checkbox" id="expense-is-planned" style="width:auto;margin-right:0.4rem">
               Gasto Previsto
             </label>
-            <div class="form-hint" style="margin-top:0.25rem">Marca si este gasto aún no se ha realizado.</div>
+            <div class="form-hint" style="margin-top:0.25rem">Un gasto que sabés que va a ocurrir en un mes futuro — se registra ahora para tenerlo en cuenta en tu flujo de gastos, pero <strong>no descuenta saldo todavía</strong>.</div>
           </div>
           <div class="form-group" id="expense-planned-month-group" style="display:none">
-            <label for="expense-planned-month">Mes del gasto previsto *</label>
+            <label for="expense-planned-month">¿En qué mes va a ocurrir? *</label>
             <input type="month" id="expense-planned-month" class="form-input">
             <div class="form-error" id="error-planned-month" style="display:none"></div>
           </div>

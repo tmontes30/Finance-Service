@@ -59,9 +59,15 @@ const Dashboard = {
   /* ---------- Render ---------- */
 
   async render() {
-    const [allExpenses, allIncomes, accounts, categories] = await Promise.all([
+    const [_allExpenses, allIncomes, accounts, categories] = await Promise.all([
       Data.getExpenses(), Data.getIncomes(), Data.getAccounts(), Data.getCategories()
     ]);
+    // Los gastos previstos no se muestran hasta que su mes sea el mes en curso
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const allExpenses = _allExpenses.filter(e =>
+      !e.isPlanned || e.date.startsWith(currentMonthKey)
+    );
     const catMap = Object.fromEntries(categories.map(c => [c.id, c]));
 
     const emptyEl    = document.getElementById('dashboard-empty');
@@ -84,7 +90,6 @@ const Dashboard = {
     statsPrimEl.style.display = 'grid';
     chartsEl.style.display   = 'grid';
 
-    const now = new Date();
     const todayStr   = now.toISOString().split('T')[0];
     const monthFrom  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const yearFrom   = `${now.getFullYear()}-01-01`;

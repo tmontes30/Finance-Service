@@ -94,7 +94,7 @@ const Dashboard = {
     const monthFrom  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const yearFrom   = `${now.getFullYear()}-01-01`;
 
-    const monthExpenses = allExpenses.filter(e => e.date >= monthFrom);
+    const monthExpenses = allExpenses.filter(e => e.date.startsWith(currentMonthKey));
     const monthExpTotal = monthExpenses.reduce((s, e) => s + e.amount, 0);
 
     const todayTotal = allExpenses.filter(e => e.date === todayStr).reduce((s, e) => s + e.amount, 0);
@@ -305,7 +305,7 @@ this._renderDailyChart(allExpenses);
     // Insight 4: Comparativa vs mes anterior
     const prevFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const prevStart = `${prevFrom.getFullYear()}-${String(prevFrom.getMonth() + 1).padStart(2, '0')}-01`;
-    const thisTotal = allExpenses.filter(e => e.date >= monthFrom).reduce((s, e) => s + e.amount, 0);
+    const thisTotal = allExpenses.filter(e => e.date.startsWith(currentMonthKey)).reduce((s, e) => s + e.amount, 0);
     const prevTotal = allExpenses.filter(e => e.date >= prevStart && e.date < monthFrom).reduce((s, e) => s + e.amount, 0);
     let vsIcon, vsValue, vsLabel;
     if (prevTotal === 0) {

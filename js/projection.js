@@ -112,11 +112,12 @@ const Projection = {
       const isCurrent = i === 0;
 
       let projected;
+      let plannedThisMonth = 0;
       if (i === 0) {
         projected = parseFloat(projBase.toFixed(2));
       } else {
         // Subtract any planned one-off expenses for this future month
-        const plannedThisMonth = plannedExpenses
+        plannedThisMonth = plannedExpenses
           .filter(e => e.date.slice(0, 7) === key)
           .reduce((s, e) => s + e.amount, 0);
         runningProjected += balance - plannedThisMonth;
@@ -140,7 +141,7 @@ const Projection = {
 
       months.push({
         key, label: this._monthLabel(y, mo),
-        isCurrent, projected, actual
+        isCurrent, projected, actual, plannedThisMonth
       });
     }
 
@@ -275,11 +276,15 @@ const Projection = {
       const currentTag = m.isCurrent ? ' <span class="proj-now-badge">hoy</span>' : '';
 
       // Ingresos / Gastos / Balance cols
+      const totalExpenses = monthlyExpenses + (m.plannedThisMonth || 0);
+      const totalBalance  = monthlyIncome - totalExpenses;
+      const totalBalStr   = (totalBalance >= 0 ? '+' : '') + Data.formatAmount(totalBalance);
+      const totalBalClass = totalBalance >= 0 ? 'stat-pos' : 'stat-neg';
       const flowCols = m.isCurrent
         ? `<td class="proj-muted">—</td><td class="proj-muted">—</td><td class="proj-muted">—</td>`
         : `<td class="stat-pos">${Data.formatAmount(monthlyIncome)}</td>
-           <td class="stat-neg">${Data.formatAmount(monthlyExpenses)}</td>
-           <td class="${balClass}">${balStr}</td>`;
+           <td class="stat-neg">${Data.formatAmount(totalExpenses)}</td>
+           <td class="${totalBalClass}">${totalBalStr}</td>`;
 
       // Real + Diff cols
       let realCols;

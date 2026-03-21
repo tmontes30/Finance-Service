@@ -342,6 +342,14 @@ input[type="checkbox"] {
   max-width: 480px;
   box-shadow: var(--shadow-lg);
   animation: modal-in 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-sm { max-width: 360px; }

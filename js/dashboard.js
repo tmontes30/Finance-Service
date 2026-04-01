@@ -231,10 +231,14 @@ const Dashboard = {
     const data   = sorted.map(([, amt]) => parseFloat(amt.toFixed(2)));
     const colors = sorted.map(([id]) => catMap[id]?.color || '#94a3b8');
 
+    const surfaceColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-surface').trim() || '#111322';
+
     if (this._categoryChart) {
-      this._categoryChart.data.labels                       = labels;
-      this._categoryChart.data.datasets[0].data            = data;
-      this._categoryChart.data.datasets[0].backgroundColor = colors;
+      this._categoryChart.data.labels                          = labels;
+      this._categoryChart.data.datasets[0].data               = data;
+      this._categoryChart.data.datasets[0].backgroundColor    = colors;
+      this._categoryChart.data.datasets[0].borderColor        = surfaceColor;
       this._categoryChart.update('active');
       return;
     }
@@ -247,7 +251,7 @@ const Dashboard = {
           data,
           backgroundColor: colors,
           borderWidth:  3,
-          borderColor:  '#111322',
+          borderColor:  surfaceColor,
           hoverOffset:  10
         }]
       },

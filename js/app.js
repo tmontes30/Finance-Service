@@ -189,12 +189,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* ----- Theme toggle ----- */
-  document.getElementById('btn-theme').addEventListener('click', () => {
+  document.getElementById('btn-theme').addEventListener('click', async () => {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     document.getElementById('btn-theme').textContent = next === 'light' ? '☀️' : '🌙';
     localStorage.setItem('financeTheme', next);
+    // Re-render charts so border/fill colors pick up the new theme
+    if (Router._current === 'dashboard') await Dashboard.render();
   });
 
   /* ----- Close dropdown when clicking outside ----- */

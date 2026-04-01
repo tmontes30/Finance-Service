@@ -59,7 +59,6 @@ const Router = {
     document.querySelectorAll('.nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.view === viewName);
     });
-    document.getElementById('navbar-nav').classList.remove('open');
     this._current = viewName;
 
     if (viewName === 'dashboard')  await Dashboard.render();
@@ -72,6 +71,11 @@ const Router = {
 
 /* ===== Bootstrap ===== */
 document.addEventListener('DOMContentLoaded', async () => {
+
+  // Apply saved theme
+  const savedTheme = localStorage.getItem('financeTheme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.getElementById('btn-theme').textContent = savedTheme === 'light' ? '☀️' : '🌙';
 
   /* Auth maneja: Storage.init, Data.init, módulos de vistas, y el primer navigate */
   await Auth.init();
@@ -169,25 +173,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.nav-link[data-view]').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
-      document.getElementById('navbar-nav').classList.remove('open');
       Router.navigate(link.dataset.view);
     });
   });
 
   /* ----- Hamburger ----- */
-  document.getElementById('navbar-toggle').addEventListener('click', () => {
-    document.getElementById('navbar-nav').classList.toggle('open');
+  document.getElementById('navbar-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('navbar-dropdown').classList.toggle('open');
   });
 
-  /* ----- Mobile nav links (hamburger menu) ----- */
-  document.getElementById('nav-mobile-add').addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('navbar-nav').classList.remove('open');
+  /* ----- Logo click → dashboard ----- */
+  document.getElementById('navbar-brand').addEventListener('click', () => {
+    Router.navigate('dashboard');
+  });
+
+  /* ----- Theme toggle ----- */
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    document.getElementById('btn-theme').textContent = next === 'light' ? '☀️' : '🌙';
+    localStorage.setItem('financeTheme', next);
+  });
+
+  /* ----- Close dropdown when clicking outside ----- */
+  document.addEventListener('click', () => {
+    document.getElementById('navbar-dropdown').classList.remove('open');
+  });
+
+  /* ----- Mobile nav links (hamburger dropdown) ----- */
+  document.getElementById('nav-mobile-add').addEventListener('click', () => {
+    document.getElementById('navbar-dropdown').classList.remove('open');
     UI.openExpenseModal();
   });
-  document.getElementById('nav-mobile-logout').addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('navbar-nav').classList.remove('open');
+  document.getElementById('nav-mobile-logout').addEventListener('click', () => {
+    document.getElementById('navbar-dropdown').classList.remove('open');
     document.getElementById('btn-logout').click();
   });
 

@@ -68,7 +68,7 @@
 
     <!-- Navbar -->
     <nav class="navbar">
-      <div class="navbar-brand">
+      <div class="navbar-brand" id="navbar-brand">
         <span class="brand-icon">⚡</span>
         <span class="brand-name">Finance</span>
       </div>
@@ -78,16 +78,19 @@
         <a href="#" class="nav-link" data-view="expenses">Gastos</a>
         <a href="#" class="nav-link" data-view="categories">Categorías</a>
         <a href="#" class="nav-link" data-view="projection">Proyección</a>
-        <a href="#" class="nav-link nav-link-add mobile-only" id="nav-mobile-add">+ Agregar Gasto</a>
-        <a href="#" class="nav-link mobile-only" id="nav-mobile-logout">Salir</a>
       </div>
       <div class="navbar-user">
         <span class="nav-user-email" id="nav-user-email"></span>
         <button class="btn btn-outline btn-sm btn-logout" id="btn-logout">Salir</button>
       </div>
       <button class="btn btn-primary navbar-add-btn" id="btn-add-expense">+ Agregar Gasto</button>
+      <button class="theme-toggle" id="btn-theme" aria-label="Cambiar tema" title="Cambiar tema">🌙</button>
       <button class="navbar-toggle" id="navbar-toggle" aria-label="Menú">☰</button>
     </nav>
+    <div class="navbar-dropdown" id="navbar-dropdown">
+      <button class="navbar-dropdown-item" id="nav-mobile-add">+ Agregar Gasto</button>
+      <button class="navbar-dropdown-item nav-dropdown-logout" id="nav-mobile-logout">Salir</button>
+    </div>
 
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
@@ -106,6 +109,11 @@
             <button class="period-btn" data-period="year">Este año</button>
             <button class="period-btn" data-period="all">Todo</button>
           </div>
+        </div>
+        <div class="month-nav" id="month-nav">
+          <button class="month-nav-btn" id="btn-month-prev" aria-label="Mes anterior">‹</button>
+          <span class="month-nav-label" id="month-nav-label">Abril 2026</span>
+          <button class="month-nav-btn" id="btn-month-next" aria-label="Mes siguiente" disabled>›</button>
         </div>
 
         <!-- Fila principal: 4 tarjetas grandes -->

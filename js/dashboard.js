@@ -2,6 +2,7 @@
 
 const Dashboard = {
   _period:        'month',
+  _monthOffset:   0,
   _monthlyChart:  null,
   _categoryChart: null,
   _accountsChart: null,
@@ -25,6 +26,15 @@ const Dashboard = {
         await Data.updateSettings({ dashboardPeriod: this._period });
         await this.render();
       });
+    });
+
+    document.getElementById('btn-month-prev').addEventListener('click', async () => {
+      this._monthOffset--;
+      await this.render();
+    });
+    document.getElementById('btn-month-next').addEventListener('click', async () => {
+      this._monthOffset++;
+      await this.render();
     });
 
     const btnFirst = document.getElementById('btn-add-first');
@@ -68,6 +78,17 @@ const Dashboard = {
     const allExpenses = _allExpenses.filter(e =>
       !e.isPlanned || e.date.startsWith(currentMonthKey)
     );
+
+    // Month navigation
+    const selDate = new Date(now.getFullYear(), now.getMonth() + this._monthOffset, 1);
+    const selKey  = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}`;
+
+    const navLabel = document.getElementById('month-nav-label');
+    const rawLabel = selDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    navLabel.textContent = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+    navLabel.classList.toggle('month-nav-current', this._monthOffset === 0);
+    document.getElementById('btn-month-next').disabled = this._monthOffset >= 0;
+
     const catMap = Object.fromEntries(categories.map(c => [c.id, c]));
 
     const emptyEl    = document.getElementById('dashboard-empty');
@@ -90,25 +111,26 @@ const Dashboard = {
     statsPrimEl.style.display = 'grid';
     chartsEl.style.display   = 'grid';
 
-    const todayStr   = now.toISOString().split('T')[0];
-    const monthFrom  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-    const yearFrom   = `${now.getFullYear()}-01-01`;
+    const todayStr = now.toISOString().split('T')[0];
+    const yearFrom = `${selDate.getFullYear()}-01-01`;
 
-    const monthExpenses = allExpenses.filter(e => e.date.startsWith(currentMonthKey));
+    const monthExpenses = allExpenses.filter(e => e.date.startsWith(selKey));
     const monthExpTotal = monthExpenses.reduce((s, e) => s + e.amount, 0);
 
-    const todayTotal = allExpenses.filter(e => e.date === todayStr).reduce((s, e) => s + e.amount, 0);
-    document.getElementById('stat-today').textContent = Data.formatAmount(todayTotal);
+    const todayTotal = this._monthOffset === 0
+      ? allExpenses.filter(e => e.date === todayStr).reduce((s, e) => s + e.amount, 0)
+      : null;
+    document.getElementById('stat-today').textContent = todayTotal !== null ? Data.formatAmount(todayTotal) : '—';
     document.getElementById('stat-month').textContent = Data.formatAmount(monthExpTotal);
     document.getElementById('stat-year').textContent = Data.formatAmount(
-      allExpenses.filter(e => e.date >= yearFrom).reduce((s, e) => s + e.amount, 0)
+      allExpenses.filter(e => e.date >= yearFrom && e.date.slice(0, 7) <= selKey).reduce((s, e) => s + e.amount, 0)
     );
 
     const periodExpenses = this._filterByPeriod(allExpenses, this._period);
 
-    this._renderMonthlyChart(allExpenses);
+    this._renderMonthlyChart(allExpenses, selDate);
     this._renderCategoryChart(periodExpenses, categories);
-this._renderDailyChart(allExpenses);
+    this._renderDailyChart(allExpenses);
     this._renderAccountsSection(accounts, allExpenses, allIncomes);
   },
 
@@ -129,10 +151,10 @@ this._renderDailyChart(allExpenses);
 
   /* ---------- Bar chart: spending per month ---------- */
 
-  _renderMonthlyChart(allExpenses) {
+  _renderMonthlyChart(allExpenses, refDate) {
     const labels = [];
     const data   = [];
-    const now    = new Date();
+    const now    = refDate || new Date();
 
     for (let i = 11; i >= 0; i--) {
       const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);

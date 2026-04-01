@@ -76,6 +76,32 @@ The `expenses` table has:
 - **Month navigation:** `Dashboard._monthOffset` (0 = current month, negative = past). `‹`/`›` arrows update offset and re-render. All stats filter to the selected month (`selKey = YYYY-MM`). The `›` arrow is disabled when on the current month. Charts shift their 12-month window based on `selDate`.
 - **Chart theme awareness:** When the theme toggle is clicked and `Router._current === 'dashboard'`, `Dashboard.render()` is called to refresh charts with the new theme's surface color.
 
+## Auth / Login
+
+### Splash Screen
+- `#splash-screen` (`.splash-screen`) is shown by default on page load (`z-index: 10000`, above everything).
+- `#auth-screen` starts with `display:none` — the splash covers it during session restore.
+- `Auth._hideSplash()` adds `.splash-hidden` (opacity → 0, transition 0.4s) then removes the element after 420ms. Called after `getSession()` resolves, regardless of whether a session exists.
+- Design: full-screen `--color-bg` background, large ⚡ with pulse animation, "Finance" gradient text, three bouncing dots (`@keyframes splash-dot`).
+
+### Forgot Password Flow
+- "¿Olvidaste tu contraseña?" button (`#auth-forgot-link`) is visible in login mode only (hidden in register mode via `authToggle` click handler).
+- Clicking it hides `#auth-form` + toggle + itself, shows `#auth-forgot-section` and changes title.
+- "← Volver" (`#btn-forgot-back`) reverses that.
+- Send handler calls `Auth.sendPasswordReset(email)` → `supabase.auth.resetPasswordForEmail` with `redirectTo: 'https://tmontes30.github.io/Finance-Service/'`.
+- **Supabase dashboard required:** Add that URL in Authentication → URL Configuration → Redirect URLs.
+- After clicking the reset link in the email, `onAuthStateChange` fires `PASSWORD_RECOVERY` → `Auth._showRecovery()` shows `#auth-recovery-section` with new-password + confirm fields.
+- Save handler calls `Auth.updatePassword(newPassword)` → `supabase.auth.updateUser`. On success, `SIGNED_IN` fires and `_setupApp()` runs automatically.
+
+### Registration Security
+- Confirm password field (`#auth-password-confirm`, `register-only`) validated on submit before calling Supabase.
+- Minimum 8 characters enforced on frontend. **Supabase dashboard:** Authentication → Policies → Minimum password length = 8 (server-side enforcement).
+- Password strength bar (`#password-strength`, `.strength-bar-fill`) appears while typing in register mode: Débil (<8), Buena (8+ with number), Fuerte (8+ with number + symbol). Driven by `input` listener on `#auth-password`.
+
+### Visual
+- `#auth-screen` background: `radial-gradient` with subtle purple tint.
+- `.auth-card`: `border-top: 3px solid var(--color-primary)`, `box-shadow: 0 8px 32px rgba(0,0,0,0.25)`.
+
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.

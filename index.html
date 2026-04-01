@@ -54,11 +54,49 @@
           <label for="auth-password">Contraseña</label>
           <input type="password" id="auth-password" class="form-input" placeholder="••••••••"
                  required autocomplete="current-password">
+          <div class="password-strength" id="password-strength">
+            <div class="strength-bar"><div class="strength-bar-fill"></div></div>
+            <span class="strength-label"></span>
+          </div>
+        </div>
+        <div class="form-group register-only" style="display:none">
+          <label for="auth-password-confirm">Confirmar contraseña</label>
+          <input type="password" id="auth-password-confirm" class="form-input" placeholder="••••••••"
+                 autocomplete="new-password">
         </div>
 
         <div id="auth-error" class="auth-error" style="display:none"></div>
         <button type="submit" class="btn btn-primary auth-submit-btn" id="auth-submit">Entrar</button>
       </form>
+
+      <button class="auth-forgot-link" id="auth-forgot-link">¿Olvidaste tu contraseña?</button>
+
+      <!-- Sección: restablecer contraseña (paso 1 — pedir email) -->
+      <div id="auth-forgot-section" style="display:none">
+        <p class="auth-recovery-hint">Ingresá tu email y te enviamos un link para restablecer tu contraseña.</p>
+        <div class="form-group">
+          <label for="auth-forgot-email">Email</label>
+          <input type="email" id="auth-forgot-email" class="form-input" placeholder="tu@email.com">
+        </div>
+        <div id="auth-forgot-msg" class="auth-error" style="display:none"></div>
+        <button class="btn btn-primary auth-submit-btn" id="btn-forgot-send">Enviar link</button>
+        <button class="auth-toggle-link" id="btn-forgot-back" style="margin-top:0.5rem">← Volver al inicio de sesión</button>
+      </div>
+
+      <!-- Sección: nueva contraseña (paso 2 — después de clic en email) -->
+      <div id="auth-recovery-section" style="display:none">
+        <p class="auth-recovery-hint">Ingresá tu nueva contraseña.</p>
+        <div class="form-group">
+          <label for="auth-new-password">Nueva contraseña</label>
+          <input type="password" id="auth-new-password" class="form-input" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label for="auth-new-password-confirm">Confirmar nueva contraseña</label>
+          <input type="password" id="auth-new-password-confirm" class="form-input" placeholder="••••••••">
+        </div>
+        <div id="auth-recovery-error" class="auth-error" style="display:none"></div>
+        <button class="btn btn-primary auth-submit-btn" id="btn-recovery-save">Guardar nueva contraseña</button>
+      </div>
 
       <button class="auth-toggle-link" id="auth-mode-toggle">¿No tienes cuenta? Regístrate</button>
     </div>

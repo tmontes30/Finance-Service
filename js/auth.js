@@ -24,6 +24,8 @@ const Auth = {
         await this._setupApp();
       } else if (event === 'SIGNED_OUT') {
         window.location.reload();
+      } else if (event === 'PASSWORD_RECOVERY') {
+        this._showRecovery();
       }
     });
   },
@@ -77,6 +79,18 @@ const Auth = {
     return error;
   },
 
+  async sendPasswordReset(email) {
+    const { error } = await this._client.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://tmontes30.github.io/Finance-Service/'
+    });
+    return error;
+  },
+
+  async updatePassword(newPassword) {
+    const { error } = await this._client.auth.updateUser({ password: newPassword });
+    return error;
+  },
+
   async logout() {
     this._ready = false;
     await this._client.auth.signOut();
@@ -93,5 +107,16 @@ const Auth = {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display  = 'block';
     document.getElementById('btn-fab').classList.add('fab-active');
+  },
+
+  _showRecovery() {
+    document.getElementById('auth-form').style.display          = 'none';
+    document.getElementById('auth-forgot-link').style.display   = 'none';
+    document.getElementById('auth-mode-toggle').style.display   = 'none';
+    document.getElementById('auth-forgot-section').style.display    = 'none';
+    document.getElementById('auth-title').textContent           = 'Nueva contraseña';
+    document.getElementById('auth-recovery-section').style.display = 'block';
+    document.getElementById('auth-screen').style.display        = 'flex';
+    document.getElementById('app-wrapper').style.display        = 'none';
   }
 };

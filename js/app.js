@@ -103,6 +103,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       el.style.display = isLogin ? 'none' : '';
     });
     document.getElementById('auth-card').classList.toggle('register', !isLogin);
+    document.getElementById('auth-forgot-link').style.display = isLogin ? '' : 'none';
+    document.getElementById('password-strength').style.display = 'none';
   });
 
   // RUT auto-format
@@ -131,6 +133,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!nombre || !apellido) {
         authError.style.cssText   = 'display:block';
         authError.textContent     = 'Nombre y apellido son requeridos';
+        authSubmitBtn.disabled    = false;
+        authSubmitBtn.textContent = 'Crear cuenta';
+        return;
+      }
+      if (pass.length < 8) {
+        authError.style.cssText   = 'display:block';
+        authError.textContent     = 'La contraseña debe tener al menos 8 caracteres';
+        authSubmitBtn.disabled    = false;
+        authSubmitBtn.textContent = 'Crear cuenta';
+        return;
+      }
+      const passConfirm = document.getElementById('auth-password-confirm').value;
+      if (pass !== passConfirm) {
+        authError.style.cssText   = 'display:block';
+        authError.textContent     = 'Las contraseñas no coinciden';
         authSubmitBtn.disabled    = false;
         authSubmitBtn.textContent = 'Crear cuenta';
         return;
@@ -167,6 +184,89 @@ document.addEventListener('DOMContentLoaded', async () => {
       authSubmitBtn.disabled    = false;
       authSubmitBtn.textContent = isLogin ? 'Entrar' : 'Crear cuenta';
     }
+  });
+
+  /* ----- Forgot password flow ----- */
+  document.getElementById('auth-forgot-link').addEventListener('click', () => {
+    document.getElementById('auth-form').style.display          = 'none';
+    document.getElementById('auth-mode-toggle').style.display   = 'none';
+    document.getElementById('auth-forgot-link').style.display   = 'none';
+    document.getElementById('auth-title').textContent           = 'Restablecer contraseña';
+    document.getElementById('auth-forgot-section').style.display = 'block';
+    document.getElementById('auth-forgot-email').focus();
+  });
+
+  document.getElementById('btn-forgot-back').addEventListener('click', () => {
+    document.getElementById('auth-forgot-section').style.display = 'none';
+    document.getElementById('auth-form').style.display           = 'block';
+    document.getElementById('auth-mode-toggle').style.display    = '';
+    document.getElementById('auth-forgot-link').style.display    = '';
+    document.getElementById('auth-title').textContent            = 'Iniciar sesión';
+    document.getElementById('auth-forgot-msg').style.display     = 'none';
+  });
+
+  document.getElementById('btn-forgot-send').addEventListener('click', async () => {
+    const email  = document.getElementById('auth-forgot-email').value.trim();
+    if (!email) return;
+    const btn    = document.getElementById('btn-forgot-send');
+    const msgEl  = document.getElementById('auth-forgot-msg');
+    btn.disabled    = true;
+    btn.textContent = '⚡ Enviando...';
+    const error = await Auth.sendPasswordReset(email);
+    if (error) {
+      msgEl.style.cssText  = 'display:block';
+      msgEl.textContent    = 'No se pudo enviar el email. Verificá la dirección.';
+    } else {
+      msgEl.style.cssText  = 'display:block;color:var(--color-success)';
+      msgEl.textContent    = '✅ Revisá tu email para continuar.';
+    }
+    btn.disabled    = false;
+    btn.textContent = 'Enviar link';
+  });
+
+  document.getElementById('btn-recovery-save').addEventListener('click', async () => {
+    const np    = document.getElementById('auth-new-password').value;
+    const npc   = document.getElementById('auth-new-password-confirm').value;
+    const errEl = document.getElementById('auth-recovery-error');
+    errEl.style.display = 'none';
+    if (np.length < 8) {
+      errEl.style.cssText = 'display:block';
+      errEl.textContent   = 'La contraseña debe tener al menos 8 caracteres';
+      return;
+    }
+    if (np !== npc) {
+      errEl.style.cssText = 'display:block';
+      errEl.textContent   = 'Las contraseñas no coinciden';
+      return;
+    }
+    const btn = document.getElementById('btn-recovery-save');
+    btn.disabled    = true;
+    btn.textContent = '⚡ Guardando...';
+    const error = await Auth.updatePassword(np);
+    if (error) {
+      errEl.style.cssText = 'display:block';
+      errEl.textContent   = 'Error al guardar: ' + error.message;
+      btn.disabled    = false;
+      btn.textContent = 'Guardar nueva contraseña';
+    }
+    // On success, onAuthStateChange fires SIGNED_IN and _setupApp runs automatically
+  });
+
+  /* ----- Password strength indicator ----- */
+  document.getElementById('auth-password').addEventListener('input', e => {
+    if (isLogin) return;
+    const val = e.target.value;
+    const bar = document.getElementById('password-strength');
+    let level = 0;
+    if (val.length >= 8) level = 1;
+    if (val.length >= 8 && /[0-9]/.test(val)) level = 2;
+    if (val.length >= 8 && /[0-9]/.test(val) && /[^a-zA-Z0-9]/.test(val)) level = 3;
+    const labels = ['', 'Débil', 'Buena', 'Fuerte'];
+    const colors = ['', 'var(--color-danger)', '#f59e0b', 'var(--color-success)'];
+    bar.style.display = val ? 'flex' : 'none';
+    bar.querySelector('.strength-bar-fill').style.width      = `${level * 33.3}%`;
+    bar.querySelector('.strength-bar-fill').style.background = colors[level] || colors[1];
+    bar.querySelector('.strength-label').textContent         = labels[level] || '';
   });
 
   /* ----- Nav links ----- */

@@ -25,7 +25,7 @@ The app is a vanilla JS single-page application backed by Supabase (PostgreSQL +
 
 **Data flow:** Feature modules call `Data.*` → `Storage.*` → Supabase API.
 
-**Routing:** `Router` object in `app.js` shows/hides `#view-{name}` elements and calls each module's `render()`.
+**Routing:** `Router` object in `app.js` shows/hides `#view-{name}` elements and calls each module's `render()`. Active view is `Router._current` (string).
 
 **Account balance:** Stored directly on the `accounts` row and mutated by `Storage.adjustAccountBalance()` whenever an expense or income is added, updated, or deleted. There is no derived calculation. Planned expenses (`isPlanned: true`) do NOT adjust account balances.
 
@@ -37,43 +37,50 @@ The app is a vanilla JS single-page application backed by Supabase (PostgreSQL +
 - **Row Level Security** is enabled on all tables; users can only access their own rows. Schema and RLS policies are in `supabase-schema.sql`. New columns are added via `ALTER TABLE … ADD COLUMN IF NOT EXISTS` at the bottom of that file.
 - **UI patterns:** Modals and toast notifications are managed through `ui.js`. Use `UI.confirm()` / `UI.toast()` for user feedback.
 - **Language:** The UI is in Spanish.
-- **Theme:** Dark purple/blue theme defined via CSS custom properties in `css/main.css`. Extend via those variables, not hardcoded colors.
+- **Theme:** Dark/light toggle persisted to `localStorage` (`financeTheme`). CSS vars are defined in `:root` (dark) and overridden in `[data-theme="light"]` in `css/main.css`. **Never hardcode colors** — always use `var(--color-*)`. For Chart.js colors that can't use CSS vars, read them at render time with `getComputedStyle(document.documentElement).getPropertyValue('--color-surface')`.
 - **Predefined categories:** 8 default categories (`PREDEFINED_CATEGORIES` in `data.js`) are seeded into the database on first login. `ACCOUNT_TYPES` (6 types) is a client-side constant only, never stored in DB.
-- **`PatrimonioToggle`** in `app.js` persists wealth-masking state to `localStorage` (`patrimonioHidden`) and toggles display of `#stat-patrimonio` and `#accounts-total`.
+- **`PatrimonioToggle`** in `app.js` persists wealth-masking state to `localStorage` (`patrimonioHidden`).
+- **Favicon:** Inline SVG in `<head>` — purple rounded square with ⚡, no external file needed.
 
 ## Gastos Previstos
 
-A "Gasto Previsto" is an expense the user knows will happen in a future month — registered now to track it in the expense flow, but **it does not deduct from account balances yet**. This distinction must be clear in any UI copy (hint text, labels, badges).
+A "Gasto Previsto" is an expense the user knows will happen in a future month — registered now to track it in the expense flow, but **it does not deduct from account balances yet**. This distinction must be clear in any UI copy.
 
 Key behaviours:
 - Planned expenses do not deduct from account balances (money hasn't moved yet).
 - `updateExpense` compares old/new `isPlanned` state to correctly apply or reverse balance adjustments.
-- In `projection.js`, planned expenses for future months are subtracted as one-off deductions from the projected line (`plannedThisMonth` per month key); they are excluded from the real-line reconstruction. Each month object carries `plannedThisMonth` so the detail table also adds it to the Gastos and Balance columns.
-- **Dashboard filtering:** `dashboard.js` filters `allExpenses` at the top of `render()` to exclude planned expenses whose month is not the current month. The monthly stat uses `date.startsWith(currentMonthKey)` (not `>= monthFrom`) to avoid future-month dates leaking into the current month total.
-- A yellow `.planned-badge` is rendered in the expenses list row showing the target month (`YYYY/MM`).
-- The expense modal has a "Gasto Previsto" checkbox with a hint explaining the concept; when checked, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?") replaces the date field and `date` is set to `YYYY-MM-01` of the chosen month on save.
-- The expenses list filter uses "Solo previstos (futuros)" / "Solo reales (realizados)" to reinforce the distinction.
-- **Requires DB migration:** `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_planned BOOLEAN NOT NULL DEFAULT FALSE;` — without this, `isPlanned` is always `false` and planned expenses behave as real ones.
+- In `projection.js`, planned expenses for future months are subtracted as one-off deductions from the projected line (`plannedThisMonth` per month key); excluded from real-line reconstruction. Each month object carries `plannedThisMonth` so the detail table adds it to Gastos and Balance columns.
+- **Dashboard filtering:** `dashboard.js` excludes planned expenses whose month ≠ selected month at the top of `render()`. Monthly stat uses `date.startsWith(selKey)` — never `>= monthFrom` — to prevent future dates leaking into current month totals.
+- A yellow `.planned-badge` shows the target month (`YYYY/MM`) in the expenses list.
+- The expense modal checkbox shows a hint explaining the concept; when checked, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?") replaces the date field; `date` is set to `YYYY-MM-01` on save.
+- Expenses list filter: "Solo previstos (futuros)" / "Solo reales (realizados)".
+- **Requires DB migration:** `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_planned BOOLEAN NOT NULL DEFAULT FALSE;`
 
 ## Proyección Fija (Frozen Projection)
 
-- On the first save of projection parameters, `Data.resetProjectionSnapshot()` stores the current total patrimony + today's date in `settings` (`proj_snapshot_patrimony`, `proj_snapshot_date`).
-- `_renderProjection()` uses this frozen base for the projected line; subsequent account balance changes only affect the "Real" line.
-- `Data.resetProjectionSnapshot()` can be called again (via the "↺ Actualizar base" button) to manually reset the baseline.
-- Subsequent saves of income/expenses do NOT overwrite the snapshot — only the explicit reset does.
+- On first save of projection parameters, `Data.resetProjectionSnapshot()` stores current total patrimony + today's date in `settings` (`proj_snapshot_patrimony`, `proj_snapshot_date`).
+- `_renderProjection()` uses this frozen base for the projected line; only the "Real" line changes with new transactions.
+- Reset manually via "↺ Actualizar base" button. Subsequent saves of income/expenses do NOT overwrite the snapshot.
 
 ## DB Schema Notes
 
-The `settings` table has these projection-related columns (added via migration, not in the original `CREATE TABLE`):
+The `settings` table has projection-related columns (added via migration):
 - `proj_income`, `proj_expenses` — monthly parameters
-- `proj_snapshot_patrimony`, `proj_snapshot_date` — frozen baseline for projection
+- `proj_snapshot_patrimony`, `proj_snapshot_date` — frozen baseline
 
 The `expenses` table has:
 - `is_planned BOOLEAN NOT NULL DEFAULT FALSE`
 
+## Dashboard
+
+- **Month navigation:** `Dashboard._monthOffset` (0 = current month, negative = past). `‹`/`›` arrows update offset and re-render. All stats filter to the selected month (`selKey = YYYY-MM`). The `›` arrow is disabled when on the current month. Charts shift their 12-month window based on `selDate`.
+- **Chart theme awareness:** When the theme toggle is clicked and `Router._current === 'dashboard'`, `Dashboard.render()` is called to refresh charts with the new theme's surface color.
+
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
-- Mobile navbar is a single clean row `[⚡ Finance] [☰]`. Both `navbar-add-btn` and `navbar-user` are hidden. The hamburger expands an absolutely-positioned dropdown with nav links + "Agregar Gasto" + "Salir" (`.mobile-only` links wired in `app.js`). Tapping any link closes the menu.
-- **FAB**: a 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Lives outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. Tapping opens the expense modal.
-- **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` so the header and footer (Save button) are always visible without scrolling.
+- **Mobile navbar:** Single-row `[⚡ Finance] [scrollable tabs] [🌙] [☰]`. All 5 nav tabs always visible via `overflow-x: auto; scrollbar-width: none` on `.navbar-nav`. `navbar-add-btn` and `navbar-user` are hidden on mobile.
+- **Hamburger dropdown** (`#navbar-dropdown`): absolutely-positioned card (not inside `navbar-nav`) with "Agregar Gasto" and "Salir". Toggled via `e.stopPropagation()` on the hamburger; closed by `document.addEventListener('click', ...)`. Wired in `app.js`.
+- **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`.
+- **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` — header and footer (Save button) always visible.
+- **Logo click:** `#navbar-brand` click → `Router.navigate('dashboard')`.

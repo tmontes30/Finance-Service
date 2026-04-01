@@ -16,6 +16,7 @@ const Auth = {
     } else {
       this._showAuth();
     }
+    this._hideSplash();
 
     // Escuchar cambios de autenticación
     this._client.auth.onAuthStateChange(async (event, session) => {
@@ -107,6 +108,13 @@ const Auth = {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display  = 'block';
     document.getElementById('btn-fab').classList.add('fab-active');
+  },
+
+  _hideSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (!splash) return;
+    splash.classList.add('splash-hidden');
+    setTimeout(() => { splash.style.display = 'none'; }, 420);
   },
 
   _showRecovery() {

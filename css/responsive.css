@@ -7,6 +7,10 @@
   .charts-grid {
     grid-template-columns: 1fr;
   }
+
+  .proj-horizons {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* ===== MOBILE (≤ 640px) ===== */
@@ -211,6 +215,11 @@
 
   /* Pagination */
   .pagination { gap: 0.75rem; }
+
+  /* Projection horizons */
+  .proj-horizons { grid-template-columns: 1fr; }
+  .projection-summary-2 { grid-template-columns: repeat(2, 1fr); }
+  .proj-horizon-value { font-size: 1.15rem; }
 }
 
 /* ===== VERY SMALL (≤ 380px) ===== */

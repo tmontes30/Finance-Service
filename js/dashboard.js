@@ -7,7 +7,7 @@ const Dashboard = {
   _categoryChart: null,
   _accountsChart: null,
   _flowChart:     null,
-  _trendChart:    null,
+  _savingsChart:  null,
 
   /* ---------- Init ---------- */
 
@@ -126,7 +126,14 @@ const Dashboard = {
       allExpenses.filter(e => e.date >= yearFrom && e.date.slice(0, 7) <= selKey).reduce((s, e) => s + e.amount, 0)
     );
 
-    const periodExpenses = this._filterByPeriod(allExpenses, this._period);
+    // Period selector only makes sense on current month
+    const periodSel = document.getElementById('period-selector');
+    if (periodSel) periodSel.style.display = this._monthOffset !== 0 ? 'none' : 'flex';
+
+    // Category chart uses the selected month when navigating past months
+    const categoryExpenses = this._monthOffset !== 0
+      ? monthExpenses
+      : this._filterByPeriod(allExpenses, this._period);
 
     // Budget insight — only for current month, uses raw (unfiltered) expenses for history
     if (this._monthOffset === 0) {
@@ -136,8 +143,8 @@ const Dashboard = {
     }
 
     this._renderMonthlyChart(allExpenses, selDate);
-    this._renderCategoryChart(periodExpenses, categories);
-    this._renderDailyChart(allExpenses);
+    this._renderCategoryChart(categoryExpenses, categories);
+    this._renderSavingsChart(allExpenses, allIncomes);
     this._renderAccountsSection(accounts, allExpenses, allIncomes);
   },
 
@@ -389,82 +396,69 @@ const Dashboard = {
        </div>`;
   },
 
-  /* ---------- Daily spending chart ---------- */
+  /* ---------- Net savings chart (last 12 months) ---------- */
 
-  _renderDailyChart(allExpenses) {
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const monthKey    = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  _renderSavingsChart(allExpenses, allIncomes) {
+    const now    = new Date();
+    const labels = [];
+    const savings = [];
 
-    const labels = [], dayData = [], cumData = [];
-    let cumulative = 0;
-    for (let d = 1; d <= daysInMonth; d++) {
-      const ds       = `${monthKey}-${String(d).padStart(2, '0')}`;
-      const dayTotal = allExpenses.filter(e => e.date === ds).reduce((s, e) => s + e.amount, 0);
-      labels.push(d);
-      dayData.push(parseFloat(dayTotal.toFixed(2)));
-      cumulative += dayTotal;
-      cumData.push(parseFloat(cumulative.toFixed(2)));
+    for (let i = 11; i >= 0; i--) {
+      const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      labels.push(d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }));
+      const inc = allIncomes.filter(x => x.date.startsWith(key)).reduce((s, x) => s + x.amount, 0);
+      const exp = allExpenses.filter(x => x.date.startsWith(key) && !x.isPlanned).reduce((s, x) => s + x.amount, 0);
+      savings.push(parseFloat((inc - exp).toFixed(2)));
     }
 
-    if (this._trendChart) {
-      this._trendChart.data.labels           = labels;
-      this._trendChart.data.datasets[0].data = dayData;
-      this._trendChart.data.datasets[1].data = cumData;
-      this._trendChart.update('active');
+    const colors = savings.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.75)' : 'rgba(244, 63, 94, 0.7)');
+
+    if (this._savingsChart) {
+      this._savingsChart.data.labels                       = labels;
+      this._savingsChart.data.datasets[0].data             = savings;
+      this._savingsChart.data.datasets[0].backgroundColor  = colors;
+      this._savingsChart.update('active');
       return;
     }
 
     const axisStyle = { color: '#4a5578', font: { size: 11 } };
     const gridStyle = { color: 'rgba(255,255,255,0.05)', drawBorder: false };
 
-    this._trendChart = new Chart(document.getElementById('chart-daily'), {
+    this._savingsChart = new Chart(document.getElementById('chart-savings'), {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          {
-            label: 'Diario',
-            data: dayData,
-            backgroundColor: 'rgba(99, 102, 241, 0.65)',
-            borderWidth: 0, borderRadius: 4, borderSkipped: false,
-            yAxisID: 'y'
-          },
-          {
-            label: 'Acumulado',
-            data: cumData,
-            type: 'line',
-            borderColor: '#a78bfa',
-            backgroundColor: 'rgba(167, 139, 250, 0.08)',
-            borderWidth: 2, pointRadius: 0, fill: true,
-            yAxisID: 'y1', tension: 0.4
-          }
-        ]
+        datasets: [{
+          label:           'Ahorro neto',
+          data:            savings,
+          backgroundColor: colors,
+          borderWidth:     0,
+          borderRadius:    6,
+          borderSkipped:   false
+        }]
       },
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive:          true,
+        maintainAspectRatio: false,
         animation: { duration: 700, easing: 'easeOutQuart' },
-        interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { color: '#8892b0', font: { size: 11 }, padding: 14, boxWidth: 10, usePointStyle: true, pointStyle: 'circle' }
-          },
+          legend: { display: false },
           tooltip: {
-            ...this._tooltipDefaults(), displayColors: true,
-            callbacks: { label: ctx => ` ${ctx.dataset.label}: ${Data.formatAmount(ctx.parsed.y)}` }
+            ...this._tooltipDefaults(),
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.y;
+                return ` ${v >= 0 ? '+' : ''}${Data.formatAmount(v)}`;
+              }
+            }
           }
         },
         scales: {
           x: { grid: gridStyle, ticks: axisStyle, border: { display: false } },
           y: {
-            beginAtZero: true, grid: gridStyle,
-            ticks: { ...axisStyle, callback: val => Data.formatAmount(val) },
-            border: { display: false }
-          },
-          y1: {
-            beginAtZero: true, position: 'right', grid: { display: false },
-            ticks: { ...axisStyle, callback: val => Data.formatAmount(val) },
+            grid:   gridStyle,
+            ticks:  { ...axisStyle, callback: val => Data.formatAmount(Math.abs(val)) },
             border: { display: false }
           }
         }

@@ -182,11 +182,6 @@ const Projection = {
     // Summary cards
     document.getElementById('proj-sum-inicio').textContent = Data.formatAmount(projBase);
 
-    const finalVal = months[12].projected;
-    const finalEl  = document.getElementById('proj-sum-final');
-    finalEl.textContent = Data.formatAmount(finalVal);
-    finalEl.className   = 'proj-sum-value ' + (balance >= 0 ? 'stat-pos' : 'stat-neg');
-
     const balEl = document.getElementById('proj-sum-balance');
     balEl.textContent = (balance >= 0 ? '+' : '') + Data.formatAmount(balance) + '/mes';
     balEl.className   = 'proj-sum-value ' + (balance >= 0 ? 'stat-pos' : 'stat-neg');
@@ -194,24 +189,41 @@ const Projection = {
     document.getElementById('projection-results').style.display = 'block';
     document.getElementById('projection-empty').style.display   = 'none';
 
+    this._renderHorizons(months, projBase);
     this._renderChart(months, balance);
-    this._renderTable(months, monthlyIncome, monthlyExpenses, balance);
+  },
+
+  _renderHorizons(months, projBase) {
+    [3, 6, 12].forEach(h => {
+      const projected     = months[h].projected;
+      const delta         = projected - projBase;
+      const plannedCount  = months.slice(1, h + 1).filter(m => m.plannedThisMonth > 0).length;
+
+      document.getElementById(`proj-h${h}`).textContent  = Data.formatAmount(projected);
+
+      const deltaEl = document.getElementById(`proj-h${h}-delta`);
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + Data.formatAmount(delta);
+      deltaEl.className   = 'proj-horizon-delta ' + (delta >= 0 ? 'stat-pos' : 'stat-neg');
+
+      const noteEl = document.getElementById(`proj-h${h}-note`);
+      noteEl.textContent = plannedCount > 0
+        ? `${plannedCount} gasto${plannedCount > 1 ? 's' : ''} previsto${plannedCount > 1 ? 's' : ''} incluido${plannedCount > 1 ? 's' : ''}`
+        : '';
+    });
   },
 
   _renderChart(months, balance) {
     const labels    = months.map(m => m.label);
     const projected = months.map(m => m.projected);
-    const actual    = months.map(m => m.actual);
 
     const isPos     = balance >= 0;
     const projColor = isPos ? 'rgba(16, 185, 129,' : 'rgba(244, 63, 94,';
 
     if (this._chart) {
-      this._chart.data.labels                            = labels;
-      this._chart.data.datasets[0].data                 = projected;
-      this._chart.data.datasets[0].borderColor          = projColor + '0.65)';
-      this._chart.data.datasets[0].backgroundColor      = projColor + '0.07)';
-      this._chart.data.datasets[1].data                 = actual;
+      this._chart.data.labels                       = labels;
+      this._chart.data.datasets[0].data             = projected;
+      this._chart.data.datasets[0].borderColor      = projColor + '0.65)';
+      this._chart.data.datasets[0].backgroundColor  = projColor + '0.07)';
       this._chart.update('active');
       return;
     }
@@ -223,43 +235,25 @@ const Projection = {
       type: 'line',
       data: {
         labels,
-        datasets: [
-          {
-            label:           'Proyectado',
-            data:            projected,
-            borderColor:     projColor + '0.65)',
-            backgroundColor: projColor + '0.07)',
-            borderWidth:     2,
-            borderDash:      [7, 4],
-            pointRadius:     3,
-            pointHoverRadius: 5,
-            fill:            true,
-            tension:         0.4
-          },
-          {
-            label:               'Real',
-            data:                actual,
-            borderColor:         'rgba(139, 92, 246, 0.9)',
-            backgroundColor:     'transparent',
-            borderWidth:         2.5,
-            pointRadius:         5,
-            pointHoverRadius:    7,
-            pointBackgroundColor:'rgba(139, 92, 246, 0.9)',
-            fill:                false,
-            tension:             0.4,
-            spanGaps:            false
-          }
-        ]
+        datasets: [{
+          label:            'Patrimonio proyectado',
+          data:             projected,
+          borderColor:      projColor + '0.65)',
+          backgroundColor:  projColor + '0.07)',
+          borderWidth:      2.5,
+          borderDash:       [7, 4],
+          pointRadius:      4,
+          pointHoverRadius: 6,
+          fill:             true,
+          tension:          0.4
+        }]
       },
       options: {
         responsive:          true,
         maintainAspectRatio: false,
         animation: { duration: 700, easing: 'easeOutQuart' },
         plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { color: '#8892b0', font: { size: 11 }, padding: 16, boxWidth: 10, usePointStyle: true, pointStyle: 'circle' }
-          },
+          legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(8, 10, 22, 0.92)',
             titleColor:      '#8892b0',
@@ -268,11 +262,9 @@ const Projection = {
             borderWidth:     1,
             padding:         10,
             cornerRadius:    8,
-            displayColors:   true,
+            displayColors:   false,
             callbacks: {
-              label: ctx => ctx.parsed.y != null
-                ? ` ${ctx.dataset.label}: ${Data.formatAmount(ctx.parsed.y)}`
-                : null
+              label: ctx => ` Patrimonio: ${Data.formatAmount(ctx.parsed.y)}`
             }
           }
         },
@@ -286,63 +278,5 @@ const Projection = {
         }
       }
     });
-  },
-
-  _renderTable(months, monthlyIncome, monthlyExpenses, balance) {
-    const balClass = balance >= 0 ? 'stat-pos' : 'stat-neg';
-    const balStr   = (balance >= 0 ? '+' : '') + Data.formatAmount(balance);
-
-    const rows = months.map(m => {
-      const rowClass = m.isCurrent ? ' class="proj-row-current"' : '';
-
-      const currentTag = m.isCurrent ? ' <span class="proj-now-badge">hoy</span>' : '';
-
-      // Ingresos / Gastos / Balance cols
-      const totalExpenses = monthlyExpenses + (m.plannedThisMonth || 0);
-      const totalBalance  = monthlyIncome - totalExpenses;
-      const totalBalStr   = (totalBalance >= 0 ? '+' : '') + Data.formatAmount(totalBalance);
-      const totalBalClass = totalBalance >= 0 ? 'stat-pos' : 'stat-neg';
-      const flowCols = m.isCurrent
-        ? `<td class="proj-muted">—</td><td class="proj-muted">—</td><td class="proj-muted">—</td>`
-        : `<td class="stat-pos">${Data.formatAmount(monthlyIncome)}</td>
-           <td class="stat-neg">${Data.formatAmount(totalExpenses)}</td>
-           <td class="${totalBalClass}">${totalBalStr}</td>`;
-
-      // Real + Diff cols
-      let realCols;
-      if (m.actual !== null) {
-        const diff      = m.actual - m.projected;
-        const diffClass = diff >= 0 ? 'stat-pos' : 'stat-neg';
-        const diffStr   = m.isCurrent
-          ? '<span class="proj-muted">—</span>'
-          : (diff >= 0 ? '+' : '') + Data.formatAmount(diff);
-        realCols = `<td class="proj-patrimony">${Data.formatAmount(m.actual)}</td>
-                    <td class="${m.isCurrent ? '' : diffClass}">${diffStr}</td>`;
-      } else {
-        realCols = `<td class="proj-muted">—</td><td class="proj-muted">—</td>`;
-      }
-
-      return `<tr${rowClass}>
-        <td class="proj-month">${m.label}${currentTag}</td>
-        ${flowCols}
-        <td class="proj-patrimony proj-projected-val">${Data.formatAmount(m.projected)}</td>
-        ${realCols}
-      </tr>`;
-    });
-
-    document.getElementById('projection-table').innerHTML = `
-      <thead>
-        <tr>
-          <th>Mes</th>
-          <th>Ingresos</th>
-          <th>Gastos</th>
-          <th>Balance</th>
-          <th>Proyectado</th>
-          <th>Real</th>
-          <th>Diferencia</th>
-        </tr>
-      </thead>
-      <tbody>${rows.join('')}</tbody>
-    `;
   }
 };

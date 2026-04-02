@@ -153,7 +153,7 @@
       <section class="view" id="view-dashboard">
         <div class="view-header">
           <h1>Dashboard</h1>
-          <div class="period-selector">
+          <div class="period-selector" id="period-selector">
             <button class="period-btn active" data-period="month">Este mes</button>
             <button class="period-btn" data-period="3months">3 meses</button>
             <button class="period-btn" data-period="year">Este año</button>
@@ -231,9 +231,9 @@
             </div>
           </div>
           <div class="chart-card chart-card-wide">
-            <h3>Gasto diario — este mes (diario + acumulado)</h3>
+            <h3>Ahorro neto — últimos 12 meses</h3>
             <div class="chart-wrapper">
-              <canvas id="chart-daily"></canvas>
+              <canvas id="chart-savings"></canvas>
             </div>
           </div>
         </div>
@@ -414,7 +414,8 @@
             <span id="proj-trend-text"></span>
           </div>
 
-          <div class="projection-summary">
+          <!-- Base + balance -->
+          <div class="projection-summary projection-summary-2">
             <div class="proj-sum-card">
               <div class="proj-sum-label">Patrimonio hoy</div>
               <div class="proj-sum-value" id="proj-sum-inicio">$0</div>
@@ -423,23 +424,35 @@
               <div class="proj-sum-label">Balance mensual</div>
               <div class="proj-sum-value" id="proj-sum-balance">$0</div>
             </div>
-            <div class="proj-sum-card">
-              <div class="proj-sum-label">Patrimonio en 12 meses</div>
-              <div class="proj-sum-value" id="proj-sum-final">$0</div>
+          </div>
+
+          <!-- Horizon cards: 3m / 6m / 12m -->
+          <div class="proj-horizons">
+            <div class="proj-horizon-card">
+              <div class="proj-horizon-label">En 3 meses</div>
+              <div class="proj-horizon-value" id="proj-h3">—</div>
+              <div class="proj-horizon-delta" id="proj-h3-delta"></div>
+              <div class="proj-horizon-note" id="proj-h3-note"></div>
+            </div>
+            <div class="proj-horizon-card">
+              <div class="proj-horizon-label">En 6 meses</div>
+              <div class="proj-horizon-value" id="proj-h6">—</div>
+              <div class="proj-horizon-delta" id="proj-h6-delta"></div>
+              <div class="proj-horizon-note" id="proj-h6-note"></div>
+            </div>
+            <div class="proj-horizon-card proj-horizon-featured">
+              <div class="proj-horizon-label">En 12 meses</div>
+              <div class="proj-horizon-value" id="proj-h12">—</div>
+              <div class="proj-horizon-delta" id="proj-h12-delta"></div>
+              <div class="proj-horizon-note" id="proj-h12-note"></div>
             </div>
           </div>
 
+          <!-- Chart -->
           <div class="chart-card">
-            <h3>Patrimonio proyectado — próximos 12 meses</h3>
+            <h3>Evolución proyectada — próximos 12 meses</h3>
             <div class="chart-wrapper chart-wrapper-tall">
               <canvas id="chart-projection"></canvas>
-            </div>
-          </div>
-
-          <div class="card projection-table-card">
-            <h3>Detalle mes a mes</h3>
-            <div class="projection-table-wrapper">
-              <table class="projection-table" id="projection-table"></table>
             </div>
           </div>
         </div>

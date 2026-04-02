@@ -11,21 +11,36 @@ const Budget = {
     const now        = new Date();
     const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    // Group real expenses by past complete months
+    // Group real expenses by past complete months (keep individual amounts for outlier detection)
     const byMonth = {};
     for (const e of allExpenses) {
       if (e.isPlanned) continue;
       const key = e.date.slice(0, 7);
       if (key >= currentKey) continue;                   // skip current & future
-      byMonth[key] = (byMonth[key] || 0) + e.amount;
+      if (!byMonth[key]) byMonth[key] = [];
+      byMonth[key].push(e.amount);
     }
 
     const sortedMonths = Object.keys(byMonth).sort().reverse().slice(0, 3);
     if (sortedMonths.length === 0) return null;
 
-    const totals = sortedMonths.map(k => byMonth[k]);
+    // Per-transaction outlier threshold (IQR method) across all recent past transactions
+    const allPast = sortedMonths.flatMap(k => byMonth[k]);
+    let txThreshold = Infinity;
+    if (allPast.length >= 4) {
+      const sorted = [...allPast].sort((a, b) => a - b);
+      const q1 = sorted[Math.floor(sorted.length * 0.25)];
+      const q3 = sorted[Math.floor(sorted.length * 0.75)];
+      txThreshold = q3 + 1.5 * (q3 - q1);
+    }
 
-    // Outlier removal: only when 3 months available
+    // Sum each month excluding per-transaction outliers
+    const totals = sortedMonths.map(k => {
+      const clean = byMonth[k].filter(v => v <= txThreshold);
+      return (clean.length > 0 ? clean : byMonth[k]).reduce((a, b) => a + b, 0);
+    });
+
+    // Inter-month outlier removal: only when 3 months available
     let used = totals;
     if (totals.length >= 3) {
       const mean  = totals.reduce((a, b) => a + b, 0) / totals.length;

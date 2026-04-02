@@ -36,12 +36,14 @@ const Data = {
 
   async init() {
     const settings = await Storage.getSettings();
-    this._currency             = settings.currency;
-    this._dashboardPeriod      = settings.dashboardPeriod;
-    this._projIncome           = settings.projIncome;
-    this._projExpenses         = settings.projExpenses;
+    this._currency              = settings.currency;
+    this._dashboardPeriod       = settings.dashboardPeriod;
+    this._projIncome            = settings.projIncome;
+    this._projExpenses          = settings.projExpenses;
     this._projSnapshotPatrimony = settings.projSnapshotPatrimony;
-    this._projSnapshotDate     = settings.projSnapshotDate;
+    this._projSnapshotDate      = settings.projSnapshotDate;
+    this._budgetAmount          = settings.budgetAmount != null ? settings.budgetAmount : null;
+    this._budgetMode            = settings.budgetMode || 'auto';
 
     // Sembrar categorías predefinidas si el usuario no tiene ninguna
     const cats = await Storage.getCategories();
@@ -62,7 +64,9 @@ const Data = {
       projIncome:            this._projIncome,
       projExpenses:          this._projExpenses,
       projSnapshotPatrimony: this._projSnapshotPatrimony,
-      projSnapshotDate:      this._projSnapshotDate
+      projSnapshotDate:      this._projSnapshotDate,
+      budgetAmount:          this._budgetAmount,
+      budgetMode:            this._budgetMode || 'auto'
     };
   },
 
@@ -75,6 +79,8 @@ const Data = {
       projExpenses:          this._projExpenses,
       projSnapshotPatrimony: this._projSnapshotPatrimony,
       projSnapshotDate:      this._projSnapshotDate,
+      budgetAmount:          this._budgetAmount,
+      budgetMode:            this._budgetMode || 'auto',
       ...partial
     };
     this._currency              = updated.currency;
@@ -83,6 +89,8 @@ const Data = {
     this._projExpenses          = updated.projExpenses;
     this._projSnapshotPatrimony = updated.projSnapshotPatrimony;
     this._projSnapshotDate      = updated.projSnapshotDate;
+    this._budgetAmount          = updated.budgetAmount != null ? updated.budgetAmount : null;
+    this._budgetMode            = updated.budgetMode || 'auto';
     await Storage.saveSettings(updated);
   },
 

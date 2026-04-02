@@ -73,6 +73,49 @@ const Budget = {
       projected,
       delta
     };
+  },
+
+  /**
+   * Returns budget stats using the user's chosen mode (manual or auto).
+   * Always returns current-month spending stats even if no history exists.
+   */
+  getEffectiveBudget(allExpenses) {
+    const settings     = Data.getSettings();
+    const computed     = this.compute(allExpenses);
+    const isManual     = settings.budgetMode === 'manual' && settings.budgetAmount != null;
+    const manualAmount = settings.budgetAmount;
+
+    if (!isManual) {
+      return computed ? { ...computed, isManual: false, computedBudget: computed.budget } : null;
+    }
+
+    // Manual mode: recompute pct/delta against manual amount
+    const now = new Date();
+    const currentKey  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysPassed  = now.getDate();
+    const daysLeft    = daysInMonth - daysPassed;
+
+    const currentSpend = allExpenses
+      .filter(e => !e.isPlanned && e.date.startsWith(currentKey))
+      .reduce((s, e) => s + e.amount, 0);
+
+    const dailyRate = daysPassed > 0 ? currentSpend / daysPassed : 0;
+    const projected = dailyRate * daysInMonth;
+    const pct       = manualAmount > 0 ? (currentSpend / manualAmount) * 100 : 0;
+    const delta     = projected - manualAmount;
+
+    return {
+      budget:        manualAmount,
+      monthsUsed:    computed ? computed.monthsUsed : 0,
+      currentSpend,
+      pct,
+      daysLeft,
+      projected,
+      delta,
+      isManual:      true,
+      computedBudget: computed ? computed.budget : null
+    };
   }
 
 };

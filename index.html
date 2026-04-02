@@ -128,6 +128,7 @@
         <a href="#" class="nav-link" data-view="expenses">Gastos</a>
         <a href="#" class="nav-link" data-view="categories">Categorías</a>
         <a href="#" class="nav-link" data-view="projection">Proyección</a>
+        <a href="#" class="nav-link" data-view="budget">Presupuesto</a>
       </div>
       <div class="navbar-user">
         <span class="nav-user-email" id="nav-user-email"></span>
@@ -464,6 +465,74 @@
         </div>
       </section>
 
+      <!-- ===== BUDGET VIEW ===== -->
+      <section class="view" id="view-budget" style="display:none">
+        <div class="view-header">
+          <div>
+            <h1>Presupuesto</h1>
+            <p class="view-subtitle">Definí cuánto querés gastar y analizá tus patrones</p>
+          </div>
+        </div>
+
+        <!-- Budget setup card -->
+        <div class="card budget-setup-card">
+          <h3>Tu presupuesto mensual</h3>
+
+          <div class="budget-mode-toggle">
+            <button class="budget-mode-btn" id="btn-mode-manual" data-mode="manual">✏️ Manual</button>
+            <button class="budget-mode-btn" id="btn-mode-auto" data-mode="auto">🤖 Automático</button>
+          </div>
+
+          <div id="budget-manual-section" style="display:none">
+            <div class="form-group" style="margin-top:1rem">
+              <label for="budget-manual-amount">Monto mensual que querés gastar</label>
+              <input type="number" id="budget-manual-amount" class="form-input" placeholder="0" min="0" step="1">
+            </div>
+          </div>
+
+          <div id="budget-auto-section" class="budget-auto-hint" style="display:none">
+            El presupuesto se calcula automáticamente en base a tus últimos meses de gasto real.
+          </div>
+
+          <div id="budget-computed-hint" class="budget-computed-hint" style="display:none">
+            <span>Estimado con historial: <strong id="budget-computed-value"></strong></span>
+            <span id="budget-computed-note" class="budget-computed-note"></span>
+          </div>
+
+          <button class="btn btn-primary" id="btn-save-budget" style="margin-top:1.25rem">Guardar presupuesto</button>
+        </div>
+
+        <!-- No history note -->
+        <div id="budget-no-history" class="budget-no-history" style="display:none">
+          <span id="budget-no-history-text"></span>
+        </div>
+
+        <!-- Insights section -->
+        <div id="budget-insights-section" style="display:none">
+
+          <!-- Category breakdown -->
+          <div class="card">
+            <div class="budget-section-header">
+              <h3>Por categoría</h3>
+              <span class="budget-months-badge" id="budget-cat-months"></span>
+            </div>
+            <div id="budget-cat-container"></div>
+          </div>
+
+          <!-- Monthly summary -->
+          <div class="card" style="margin-top:1rem">
+            <h3>Resumen mensual</h3>
+            <div class="budget-table-wrapper" id="budget-monthly-container"></div>
+          </div>
+        </div>
+
+        <div id="budget-empty" class="empty-state" style="display:none">
+          <div class="empty-icon">📊</div>
+          <h3>Sin datos aún</h3>
+          <p>Agregá tus primeros gastos para ver el análisis por categoría.</p>
+        </div>
+      </section>
+
       <!-- ===== ACCOUNTS VIEW ===== -->
       <section class="view" id="view-accounts" style="display:none">
         <div class="view-header">
@@ -680,6 +749,7 @@
   <script src="js/expenses.js"></script>
   <script src="js/budget.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/budget-view.js"></script>
   <script src="js/projection.js"></script>
   <script src="js/categories.js"></script>
   <script src="js/accounts.js"></script>

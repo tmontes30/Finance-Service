@@ -137,7 +137,7 @@ const Dashboard = {
 
     // Budget insight — only for current month, uses raw (unfiltered) expenses for history
     if (this._monthOffset === 0) {
-      this._renderBudgetInsight(Budget.compute(_allExpenses));
+      this._renderBudgetInsight(Budget.getEffectiveBudget(_allExpenses));
     } else {
       document.getElementById('budget-insight').style.display = 'none';
     }
@@ -161,8 +161,9 @@ const Dashboard = {
 
     document.getElementById('budget-bar-fill').style.width      = `${pct}%`;
     document.getElementById('budget-bar-fill').style.background = color;
-    document.getElementById('budget-months-tag').textContent    =
-      `${data.monthsUsed} mes${data.monthsUsed > 1 ? 'es' : ''}`;
+    document.getElementById('budget-months-tag').textContent    = data.isManual
+      ? 'manual'
+      : `${data.monthsUsed} mes${data.monthsUsed > 1 ? 'es' : ''}`;
     document.getElementById('budget-text-spent').textContent    =
       `${Data.formatAmount(data.currentSpend)} de ${Data.formatAmount(data.budget)}`;
     document.getElementById('budget-text-pct').textContent      = `${Math.round(data.pct)}%`;

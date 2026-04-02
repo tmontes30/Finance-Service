@@ -81,3 +81,8 @@ ALTER TABLE settings
   ADD COLUMN IF NOT EXISTS proj_expenses           NUMERIC(14,2),
   ADD COLUMN IF NOT EXISTS proj_snapshot_patrimony NUMERIC(14,2),
   ADD COLUMN IF NOT EXISTS proj_snapshot_date      DATE;
+
+-- Presupuesto mensual manual
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS budget_amount NUMERIC(14,2),
+  ADD COLUMN IF NOT EXISTS budget_mode   TEXT NOT NULL DEFAULT 'auto';

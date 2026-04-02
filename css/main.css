@@ -787,6 +787,227 @@ body {
 }
 
 /* ==============================================
+   BUDGET VIEW
+   ============================================== */
+
+.budget-setup-card h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
+
+.budget-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  align-self: flex-start;
+}
+
+.budget-mode-btn {
+  padding: 0.4rem 1rem;
+  border-radius: calc(var(--radius) - 2px);
+  border: none;
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.budget-mode-btn.active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 0 0 1px rgba(124,58,237,0.3), var(--shadow);
+  color: #a78bfa;
+}
+
+.budget-auto-hint {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  padding: 0.75rem 1rem;
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: var(--radius);
+}
+
+.budget-computed-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  padding: 0.6rem 0.85rem;
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius);
+}
+
+.budget-computed-note {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.budget-no-history {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.budget-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.budget-section-header h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.budget-months-badge {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  padding: 0.15rem 0.6rem;
+  border-radius: 99px;
+  border: 1px solid var(--color-border);
+}
+
+/* Category rows */
+.budget-cat-row {
+  margin-bottom: 1.1rem;
+}
+
+.budget-cat-row:last-child { margin-bottom: 0; }
+
+.budget-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.budget-cat-name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.budget-cat-pct {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.budget-cat-bar-track {
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+
+.budget-cat-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.budget-cat-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.budget-cat-avg {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.budget-cat-unit {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.budget-cat-last { color: var(--color-text-muted); }
+
+.budget-peak-note {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* Monthly table */
+.budget-table-wrapper { overflow-x: auto; }
+
+.budget-monthly-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.budget-monthly-table thead th {
+  text-align: left;
+  padding: 0.5rem 0.85rem;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
+.budget-monthly-table tbody td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--color-text);
+}
+
+.budget-monthly-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+.budget-row-current td {
+  background: rgba(124, 58, 237, 0.06);
+  border-top:    1px solid rgba(124, 58, 237, 0.2) !important;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.2) !important;
+}
+
+.budget-tx-count { color: var(--color-text-muted); }
+.budget-empty-note { font-size: 0.875rem; color: var(--color-text-muted); }
+
+/* ==============================================
    PROJECTION HORIZONS
    ============================================== */
 

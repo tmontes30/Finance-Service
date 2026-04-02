@@ -43,6 +43,7 @@ const Auth = {
       Expenses.init();
       Categories.init();
       Projection.init();
+      BudgetView.init();
 
       const emailEl = document.getElementById('nav-user-email');
       if (emailEl) {

@@ -36,7 +36,7 @@ The app is a vanilla JS single-page application backed by Supabase (PostgreSQL +
 - **Supabase credentials** are in `js/config.js` (public anon key — safe to commit).
 - **Row Level Security** is enabled on all tables; users can only access their own rows. Schema and RLS policies are in `supabase-schema.sql`. New columns are added via `ALTER TABLE … ADD COLUMN IF NOT EXISTS` at the bottom of that file.
 - **UI patterns:** Modals and toast notifications are managed through `ui.js`. Use `UI.confirm()` / `UI.toast()` for user feedback.
-- **Language:** The UI is in Spanish.
+- **Language:** The UI is in **neutral Spanish** (no Argentine voseo). Use `tú` forms: "quieres", "puedes", "ingresa", "define" — never "querés", "podés", "ingresá", "definí".
 - **Theme:** Dark/light toggle persisted to `localStorage` (`financeTheme`). CSS vars are defined in `:root` (dark) and overridden in `[data-theme="light"]` in `css/main.css`. **Never hardcode colors** — always use `var(--color-*)`. For Chart.js colors that can't use CSS vars, read them at render time with `getComputedStyle(document.documentElement).getPropertyValue('--color-surface')`.
 - **Predefined categories:** 8 default categories (`PREDEFINED_CATEGORIES` in `data.js`) are seeded into the database on first login. `ACCOUNT_TYPES` (6 types) is a client-side constant only, never stored in DB.
 - **`PatrimonioToggle`** in `app.js` persists wealth-masking state to `localStorage` (`patrimonioHidden`).

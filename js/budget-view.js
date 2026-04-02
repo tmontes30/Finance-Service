@@ -96,7 +96,7 @@ const BudgetView = {
     const amount    = mode === 'manual' && !isNaN(rawAmount) && rawAmount > 0 ? rawAmount : null;
 
     if (mode === 'manual' && amount == null) {
-      UI.toast('Ingresá un monto mayor a cero', 'error');
+      UI.toast('Ingresa un monto mayor a cero', 'error');
       return;
     }
 

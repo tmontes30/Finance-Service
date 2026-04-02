@@ -58,9 +58,11 @@ Key behaviours:
 
 ## DB Schema Notes
 
-The `settings` table has projection-related columns (added via migration):
-- `proj_income`, `proj_expenses` — monthly parameters
-- `proj_snapshot_patrimony`, `proj_snapshot_date` — frozen baseline
+The `settings` table has columns (added via migrations):
+- `proj_income`, `proj_expenses` — projection monthly parameters
+- `proj_snapshot_patrimony`, `proj_snapshot_date` — frozen projection baseline
+- `budget_amount` NUMERIC — user-defined monthly budget (null = not set)
+- `budget_mode` TEXT DEFAULT `'auto'` — `'manual'` or `'auto'`
 
 The `expenses` table has:
 - `is_planned BOOLEAN NOT NULL DEFAULT FALSE`
@@ -68,7 +70,13 @@ The `expenses` table has:
 ## Dashboard
 
 - **Month navigation:** `Dashboard._monthOffset` (0 = current month, negative = past). `‹`/`›` arrows update offset and re-render. All stats filter to the selected month (`selKey = YYYY-MM`). The `›` arrow is disabled when on the current month. Charts shift their 12-month window based on `selDate`.
+- **Period selector** (Este mes / 3 meses / Año / Todo) is hidden when `_monthOffset !== 0` — it doesn't make sense for past months.
+- **Category chart** uses `monthExpenses` (filtered to `selKey`) when `_monthOffset !== 0`, so navigating to a past month shows that month's category breakdown.
 - **Chart theme awareness:** When the theme toggle is clicked and `Router._current === 'dashboard'`, `Dashboard.render()` is called to refresh charts with the new theme's surface color.
+- **Charts:**
+  - Monthly bar (12 months, shifts with `selDate`)
+  - Category doughnut (respects selected month)
+  - Net savings bar (`_renderSavingsChart`) — income minus real expenses per month for last 12 months, green/red per month. Always uses current date, not `selDate`. Canvas `#chart-savings`.
 
 ## Auth / Login
 
@@ -96,27 +104,44 @@ The `expenses` table has:
 - `#auth-screen` background: `radial-gradient` with subtle purple tint.
 - `.auth-card`: `border-top: 3px solid var(--color-primary)`, `box-shadow: 0 8px 32px rgba(0,0,0,0.25)`.
 
-## Budget Prediction
+## Budget Prediction (`js/budget.js`)
 
-- `js/budget.js` exposes `Budget.compute(allExpenses)` — pure function, no DB calls.
-- **Algorithm:** groups real (non-planned) expenses by month, takes last 1–3 complete months, removes outliers when 3 months available (excludes months where `|total − mean| > 1.5 × stdDev`), returns the average as `budget`.
-- **Insights returned:** `{ budget, monthsUsed, currentSpend, pct, daysLeft, projected, delta }`. `delta > 0` = over budget.
-- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` card (progress bar + spend text + footer). Called with `Budget.compute(_allExpenses)` (raw unfiltered expenses for full history). Hidden when `_monthOffset !== 0` (past months). `budget.js` must be loaded before `dashboard.js` in `index.html`.
+- `Budget.compute(allExpenses)` — pure function, no DB calls.
+- **Algorithm:** groups real (non-planned) expenses by month, takes last 1–3 complete months.
+  - **Per-transaction outlier removal (IQR):** before summing each month, individual transactions where `amount > Q3 + 1.5×(Q3−Q1)` (across all past transactions) are excluded. Requires ≥4 past transactions. Prevents one-off large expenses from skewing the estimate.
+  - **Inter-month outlier removal:** when 3 months available, months where `|total − mean| > 1.5 × stdDev` are excluded.
+- **Returns:** `{ budget, monthsUsed, currentSpend, pct, daysLeft, projected, delta }`.
+- `Budget.getEffectiveBudget(allExpenses)` — used by the dashboard. Checks `settings.budgetMode`:
+  - `'manual'`: uses `settings.budgetAmount` as the budget; recomputes `pct` and `delta` against that amount. Adds `isManual: true` and `computedBudget` (the auto estimate) to the result.
+  - `'auto'`: returns `Budget.compute()` result unchanged.
+  - Works even with no history (returns current-month spending vs manual amount).
+- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` card. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
 - **Progress bar color:** green < 75%, amber 75–99%, red ≥ 100%.
+
+## Presupuesto Tab (`js/budget-view.js`)
+
+- 6th nav tab, `#view-budget`, rendered by `BudgetView.render()`.
+- **Budget mode toggle:** Manual (user sets amount) vs Automático (uses `Budget.compute()`). Saved to `settings.budgetMode` + `settings.budgetAmount`.
+- **Computed hint:** always shows the auto-computed estimate as a reference regardless of mode.
+- **Category insights** (`_renderCategoryInsights`): shows last ≤6 complete months of real expenses grouped by category. Per category: % of total, avg/month, last month value, and a peak-month note if a month had 1.5× the last month's spend. Sorted by avg desc.
+- **Monthly summary** (`_renderMonthlySummary`): table of last 7 months with total and vs-budget column (only when a budget is set). Green = under budget, red = over.
+- **DB migration required:** `ALTER TABLE settings ADD COLUMN IF NOT EXISTS budget_amount NUMERIC(14,2), ADD COLUMN IF NOT EXISTS budget_mode TEXT NOT NULL DEFAULT 'auto';`
 
 ## Proyección Fija (Frozen Projection)
 
 - On first save of projection parameters, `Data.resetProjectionSnapshot()` stores current total patrimony + today's date in `settings` (`proj_snapshot_patrimony`, `proj_snapshot_date`).
-- `_renderProjection()` uses this frozen base for the projected line; only the "Real" line changes with new transactions.
+- `_renderProjection()` uses this frozen base for the projected line.
 - Reset manually via "↺ Actualizar base" button. Subsequent saves of income/expenses do NOT overwrite the snapshot.
-- **Trend card** (`#proj-trend-card`): shown above the summary cards with ↗ (green) or ↘ (red) and plain-language text — months until depletion if negative balance, 12-month target if positive.
-- **Early income warning** (`#proj-early-income-note`): shown when a snapshot exists. Explains that advance salary (e.g. April salary received in March) inflates the snapshot base, causing double-count in April's projection. User should click "Actualizar base" at the start of each month once salary is normally received.
-- **Projection subtitle:** `.view-subtitle` under the h1 header explaining what the tab does.
+- **Horizon cards** (`#proj-h3`, `#proj-h6`, `#proj-h12`): show projected patrimony at 3, 6, 12 months with delta vs today. 12-month card has purple border. Replaces the old month-by-month detail table.
+- **Simplified chart:** single projected line only (no "Real" overlay). Canvas `#chart-projection`.
+- **Trend card** (`#proj-trend-card`): ↗ (green) or ↘ (red) with plain-language text — months until depletion if negative balance, 12-month target if positive.
+- **Early income warning** (`#proj-early-income-note`): shown when a snapshot exists. Warns about advance salary inflating the base.
+- **Projection subtitle:** `.view-subtitle` under the h1 header.
 
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
-- **Mobile navbar:** Single-row `[⚡ Finance] [scrollable tabs] [🌙] [☰]`. All 5 nav tabs always visible via `overflow-x: auto; scrollbar-width: none` on `.navbar-nav`. `navbar-add-btn` and `navbar-user` are hidden on mobile.
+- **Mobile navbar:** Single-row `[⚡ Finance] [scrollable tabs] [🌙] [☰]`. All 6 nav tabs (Dashboard, Cuentas, Gastos, Categorías, Proyección, Presupuesto) always visible via `overflow-x: auto; scrollbar-width: none` on `.navbar-nav`. `navbar-add-btn` and `navbar-user` are hidden on mobile.
 - **Hamburger dropdown** (`#navbar-dropdown`): absolutely-positioned card (not inside `navbar-nav`) with "Agregar Gasto" and "Salir". Toggled via `e.stopPropagation()` on the hamburger; closed by `document.addEventListener('click', ...)`. Wired in `app.js`.
 - **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. **FAB hides when expense modal opens** (`UI.openExpenseModal` removes `.fab-active`; `closeExpenseModal` restores it).
 - **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` — header and footer (Save button) always visible.

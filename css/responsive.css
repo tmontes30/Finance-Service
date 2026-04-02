@@ -22,13 +22,10 @@
     padding: 0 0.5rem 0 0.6rem;
     gap: 0.35rem;
   }
-  /* Shrink brand so tabs have more room */
-  .navbar-brand {
-    flex-shrink: 0;
-    font-size: 0.95rem;
-    gap: 0.3rem;
-  }
-  .brand-icon { font-size: 1.1rem; }
+  /* Brand: hide "Finance" text on mobile, keep only ⚡ icon */
+  .navbar-brand { flex-shrink: 0; gap: 0; }
+  .brand-name { display: none; }
+  .brand-icon { font-size: 1.25rem; }
   .navbar-nav {
     flex: 1;
     min-width: 0;
@@ -45,8 +42,8 @@
   .navbar-toggle   { display: flex; margin-right: 0; }
   .mobile-add-btn  { display: inline-flex; }
   .nav-link { font-size: 0.78rem; padding: 0.35rem 0.55rem; white-space: nowrap; }
-  /* Hide moon from navbar on mobile — shown in mobile-subheader instead */
-  .theme-toggle { display: none; }
+  /* Hide moon from navbar on mobile */
+  .theme-toggle { display: none !important; }
 
   /* Mobile subheader: view title + theme toggle */
   .mobile-subheader {

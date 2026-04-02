@@ -50,6 +50,10 @@ const PatrimonioToggle = {
 const Router = {
   _views: ['dashboard', 'accounts', 'expenses', 'categories', 'projection', 'budget'],
   _current: null,
+  _viewNames: {
+    dashboard: 'Dashboard', accounts: 'Cuentas', expenses: 'Gastos',
+    categories: 'Categorías', projection: 'Proyección', budget: 'Presupuesto'
+  },
 
   async navigate(viewName) {
     this._views.forEach(v => {
@@ -59,6 +63,9 @@ const Router = {
     document.querySelectorAll('.nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.view === viewName);
     });
+    // Update mobile subheader title
+    const mobileTitle = document.getElementById('mobile-view-name');
+    if (mobileTitle) mobileTitle.textContent = this._viewNames[viewName] || viewName;
     this._current = viewName;
 
     if (viewName === 'dashboard')  await Dashboard.render();
@@ -76,7 +83,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Apply saved theme
   const savedTheme = localStorage.getItem('financeTheme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
-  document.getElementById('btn-theme').textContent = savedTheme === 'light' ? '☀️' : '🌙';
+  const themeIcon = savedTheme === 'light' ? '☀️' : '🌙';
+  document.getElementById('btn-theme').textContent = themeIcon;
+  document.getElementById('btn-theme-mobile').textContent = themeIcon;
 
   /* Auth maneja: Storage.init, Data.init, módulos de vistas, y el primer navigate */
   await Auth.init();
@@ -290,19 +299,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* ----- Theme toggle ----- */
-  document.getElementById('btn-theme').addEventListener('click', async () => {
+  async function applyThemeToggle() {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    document.getElementById('btn-theme').textContent = next === 'light' ? '☀️' : '🌙';
+    const icon = next === 'light' ? '☀️' : '🌙';
+    document.getElementById('btn-theme').textContent = icon;
+    document.getElementById('btn-theme-mobile').textContent = icon;
     localStorage.setItem('financeTheme', next);
-    // Re-render charts so border/fill colors pick up the new theme
     if (Router._current === 'dashboard') await Dashboard.render();
-  });
+  }
+  document.getElementById('btn-theme').addEventListener('click', applyThemeToggle);
+  document.getElementById('btn-theme-mobile').addEventListener('click', applyThemeToggle);
 
   /* ----- Close dropdown when clicking outside ----- */
   document.addEventListener('click', () => {
     document.getElementById('navbar-dropdown').classList.remove('open');
+  });
+
+  /* ----- Dropdown nav links ----- */
+  document.querySelectorAll('.nav-link-drop[data-view]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('navbar-dropdown').classList.remove('open');
+      Router.navigate(link.dataset.view);
+    });
   });
 
   /* ----- Mobile nav links (hamburger dropdown) ----- */

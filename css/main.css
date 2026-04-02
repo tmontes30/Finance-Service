@@ -203,6 +203,28 @@ body {
 .navbar-dropdown-item:last-child { border-bottom: none; }
 .navbar-dropdown-item:hover { background: var(--color-bg); }
 .nav-dropdown-logout { color: var(--color-danger); }
+.nav-link-drop { text-decoration: none; }
+.navbar-dropdown-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0.25rem 0;
+}
+/* Mobile subheader (title bar below navbar, mobile only) */
+.mobile-subheader { display: none; }
+/* Inline theme toggle (used in mobile subheader) */
+.theme-toggle-inline {
+  background: none;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  transition: color var(--transition), background var(--transition);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.theme-toggle-inline:hover { background: var(--color-surface); color: var(--color-text); }
 
 /* Month navigator */
 .month-nav {

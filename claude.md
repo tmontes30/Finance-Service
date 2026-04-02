@@ -56,12 +56,6 @@ Key behaviours:
 - Expenses list filter: "Solo previstos (futuros)" / "Solo reales (realizados)".
 - **Requires DB migration:** `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_planned BOOLEAN NOT NULL DEFAULT FALSE;`
 
-## Proyección Fija (Frozen Projection)
-
-- On first save of projection parameters, `Data.resetProjectionSnapshot()` stores current total patrimony + today's date in `settings` (`proj_snapshot_patrimony`, `proj_snapshot_date`).
-- `_renderProjection()` uses this frozen base for the projected line; only the "Real" line changes with new transactions.
-- Reset manually via "↺ Actualizar base" button. Subsequent saves of income/expenses do NOT overwrite the snapshot.
-
 ## DB Schema Notes
 
 The `settings` table has projection-related columns (added via migration):
@@ -102,11 +96,29 @@ The `expenses` table has:
 - `#auth-screen` background: `radial-gradient` with subtle purple tint.
 - `.auth-card`: `border-top: 3px solid var(--color-primary)`, `box-shadow: 0 8px 32px rgba(0,0,0,0.25)`.
 
+## Budget Prediction
+
+- `js/budget.js` exposes `Budget.compute(allExpenses)` — pure function, no DB calls.
+- **Algorithm:** groups real (non-planned) expenses by month, takes last 1–3 complete months, removes outliers when 3 months available (excludes months where `|total − mean| > 1.5 × stdDev`), returns the average as `budget`.
+- **Insights returned:** `{ budget, monthsUsed, currentSpend, pct, daysLeft, projected, delta }`. `delta > 0` = over budget.
+- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` card (progress bar + spend text + footer). Called with `Budget.compute(_allExpenses)` (raw unfiltered expenses for full history). Hidden when `_monthOffset !== 0` (past months). `budget.js` must be loaded before `dashboard.js` in `index.html`.
+- **Progress bar color:** green < 75%, amber 75–99%, red ≥ 100%.
+
+## Proyección Fija (Frozen Projection)
+
+- On first save of projection parameters, `Data.resetProjectionSnapshot()` stores current total patrimony + today's date in `settings` (`proj_snapshot_patrimony`, `proj_snapshot_date`).
+- `_renderProjection()` uses this frozen base for the projected line; only the "Real" line changes with new transactions.
+- Reset manually via "↺ Actualizar base" button. Subsequent saves of income/expenses do NOT overwrite the snapshot.
+- **Trend card** (`#proj-trend-card`): shown above the summary cards with ↗ (green) or ↘ (red) and plain-language text — months until depletion if negative balance, 12-month target if positive.
+- **Early income warning** (`#proj-early-income-note`): shown when a snapshot exists. Explains that advance salary (e.g. April salary received in March) inflates the snapshot base, causing double-count in April's projection. User should click "Actualizar base" at the start of each month once salary is normally received.
+- **Projection subtitle:** `.view-subtitle` under the h1 header explaining what the tab does.
+
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
 - **Mobile navbar:** Single-row `[⚡ Finance] [scrollable tabs] [🌙] [☰]`. All 5 nav tabs always visible via `overflow-x: auto; scrollbar-width: none` on `.navbar-nav`. `navbar-add-btn` and `navbar-user` are hidden on mobile.
 - **Hamburger dropdown** (`#navbar-dropdown`): absolutely-positioned card (not inside `navbar-nav`) with "Agregar Gasto" and "Salir". Toggled via `e.stopPropagation()` on the hamburger; closed by `document.addEventListener('click', ...)`. Wired in `app.js`.
-- **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`.
+- **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. **FAB hides when expense modal opens** (`UI.openExpenseModal` removes `.fab-active`; `closeExpenseModal` restores it).
 - **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` — header and footer (Save button) always visible.
+- **Modal sizing:** Reduced padding (header `0.9rem 1.25rem`, body `1.1rem 1.25rem`, footer `0.75rem 1.25rem`). Inputs/selects inside modal use `font-size: 0.875rem; padding: 0.4rem 0.65rem` for a compact feel.
 - **Logo click:** `#navbar-brand` click → `Router.navigate('dashboard')`.

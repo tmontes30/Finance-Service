@@ -188,15 +188,17 @@ const Storage = {
 
   async getSettings() {
     const { data } = await _sb.from('settings').select('*').eq('user_id', _uid).maybeSingle();
-    if (!data) return { currency: '$', dashboardPeriod: 'month', version: 1, projIncome: null, projExpenses: null, projSnapshotPatrimony: null, projSnapshotDate: null };
+    if (!data) return { currency: '$', dashboardPeriod: 'month', version: 1, projIncome: null, projExpenses: null, projSnapshotPatrimony: null, projSnapshotDate: null, budgetAmount: null, budgetMode: 'auto' };
     return {
-      currency:             data.currency,
-      dashboardPeriod:      data.dashboard_period,
-      version:              data.version,
-      projIncome:           data.proj_income    != null ? parseFloat(data.proj_income)    : null,
-      projExpenses:         data.proj_expenses  != null ? parseFloat(data.proj_expenses)  : null,
+      currency:              data.currency,
+      dashboardPeriod:       data.dashboard_period,
+      version:               data.version,
+      projIncome:            data.proj_income    != null ? parseFloat(data.proj_income)    : null,
+      projExpenses:          data.proj_expenses  != null ? parseFloat(data.proj_expenses)  : null,
       projSnapshotPatrimony: data.proj_snapshot_patrimony != null ? parseFloat(data.proj_snapshot_patrimony) : null,
-      projSnapshotDate:     data.proj_snapshot_date || null
+      projSnapshotDate:      data.proj_snapshot_date || null,
+      budgetAmount:          data.budget_amount  != null ? parseFloat(data.budget_amount)  : null,
+      budgetMode:            data.budget_mode    || 'auto'
     };
   },
 
@@ -205,12 +207,14 @@ const Storage = {
       user_id:          _uid,
       currency:         s.currency,
       dashboard_period: s.dashboardPeriod,
-      version:          s.version || 1
+      version:          s.version || 1,
+      budget_mode:      s.budgetMode || 'auto',
+      budget_amount:    s.budgetAmount != null ? s.budgetAmount : null
     };
-    if (s.projIncome          != null) payload.proj_income             = s.projIncome;
-    if (s.projExpenses        != null) payload.proj_expenses           = s.projExpenses;
-    if (s.projSnapshotPatrimony != null) payload.proj_snapshot_patrimony = s.projSnapshotPatrimony;
-    if (s.projSnapshotDate    != null) payload.proj_snapshot_date      = s.projSnapshotDate;
+    if (s.projIncome            != null) payload.proj_income              = s.projIncome;
+    if (s.projExpenses          != null) payload.proj_expenses            = s.projExpenses;
+    if (s.projSnapshotPatrimony != null) payload.proj_snapshot_patrimony  = s.projSnapshotPatrimony;
+    if (s.projSnapshotDate      != null) payload.proj_snapshot_date       = s.projSnapshotDate;
     const { error } = await _sb.from('settings').upsert(payload);
     if (error) throw error;
   }

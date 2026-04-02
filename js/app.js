@@ -51,7 +51,7 @@ const Router = {
   _views: ['dashboard', 'accounts', 'expenses', 'categories', 'projection', 'budget'],
   _current: null,
   _viewNames: {
-    dashboard: 'Dashboard', accounts: 'Cuentas', expenses: 'Gastos',
+    dashboard: 'Finance', accounts: 'Cuentas', expenses: 'Gastos',
     categories: 'Categorías', projection: 'Proyección', budget: 'Presupuesto'
   },
 

@@ -80,12 +80,14 @@ const UI = {
     this._clearAllErrors();
 
     modal.style.display = 'flex';
+    document.getElementById('btn-fab')?.classList.remove('fab-active');
     setTimeout(() => amount.focus(), 60);
     this._setupFocusTrap(modal);
   },
 
   closeExpenseModal() {
     document.getElementById('modal-expense').style.display = 'none';
+    document.getElementById('btn-fab')?.classList.add('fab-active');
   },
 
   /* ---------- Confirm Dialog ---------- */

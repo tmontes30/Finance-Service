@@ -145,16 +145,38 @@ const Projection = {
       });
     }
 
+    // Trend card
+    const trendEl   = document.getElementById('proj-trend-card');
+    const trendText = document.getElementById('proj-trend-text');
+    const trendIcon = document.getElementById('proj-trend-icon');
+    if (balance > 0) {
+      trendIcon.textContent = '↗';
+      trendText.textContent = `Tu patrimonio crece ${Data.formatAmount(balance)} por mes. En 12 meses tendrás ${Data.formatAmount(months[12].projected)}.`;
+      trendEl.className     = 'proj-trend-card proj-trend-up';
+      trendEl.style.display = 'flex';
+    } else if (balance < 0) {
+      const monthsLeft = projBase > 0 ? projBase / Math.abs(balance) : 0;
+      trendIcon.textContent = '↘';
+      trendText.textContent = `Tu patrimonio cae ${Data.formatAmount(Math.abs(balance))} por mes.${monthsLeft > 0 && monthsLeft < 36 ? ` A este ritmo, los ahorros se agotan en ~${Math.round(monthsLeft)} meses.` : ' Revisá tus gastos.'}`;
+      trendEl.className     = 'proj-trend-card proj-trend-down';
+      trendEl.style.display = 'flex';
+    } else {
+      trendEl.style.display = 'none';
+    }
+
     // Show snapshot info
     const infoEl   = document.getElementById('proj-snapshot-info');
     const resetBtn = document.getElementById('btn-reset-snapshot');
+    const earlyNote = document.getElementById('proj-early-income-note');
     if (settings.projSnapshotDate) {
-      infoEl.textContent   = `Base fija desde ${Data.formatDate(settings.projSnapshotDate)} — ${Data.formatAmount(projBase)}`;
-      infoEl.style.display   = 'block';
-      resetBtn.style.display = 'inline-block';
+      infoEl.textContent      = `Base fija desde ${Data.formatDate(settings.projSnapshotDate)} — ${Data.formatAmount(projBase)}`;
+      infoEl.style.display    = 'block';
+      resetBtn.style.display  = 'inline-block';
+      earlyNote.style.display = 'block';
     } else {
-      infoEl.style.display   = 'none';
-      resetBtn.style.display = 'none';
+      infoEl.style.display    = 'none';
+      resetBtn.style.display  = 'none';
+      earlyNote.style.display = 'none';
     }
 
     // Summary cards

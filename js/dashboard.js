@@ -128,10 +128,49 @@ const Dashboard = {
 
     const periodExpenses = this._filterByPeriod(allExpenses, this._period);
 
+    // Budget insight — only for current month, uses raw (unfiltered) expenses for history
+    if (this._monthOffset === 0) {
+      this._renderBudgetInsight(Budget.compute(_allExpenses));
+    } else {
+      document.getElementById('budget-insight').style.display = 'none';
+    }
+
     this._renderMonthlyChart(allExpenses, selDate);
     this._renderCategoryChart(periodExpenses, categories);
     this._renderDailyChart(allExpenses);
     this._renderAccountsSection(accounts, allExpenses, allIncomes);
+  },
+
+  _renderBudgetInsight(data) {
+    const el = document.getElementById('budget-insight');
+    if (!data) { el.style.display = 'none'; return; }
+
+    el.style.display = 'block';
+
+    const pct   = Math.min(data.pct, 100);
+    const color = data.pct < 75  ? 'var(--color-success)'
+                : data.pct < 100 ? '#f59e0b'
+                : 'var(--color-danger)';
+
+    document.getElementById('budget-bar-fill').style.width      = `${pct}%`;
+    document.getElementById('budget-bar-fill').style.background = color;
+    document.getElementById('budget-months-tag').textContent    =
+      `${data.monthsUsed} mes${data.monthsUsed > 1 ? 'es' : ''}`;
+    document.getElementById('budget-text-spent').textContent    =
+      `${Data.formatAmount(data.currentSpend)} de ${Data.formatAmount(data.budget)}`;
+    document.getElementById('budget-text-pct').textContent      = `${Math.round(data.pct)}%`;
+    document.getElementById('budget-text-pct').style.color      = color;
+
+    const footer = document.getElementById('budget-text-footer');
+    if (data.daysLeft <= 0) {
+      footer.textContent = '';
+    } else if (data.delta > 0) {
+      footer.textContent  = `Quedan ${data.daysLeft} días — a este ritmo te pasarías ${Data.formatAmount(data.delta)} del estimado`;
+      footer.style.color  = 'var(--color-danger)';
+    } else {
+      footer.textContent  = `Quedan ${data.daysLeft} días — vas dentro del presupuesto`;
+      footer.style.color  = 'var(--color-success)';
+    }
   },
 
   /* ---------- Shared tooltip style ---------- */

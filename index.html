@@ -201,6 +201,21 @@
           </div>
         </div>
 
+        <!-- Budget insight — solo mes actual -->
+        <div id="budget-insight" class="budget-insight" style="display:none">
+          <div class="budget-insight-top">
+            <span class="budget-insight-title">Presupuesto estimado del mes</span>
+            <span class="budget-months-tag" id="budget-months-tag"></span>
+          </div>
+          <div class="budget-bar-track">
+            <div class="budget-bar-fill" id="budget-bar-fill"></div>
+          </div>
+          <div class="budget-insight-row">
+            <span id="budget-text-spent"></span>
+            <span id="budget-text-pct" class="budget-pct"></span>
+          </div>
+          <div id="budget-text-footer" class="budget-footer"></div>
+        </div>
 
         <div class="charts-grid" id="charts-grid">
           <div class="chart-card">
@@ -360,6 +375,7 @@
       <section class="view" id="view-projection" style="display:none">
         <div class="view-header">
           <h1>Proyección</h1>
+          <p class="view-subtitle">¿Cómo va a crecer tu patrimonio según tus ingresos y gastos típicos?</p>
         </div>
 
         <!-- Parámetros -->
@@ -385,10 +401,19 @@
           <button class="btn btn-primary" id="btn-proj-save">Calcular proyección</button>
           <div id="proj-snapshot-info" class="proj-snapshot-info" style="display:none"></div>
           <button class="btn btn-outline btn-sm" id="btn-reset-snapshot" style="display:none;margin-top:0.5rem">↺ Actualizar base de proyección</button>
+          <div id="proj-early-income-note" class="proj-early-income-note" style="display:none">
+            ⚠ Si recibiste ingresos de meses futuros (ej: sueldo adelantado), el patrimonio base puede estar sobreestimado. Usá "Actualizar base" al inicio de cada mes, cuando normalmente recibís tu ingreso.
+          </div>
         </div>
 
         <!-- Resultados -->
         <div id="projection-results" style="display:none">
+          <!-- Trend card -->
+          <div class="proj-trend-card" id="proj-trend-card" style="display:none">
+            <span class="proj-trend-icon" id="proj-trend-icon"></span>
+            <span id="proj-trend-text"></span>
+          </div>
+
           <div class="projection-summary">
             <div class="proj-sum-card">
               <div class="proj-sum-label">Patrimonio hoy</div>
@@ -640,6 +665,7 @@
   <script src="js/ui.js"></script>
   <script src="js/export.js"></script>
   <script src="js/expenses.js"></script>
+  <script src="js/budget.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/projection.js"></script>
   <script src="js/categories.js"></script>

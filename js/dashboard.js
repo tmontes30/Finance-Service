@@ -169,16 +169,7 @@ const Dashboard = {
     document.getElementById('budget-text-pct').textContent      = `${Math.round(data.pct)}%`;
     document.getElementById('budget-text-pct').style.color      = color;
 
-    const footer = document.getElementById('budget-text-footer');
-    if (data.daysLeft <= 0) {
-      footer.textContent = '';
-    } else if (data.delta > 0) {
-      footer.textContent  = `Quedan ${data.daysLeft} días — a este ritmo te pasarías ${Data.formatAmount(data.delta)} del estimado`;
-      footer.style.color  = 'var(--color-danger)';
-    } else {
-      footer.textContent  = `Quedan ${data.daysLeft} días — vas dentro del presupuesto`;
-      footer.style.color  = 'var(--color-success)';
-    }
+    document.getElementById('budget-text-footer').textContent = '';
   },
 
   /* ---------- Shared tooltip style ---------- */

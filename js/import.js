@@ -77,7 +77,7 @@ const Import = {
 
     try {
       const base64  = await this._fileToBase64(file);
-      const session = (await supabase.auth.getSession()).data.session;
+      const session = (await Auth.client().auth.getSession()).data.session;
 
       const res = await fetch(`${SUPABASE_URL}/functions/v1/parse-bank-statement`, {
         method: 'POST',

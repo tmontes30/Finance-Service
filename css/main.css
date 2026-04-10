@@ -1211,3 +1211,94 @@ body {
 }
 .cat-chip .cat-edit-row .form-input { font-size: 0.8rem; padding: 0.2rem 0.4rem; width: 120px; }
 .cat-chip .cat-edit-row .form-color { width: 28px; height: 26px; padding: 1px; }
+
+/* ── Expense modal redesign ──────────────────────────────────────────────── */
+.modal-expense-new { max-width: 380px; }
+
+/* Amount hero */
+.expense-amount-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 1.1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.expense-amount-hero:focus-within { border-color: var(--color-primary); }
+.expense-amount-prefix {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+.expense-amount-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: left;
+  width: 100%;
+  -moz-appearance: textfield;
+}
+.expense-amount-input::-webkit-outer-spin-button,
+.expense-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.expense-amount-input::placeholder { color: var(--color-text-muted); opacity: 0.4; }
+
+/* 2-col row */
+.expense-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.form-label-sm {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+/* Planned toggle row */
+.expense-planned-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  margin-bottom: 0.6rem;
+}
+.expense-planned-info { display: flex; flex-direction: column; gap: 0.1rem; }
+.expense-planned-title { font-size: 0.85rem; font-weight: 600; }
+.expense-planned-hint { font-size: 0.72rem; color: var(--color-text-muted); }
+
+/* Toggle switch */
+.toggle-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--color-border);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  left: 3px; top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--color-primary); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }

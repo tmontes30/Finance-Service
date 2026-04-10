@@ -31,6 +31,8 @@ The app is a vanilla JS single-page application backed by Supabase (PostgreSQL +
 
 **Incomes:** A first-class entity (table: `incomes`) linked to an account. Adding income increases account balance; deleting reverses it.
 
+**Account balance adjustment:** When editing an account (⚙️), a "Ajustar saldo" section appears below the balance field. The user picks `+ Sumar` or `− Restar`, enters an amount, and sees a live preview (`$X + $Y = $Z`). On save, `finalBalance = storedBalance ± delta`. This is for reconciling investment accounts without recording the change as income or expense. The current balance during edit is stored in `Accounts._editingBalance`.
+
 ## Key Conventions
 
 - **Supabase credentials** are in `js/config.js` (public anon key — safe to commit).
@@ -108,7 +110,7 @@ The `expenses` table has:
 
 - `Budget.compute(allExpenses)` — pure function, no DB calls.
 - **Algorithm:** groups real (non-planned) expenses by month, takes last 1–3 complete months.
-  - **Per-transaction outlier removal (IQR):** before summing each month, individual transactions where `amount > Q3 + 1.5×(Q3−Q1)` (across all past transactions) are excluded. Requires ≥4 past transactions. Prevents one-off large expenses from skewing the estimate.
+  - **Per-month dominant-transaction removal:** if a single transaction accounts for > 50% of that month's total, it is removed before summing (e.g. a one-off vehicle purchase). This avoids removing legitimate large recurring expenses (rent, credit cards) which rarely exceed 50% of total. IQR-based per-transaction removal was replaced because it incorrectly filtered out large-but-normal expenses when most transactions are small.
   - **Inter-month outlier removal:** when 3 months available, months where `|total − mean| > 1.5 × stdDev` are excluded.
 - **Returns:** `{ budget, monthsUsed, currentSpend, pct, daysLeft, projected, delta }`.
 - `Budget.getEffectiveBudget(allExpenses)` — used by the dashboard. Checks `settings.budgetMode`:
@@ -141,8 +143,9 @@ The `expenses` table has:
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
-- **Mobile navbar:** Single-row `[⚡ Finance] [scrollable tabs] [🌙] [☰]`. All 6 nav tabs (Dashboard, Cuentas, Gastos, Categorías, Proyección, Presupuesto) always visible via `overflow-x: auto; scrollbar-width: none` on `.navbar-nav`. `navbar-add-btn` and `navbar-user` are hidden on mobile.
-- **Hamburger dropdown** (`#navbar-dropdown`): absolutely-positioned card (not inside `navbar-nav`) with "Agregar Gasto" and "Salir". Toggled via `e.stopPropagation()` on the hamburger; closed by `document.addEventListener('click', ...)`. Wired in `app.js`.
+- **Mobile navbar:** Single-row `[⚡] [scrollable tabs] [☰]`. On mobile `.brand-name` ("Finance") is hidden — only the ⚡ icon shows — to maximise tab space. The 🌙 theme toggle is also hidden from the navbar (`display: none !important`) and moved to the mobile subheader instead.
+- **Mobile subheader** (`.mobile-subheader`, `#mobile-subheader`): `position: fixed; top: var(--nav-height); height: 40px`. Shows the current view name on the left and the 🌙 theme toggle on the right. `Router.navigate()` updates `#mobile-view-name`. The dashboard shows "Finance" (not "Dashboard") here — defined in `Router._viewNames`. Main content has extra `margin-top: calc(56px + 40px)` on mobile to account for this bar. View `h1` headings and `.view-subtitle` are hidden on mobile (`.view-header > h1 { display: none }`); `.view-title-group` (budget view wrapper div) is also hidden.
+- **Hamburger dropdown** (`#navbar-dropdown`): floating card (`padding: 0.4rem`, inner items use `border-radius: var(--radius)`, no per-item borders). Contains all 6 nav tabs (`.nav-link-drop[data-view]`) at the top, then a subtle divider (`.navbar-dropdown-divider`), then "Agregar Gasto" and "Salir". Nav links wired via `querySelectorAll('.nav-link-drop[data-view]')` in `app.js`.
 - **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. **FAB hides when expense modal opens** (`UI.openExpenseModal` removes `.fab-active`; `closeExpenseModal` restores it).
 - **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` — header and footer (Save button) always visible.
 - **Modal sizing:** Reduced padding (header `0.9rem 1.25rem`, body `1.1rem 1.25rem`, footer `0.75rem 1.25rem`). Inputs/selects inside modal use `font-size: 0.875rem; padding: 0.4rem 0.65rem` for a compact feel.

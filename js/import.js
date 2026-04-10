@@ -19,10 +19,15 @@ const Import = {
   },
 
   async openModal() {
-    [this._accounts, this._categories] = await Promise.all([
-      Data.getAccounts(),
-      Data.getCategories()
-    ]);
+    try {
+      [this._accounts, this._categories] = await Promise.all([
+        Data.getAccounts(),
+        Data.getCategories()
+      ]);
+    } catch (err) {
+      UI.toast('Error al abrir el importador: ' + err.message, 'error');
+      return;
+    }
     this._showStep('upload');
     document.getElementById('modal-import').style.display = 'flex';
   },

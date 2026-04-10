@@ -347,6 +347,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ----- Expense modal: close ----- */
   document.getElementById('modal-close').addEventListener('click', () => UI.closeExpenseModal());
   document.getElementById('btn-modal-cancel').addEventListener('click', () => UI.closeExpenseModal());
+  document.getElementById('btn-modal-import-photo').addEventListener('click', () => {
+    UI.closeExpenseModal();
+    Import.openModal();
+  });
   document.getElementById('modal-expense').addEventListener('click', e => {
     if (e.target === e.currentTarget) UI.closeExpenseModal();
   });

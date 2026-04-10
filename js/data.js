@@ -107,13 +107,14 @@ const Data = {
     return Storage.getExpenses();
   },
 
-  async addExpense({ amount, categoryId, description, date, accountId, isPlanned }) {
+  async addExpense({ amount, categoryId, description, date, accountId, isPlanned, externalId }) {
     const amt    = parseFloat(parseFloat(amount).toFixed(2));
     const record = {
       id: genId(), amount: amt, categoryId,
       accountId: accountId || null,
       description: (description || '').trim().slice(0, 200),
-      date, isPlanned: isPlanned || false
+      date, isPlanned: isPlanned || false,
+      externalId: externalId || null
     };
     const saved = await Storage.addExpense(record);
     if (accountId && !isPlanned) await Storage.adjustAccountBalance(accountId, -amt);
@@ -247,11 +248,12 @@ const Data = {
     return incomes.find(i => i.id === id) || null;
   },
 
-  async addIncome({ accountId, amount, description, date }) {
+  async addIncome({ accountId, amount, description, date, externalId }) {
     const amt  = parseFloat(parseFloat(amount).toFixed(2));
     const saved = await Storage.addIncome({
       id: genId(), accountId, amount: amt,
-      description: (description || '').trim().slice(0, 200), date
+      description: (description || '').trim().slice(0, 200), date,
+      externalId: externalId || null
     });
     await Storage.adjustAccountBalance(accountId, amt);
     return saved;

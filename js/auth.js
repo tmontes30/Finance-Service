@@ -44,6 +44,7 @@ const Auth = {
       Categories.init();
       Projection.init();
       BudgetView.init();
+      Import.init();
 
       const emailEl = document.getElementById('nav-user-email');
       if (emailEl) {

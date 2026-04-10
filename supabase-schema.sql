@@ -86,3 +86,10 @@ ALTER TABLE settings
 ALTER TABLE settings
   ADD COLUMN IF NOT EXISTS budget_amount NUMERIC(14,2),
   ADD COLUMN IF NOT EXISTS budget_mode   TEXT NOT NULL DEFAULT 'auto';
+
+-- Importación desde foto: clave de deduplicación para evitar importar el mismo movimiento dos veces
+ALTER TABLE expenses
+  ADD COLUMN IF NOT EXISTS external_id TEXT;
+
+ALTER TABLE incomes
+  ADD COLUMN IF NOT EXISTS external_id TEXT;

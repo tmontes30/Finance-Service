@@ -24,6 +24,7 @@ const Storage = {
       description: r.description || '',
       date:        r.date,
       isPlanned:   r.is_planned  || false,
+      externalId:  r.external_id || null,
       createdAt:   new Date(r.created_at).getTime()
     }));
   },
@@ -33,12 +34,13 @@ const Storage = {
       id: r.id, user_id: _uid, amount: r.amount,
       category_id: r.categoryId, account_id: r.accountId || null,
       description: r.description || '', date: r.date,
-      is_planned: r.isPlanned || false
+      is_planned: r.isPlanned || false, external_id: r.externalId || null
     }).select().single();
     if (error) throw error;
     return { id: data.id, amount: parseFloat(data.amount), categoryId: data.category_id,
              accountId: data.account_id || null, description: data.description || '',
              date: data.date, isPlanned: data.is_planned || false,
+             externalId: data.external_id || null,
              createdAt: new Date(data.created_at).getTime() };
   },
 
@@ -153,6 +155,7 @@ const Storage = {
     return (data || []).map(r => ({
       id: r.id, accountId: r.account_id, amount: parseFloat(r.amount),
       description: r.description || '', date: r.date,
+      externalId: r.external_id || null,
       createdAt: new Date(r.created_at).getTime()
     }));
   },
@@ -160,11 +163,12 @@ const Storage = {
   async addIncome(r) {
     const { data, error } = await _sb.from('incomes').insert({
       id: r.id, user_id: _uid, account_id: r.accountId, amount: r.amount,
-      description: r.description || '', date: r.date
+      description: r.description || '', date: r.date, external_id: r.externalId || null
     }).select().single();
     if (error) throw error;
     return { id: data.id, accountId: data.account_id, amount: parseFloat(data.amount),
              description: data.description || '', date: data.date,
+             externalId: data.external_id || null,
              createdAt: new Date(data.created_at).getTime() };
   },
 

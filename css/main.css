@@ -1092,3 +1092,56 @@ body {
   color: var(--color-text-muted);
   margin-top: 0.3rem;
 }
+
+/* ===== IMPORT MODAL ===== */
+.import-preview-wrapper {
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.import-preview-table th,
+.import-preview-table td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.import-preview-table th {
+  background: var(--color-surface);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.import-preview-table .preview-desc {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.import-preview-table .preview-amount { text-align: right; white-space: nowrap; }
+.import-preview-table .import-expense  { color: var(--color-danger); }
+.import-preview-table .import-income   { color: var(--color-success); }
+.import-row-dup { opacity: 0.55; }
+.import-dup-badge {
+  font-size: 0.65rem;
+  background: var(--color-warning, #f59e0b);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 3px;
+  margin-left: 4px;
+}
+.import-dup-notice {
+  color: var(--color-warning, #f59e0b);
+  margin-bottom: 0.5rem;
+}
+.import-income-label {
+  font-size: 0.75rem;
+  color: var(--color-success);
+  font-weight: 600;
+}

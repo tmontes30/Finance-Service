@@ -140,6 +140,18 @@ The `expenses` table has:
 - **Early income warning** (`#proj-early-income-note`): shown when a snapshot exists. Warns about advance salary inflating the base.
 - **Projection subtitle:** `.view-subtitle` under the h1 header.
 
+## Importar movimientos desde foto (`js/import.js`)
+
+El usuario saca una captura de pantalla de sus movimientos bancarios (Santander, Mercado Pago, etc.) y la sube a la app. Claude Vision extrae las transacciones automáticamente.
+
+- **Entry points:** botón `📥 Importar` en la toolbar de gastos (`#btn-import`) + botón `📷 Importar foto` en el footer del modal de gastos (`#btn-modal-import-photo`).
+- **Flujo:** upload de imagen → `FileReader` convierte a base64 → POST a Supabase Edge Function `parse-bank-statement` → Claude Haiku Vision devuelve `[{date, amount, description, type}]` → preview con checkboxes → confirmar importación.
+- **Gastos:** importados via `Data.addExpense()` con `categoryId` obligatorio.
+- **Ingresos:** importados via `Data.addIncome()` con `accountId` obligatorio (Claude devuelve `type: "ingreso"` para créditos).
+- **Deduplicación:** cada transacción genera un `externalId = photo|YYYY-MM-DD|amount_cents|desc_40chars`. Se guarda en `expenses.external_id` e `incomes.external_id`. Al subir una foto que se superpone con una anterior, los movimientos ya importados aparecen desmarcados con badge "↩ dup".
+- **Edge Function:** `supabase/functions/parse-bank-statement/index.ts`. Requiere secret `ANTHROPIC_API_KEY` en Supabase. Usa `claude-haiku-4-5-20251001`.
+- **DB migrations:** `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS external_id TEXT` y lo mismo para `incomes`.
+
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.

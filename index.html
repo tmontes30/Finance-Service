@@ -126,7 +126,6 @@
         <a href="#" class="nav-link active" data-view="dashboard">Dashboard</a>
         <a href="#" class="nav-link" data-view="accounts">Cuentas</a>
         <a href="#" class="nav-link" data-view="expenses">Gastos</a>
-        <a href="#" class="nav-link" data-view="categories">Categorías</a>
         <a href="#" class="nav-link" data-view="projection">Proyección</a>
         <a href="#" class="nav-link" data-view="budget">Presupuesto</a>
       </div>
@@ -142,7 +141,6 @@
       <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="dashboard">Dashboard</a>
       <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="accounts">Cuentas</a>
       <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="expenses">Gastos</a>
-      <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="categories">Categorías</a>
       <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="projection">Proyección</a>
       <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="budget">Presupuesto</a>
       <div class="navbar-dropdown-divider"></div>
@@ -334,6 +332,24 @@
           </div>
         </div>
 
+        <!-- ===== CATEGORIES PANEL ===== -->
+        <div class="categories-panel" id="categories-panel">
+          <button class="categories-panel-toggle" id="btn-toggle-categories">
+            <span>Categorías</span>
+            <span id="categories-count-badge" class="cat-count-badge"></span>
+            <span class="categories-toggle-arrow">▾</span>
+          </button>
+          <div class="categories-panel-body" id="categories-panel-body" style="display:none">
+            <div class="cat-add-row">
+              <input type="text" id="new-cat-name" class="form-input" placeholder="Nueva categoría..." maxlength="50">
+              <input type="color" id="new-cat-color" class="form-color" value="#6366f1">
+              <button class="btn btn-primary btn-sm" id="btn-save-category">Agregar</button>
+            </div>
+            <div id="cat-form-error" class="form-error" style="display:none"></div>
+            <div id="categories-list"></div>
+          </div>
+        </div>
+
         <div class="list-header" id="list-header">
           <span id="list-count" class="list-count">0 gastos</span>
           <div class="sort-controls">
@@ -363,26 +379,6 @@
       </section>
 
       <!-- ===== CATEGORIES VIEW ===== -->
-      <section class="view" id="view-categories" style="display:none">
-        <div class="view-header">
-          <h1>Categorías</h1>
-        </div>
-
-        <div class="card category-add-form">
-          <h3>Nueva categoría</h3>
-          <div class="category-form-row">
-            <input type="text" id="new-cat-name" class="form-input" placeholder="Nombre de la categoría" maxlength="50">
-            <div class="color-input-wrapper">
-              <label>Color</label>
-              <input type="color" id="new-cat-color" class="form-color" value="#6366f1">
-            </div>
-            <button class="btn btn-primary" id="btn-save-category">Guardar</button>
-          </div>
-          <div id="cat-form-error" class="form-error" style="display:none"></div>
-        </div>
-
-        <div id="categories-list"></div>
-      </section>
 
       <!-- ===== PROJECTION VIEW ===== -->
       <section class="view" id="view-projection" style="display:none">

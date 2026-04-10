@@ -48,11 +48,11 @@ const PatrimonioToggle = {
 };
 
 const Router = {
-  _views: ['dashboard', 'accounts', 'expenses', 'categories', 'projection', 'budget'],
+  _views: ['dashboard', 'accounts', 'expenses', 'projection', 'budget'],
   _current: null,
   _viewNames: {
     dashboard: 'Finance', accounts: 'Cuentas', expenses: 'Gastos',
-    categories: 'Categorías', projection: 'Proyección', budget: 'Presupuesto'
+    projection: 'Proyección', budget: 'Presupuesto'
   },
 
   async navigate(viewName) {
@@ -71,7 +71,6 @@ const Router = {
     if (viewName === 'dashboard')  await Dashboard.render();
     if (viewName === 'accounts')   await Accounts.render();
     if (viewName === 'expenses')   await Expenses.render();
-    if (viewName === 'categories') await Categories.render();
     if (viewName === 'projection') await Projection.render();
     if (viewName === 'budget')     await BudgetView.render();
   }

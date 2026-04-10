@@ -77,13 +77,11 @@ const Import = {
 
     try {
       const base64  = await this._fileToBase64(file);
-      const session = (await Auth.client().auth.getSession()).data.session;
-
       const res = await fetch(`${SUPABASE_URL}/functions/v1/parse-bank-statement`, {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${SUPABASE_KEY}`
         },
         body: JSON.stringify({ imageBase64: base64, mimeType: file.type })
       });

@@ -24,20 +24,21 @@ const Budget = {
     const sortedMonths = Object.keys(byMonth).sort().reverse().slice(0, 3);
     if (sortedMonths.length === 0) return null;
 
-    // Per-transaction outlier threshold (IQR method) across all recent past transactions
-    const allPast = sortedMonths.flatMap(k => byMonth[k]);
-    let txThreshold = Infinity;
-    if (allPast.length >= 4) {
-      const sorted = [...allPast].sort((a, b) => a - b);
-      const q1 = sorted[Math.floor(sorted.length * 0.25)];
-      const q3 = sorted[Math.floor(sorted.length * 0.75)];
-      txThreshold = q3 + 1.5 * (q3 - q1);
-    }
-
-    // Sum each month excluding per-transaction outliers
+    // Per-month outlier removal: drop a single transaction if it alone represents
+    // > 50% of that month's total (e.g. a one-off large purchase like a vehicle).
+    // This avoids removing legitimate large recurring expenses (rent, credit cards).
     const totals = sortedMonths.map(k => {
-      const clean = byMonth[k].filter(v => v <= txThreshold);
-      return (clean.length > 0 ? clean : byMonth[k]).reduce((a, b) => a + b, 0);
+      const txs = byMonth[k];
+      const rawTotal = txs.reduce((a, b) => a + b, 0);
+      if (txs.length > 1) {
+        const maxTx = Math.max(...txs);
+        if (maxTx > rawTotal * 0.5) {
+          const idx = txs.indexOf(maxTx);
+          const cleaned = [...txs.slice(0, idx), ...txs.slice(idx + 1)];
+          return cleaned.reduce((a, b) => a + b, 0);
+        }
+      }
+      return rawTotal;
     });
 
     // Inter-month outlier removal: only when 3 months available

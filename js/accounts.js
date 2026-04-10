@@ -252,7 +252,7 @@ const Accounts = {
     document.getElementById('account-id').value      = acc ? acc.id : '';
     document.getElementById('account-name').value    = acc ? acc.name : '';
     document.getElementById('account-type').value    = acc ? acc.type : 'bank';
-    document.getElementById('account-balance').value = acc ? acc.balance : '';
+    document.getElementById('account-balance').value = acc ? UI.formatMoney(acc.balance) : '';
     document.getElementById('account-notes').value   = acc ? acc.notes : '';
     document.getElementById('account-color').value   = acc ? acc.color : '#6366f1';
 
@@ -276,7 +276,7 @@ const Accounts = {
 
   _updateAdjustPreview() {
     const preview  = document.getElementById('account-adjust-preview');
-    const raw      = parseFloat(document.getElementById('account-adjust-amount').value);
+    const raw      = UI.parseMoney(document.getElementById('account-adjust-amount').value);
     if (isNaN(raw) || raw === 0 || this._editingBalance === null) {
       preview.textContent = '';
       return;
@@ -304,7 +304,7 @@ const Accounts = {
       this._showError('account-name', 'El nombre es requerido'); valid = false;
     } else { this._clearError('account-name'); }
 
-    if (balance === '' || isNaN(parseFloat(balance))) {
+    if (balance === '' || balance === '-') {
       this._showError('account-balance', 'Ingresa un saldo válido (puede ser 0 o negativo)');
       valid = false;
     } else { this._clearError('account-balance'); }
@@ -312,10 +312,10 @@ const Accounts = {
     if (!valid) return;
 
     // Compute final balance: apply adjustment if entered
-    let finalBalance = parseFloat(balance);
+    let finalBalance = UI.parseMoney(balance);
     const id = document.getElementById('account-id').value;
     if (id && this._editingBalance !== null) {
-      const adjustRaw = parseFloat(document.getElementById('account-adjust-amount').value);
+      const adjustRaw = UI.parseMoney(document.getElementById('account-adjust-amount').value);
       if (!isNaN(adjustRaw) && adjustRaw !== 0) {
         const isPlus = document.getElementById('adjust-sign-plus').classList.contains('active');
         finalBalance = this._editingBalance + (isPlus ? adjustRaw : -adjustRaw);
@@ -373,7 +373,7 @@ const Accounts = {
       }).join('');
 
     document.getElementById('income-id').value          = income ? income.id : '';
-    document.getElementById('income-amount').value      = income ? income.amount : '';
+    document.getElementById('income-amount').value      = income ? UI.formatMoney(income.amount) : '';
     document.getElementById('income-description').value = income ? income.description : '';
     document.getElementById('income-date').value        = income
       ? income.date
@@ -401,7 +401,7 @@ const Accounts = {
       this._showError('income-account', 'Selecciona una cuenta'); valid = false;
     } else { this._clearError('income-account'); }
 
-    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+    if (!UI.parseMoney(amount) || UI.parseMoney(amount) <= 0) {
       this._showError('income-amount', 'Ingresa un monto válido mayor a cero'); valid = false;
     } else { this._clearError('income-amount'); }
 
@@ -417,7 +417,7 @@ const Accounts = {
       const id      = document.getElementById('income-id').value;
       const payload = {
         accountId,
-        amount:      document.getElementById('income-amount').value,
+        amount:      UI.parseMoney(document.getElementById('income-amount').value),
         description: document.getElementById('income-description').value,
         date
       };

@@ -307,11 +307,11 @@
             </div>
             <div class="filter-group">
               <label>Monto mínimo</label>
-              <input type="number" id="filter-amount-min" class="form-input" placeholder="0" min="0">
+              <input type="text" id="filter-amount-min" class="form-input" placeholder="0" inputmode="numeric">
             </div>
             <div class="filter-group">
               <label>Monto máximo</label>
-              <input type="number" id="filter-amount-max" class="form-input" placeholder="Sin límite" min="0">
+              <input type="text" id="filter-amount-max" class="form-input" placeholder="Sin límite" inputmode="numeric">
             </div>
             <div class="filter-group">
               <label>Descripción</label>
@@ -400,18 +400,18 @@
           <div class="form-row-2">
             <div class="form-group">
               <label for="proj-income">Ingreso mensual líquido</label>
-              <input type="number" id="proj-income" class="form-input" placeholder="0" min="0" step="1">
+              <input type="text" id="proj-income" class="form-input" placeholder="0" inputmode="numeric">
             </div>
             <div class="form-group">
               <label for="proj-expenses">Gasto mensual aproximado</label>
-              <input type="number" id="proj-expenses" class="form-input" placeholder="0" min="0" step="1">
+              <input type="text" id="proj-expenses" class="form-input" placeholder="0" inputmode="numeric">
             </div>
           </div>
           <button class="btn btn-primary" id="btn-proj-save">Calcular proyección</button>
           <div id="proj-snapshot-info" class="proj-snapshot-info" style="display:none"></div>
           <button class="btn btn-outline btn-sm" id="btn-reset-snapshot" style="display:none;margin-top:0.5rem">↺ Actualizar base de proyección</button>
           <div id="proj-early-income-note" class="proj-early-income-note" style="display:none">
-            ⚠ Si recibiste ingresos de meses futuros (ej: sueldo adelantado), el patrimonio base puede estar sobreestimado. Usá "Actualizar base" al inicio de cada mes, cuando normalmente recibís tu ingreso.
+            ⚠ Si recibiste ingresos de meses futuros (ej: sueldo adelantado), el patrimonio base puede estar sobreestimado. Usa "Actualizar base" al inicio de cada mes, cuando normalmente recibes tu ingreso.
           </div>
         </div>
 
@@ -494,7 +494,7 @@
           <div id="budget-manual-section" style="display:none">
             <div class="form-group" style="margin-top:1rem">
               <label for="budget-manual-amount">Monto mensual que quieres gastar</label>
-              <input type="number" id="budget-manual-amount" class="form-input" placeholder="0" min="0" step="1">
+              <input type="text" id="budget-manual-amount" class="form-input" placeholder="0" inputmode="numeric">
             </div>
           </div>
 
@@ -602,7 +602,7 @@
           </div>
           <div class="form-group">
             <label for="income-amount">Monto *</label>
-            <input type="number" id="income-amount" class="form-input" placeholder="0" min="1" step="1" required>
+            <input type="text" id="income-amount" class="form-input" placeholder="0" inputmode="numeric" required>
             <div class="form-error" id="error-income-amount" style="display:none"></div>
           </div>
           <div class="form-group">
@@ -655,7 +655,7 @@
           </div>
           <div class="form-group">
             <label for="account-balance">Saldo actual *</label>
-            <input type="number" id="account-balance" class="form-input" placeholder="0" step="0.01" required>
+            <input type="text" id="account-balance" class="form-input" placeholder="0" inputmode="numeric" required>
             <div class="form-error" id="error-account-balance" style="display:none"></div>
             <div class="form-hint">Puedes ingresar valores negativos para créditos o deudas.</div>
           </div>
@@ -667,7 +667,7 @@
                 <button type="button" class="adjust-sign-btn active" id="adjust-sign-plus">+ Sumar</button>
                 <button type="button" class="adjust-sign-btn" id="adjust-sign-minus">− Restar</button>
               </div>
-              <input type="number" id="account-adjust-amount" class="form-input adjust-amount-input" placeholder="0" step="0.01" min="0">
+              <input type="text" id="account-adjust-amount" class="form-input adjust-amount-input" placeholder="0" inputmode="numeric">
             </div>
             <div class="adjust-preview" id="account-adjust-preview"></div>
           </div>
@@ -696,7 +696,7 @@
           <!-- Amount — hero field -->
           <div class="expense-amount-hero">
             <span class="expense-amount-prefix">$</span>
-            <input type="number" id="expense-amount" class="expense-amount-input" placeholder="0" min="0.01" step="0.01" required inputmode="decimal">
+            <input type="text" id="expense-amount" class="expense-amount-input" placeholder="0" inputmode="numeric" required>
           </div>
           <div class="form-error" id="error-amount" style="display:none;text-align:center;margin-top:-0.5rem;margin-bottom:0.5rem"></div>
 

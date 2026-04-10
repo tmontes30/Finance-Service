@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-theme').textContent = themeIcon;
   document.getElementById('btn-theme-mobile').textContent = themeIcon;
 
+  // Attach CLP live formatters to all money inputs
+  ['expense-amount', 'income-amount', 'proj-income', 'proj-expenses',
+   'budget-manual-amount', 'account-adjust-amount',
+   'filter-amount-min', 'filter-amount-max'].forEach(id => UI.attachMoneyFormat(id));
+  UI.attachMoneyFormat('account-balance', true); // allows negative
+
   /* Auth maneja: Storage.init, Data.init, módulos de vistas, y el primer navigate */
   await Auth.init();
   PatrimonioToggle.init();
@@ -360,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isPlanned  = document.getElementById('expense-is-planned').checked;
       const plannedMonth = document.getElementById('expense-planned-month').value;
       const payload = {
-        amount:      document.getElementById('expense-amount').value,
+        amount:      UI.parseMoney(document.getElementById('expense-amount').value),
         categoryId:  document.getElementById('expense-category').value,
         accountId:   document.getElementById('expense-account').value || null,
         description: document.getElementById('expense-description').value,

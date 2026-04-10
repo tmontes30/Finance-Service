@@ -25,7 +25,7 @@ const BudgetView = {
     // Restore saved state
     this._setModeUI(currentMode);
     if (settings.budgetAmount != null) {
-      document.getElementById('budget-manual-amount').value = settings.budgetAmount;
+      document.getElementById('budget-manual-amount').value = UI.formatMoney(settings.budgetAmount);
     }
 
     // Computed budget hint (always shown as reference)
@@ -92,8 +92,8 @@ const BudgetView = {
   async _save() {
     const activeBtn = document.querySelector('.budget-mode-btn.active');
     const mode      = activeBtn ? activeBtn.dataset.mode : 'auto';
-    const rawAmount = parseFloat(document.getElementById('budget-manual-amount').value);
-    const amount    = mode === 'manual' && !isNaN(rawAmount) && rawAmount > 0 ? rawAmount : null;
+    const rawAmount = UI.parseMoney(document.getElementById('budget-manual-amount').value);
+    const amount    = mode === 'manual' && rawAmount > 0 ? rawAmount : null;
 
     if (mode === 'manual' && amount == null) {
       UI.toast('Ingresa un monto mayor a cero', 'error');

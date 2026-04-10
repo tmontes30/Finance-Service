@@ -2,6 +2,44 @@
 
 const UI = {
 
+  /* ---------- Money formatting ---------- */
+
+  // Parse a CLP-formatted string like "250.000" or "-1.500.000" → number
+  parseMoney(str) {
+    if (str === '' || str === null || str === undefined) return 0;
+    const s = str.toString().trim();
+    const negative = s.startsWith('-');
+    const num = parseInt(s.replace(/[^0-9]/g, ''), 10) || 0;
+    return negative ? -num : num;
+  },
+
+  // Format a number as CLP: 250000 → "250.000"
+  formatMoney(num) {
+    if (num === '' || num === null || num === undefined) return '';
+    const n = Math.round(Number(num));
+    if (isNaN(n)) return '';
+    const abs = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return n < 0 ? '-' + abs : abs;
+  },
+
+  // Attach live CLP formatter to an input (by id)
+  attachMoneyFormat(id, allowNegative = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const raw      = el.value;
+      const negative = allowNegative && raw.startsWith('-');
+      const digits   = raw.replace(/[^0-9]/g, '');
+      if (!digits) { el.value = negative ? '-' : ''; return; }
+      const prevLen  = el.value.length;
+      const cursor   = el.selectionStart;
+      const formatted = (negative ? '-' : '') +
+        parseInt(digits, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      el.value = formatted;
+      try { el.setSelectionRange(cursor + (formatted.length - prevLen), cursor + (formatted.length - prevLen)); } catch (_) {}
+    });
+  },
+
   /* ---------- Toast ---------- */
 
   toast(message, type = 'info') {
@@ -38,7 +76,7 @@ const UI = {
 
     title.textContent = expense ? 'Editar Gasto' : 'Agregar Gasto';
     idField.value     = expense ? expense.id : '';
-    amount.value      = expense ? expense.amount : '';
+    amount.value      = expense ? this.formatMoney(expense.amount) : '';
     desc.value        = expense ? expense.description : '';
     date.value        = expense
       ? expense.date
@@ -124,7 +162,7 @@ const UI = {
     const date     = document.getElementById('expense-date').value;
     let valid = true;
 
-    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+    if (!this.parseMoney(amount) || this.parseMoney(amount) <= 0) {
       this._showError('amount', 'Ingresa un monto válido mayor a cero');
       valid = false;
     } else {

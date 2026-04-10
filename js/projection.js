@@ -8,7 +8,7 @@ const Projection = {
     document.getElementById('btn-proj-save').addEventListener('click', () => this._save());
     document.getElementById('btn-use-avg').addEventListener('click', () => {
       if (this._avgMonthly) {
-        document.getElementById('proj-expenses').value = Math.round(this._avgMonthly);
+        document.getElementById('proj-expenses').value = UI.formatMoney(Math.round(this._avgMonthly));
       }
     });
     document.getElementById('btn-reset-snapshot').addEventListener('click', () => {
@@ -29,13 +29,13 @@ const Projection = {
     const income   = settings.projIncome   != null ? settings.projIncome   : '';
     const expenses = settings.projExpenses != null ? settings.projExpenses : '';
 
-    document.getElementById('proj-income').value   = income;
-    document.getElementById('proj-expenses').value = expenses;
+    document.getElementById('proj-income').value   = income !== '' ? UI.formatMoney(income) : '';
+    document.getElementById('proj-expenses').value = expenses !== '' ? UI.formatMoney(expenses) : '';
 
     await this._checkHistory();
 
     if (income !== '' && expenses !== '') {
-      await this._renderProjection(parseFloat(income), parseFloat(expenses));
+      await this._renderProjection(Number(income), Number(expenses));
     } else {
       document.getElementById('projection-results').style.display = 'none';
       document.getElementById('projection-empty').style.display   = 'block';
@@ -63,8 +63,8 @@ const Projection = {
   },
 
   async _save() {
-    const income   = parseFloat(document.getElementById('proj-income').value)   || 0;
-    const expenses = parseFloat(document.getElementById('proj-expenses').value) || 0;
+    const income   = UI.parseMoney(document.getElementById('proj-income').value)   || 0;
+    const expenses = UI.parseMoney(document.getElementById('proj-expenses').value) || 0;
     const isFirst  = Data.getSettings().projSnapshotPatrimony == null;
     await Data.updateSettings({ projIncome: income, projExpenses: expenses });
     if (isFirst) {

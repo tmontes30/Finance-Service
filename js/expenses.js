@@ -121,8 +121,8 @@ const Expenses = {
       if (f.dateFrom   && e.date < f.dateFrom) return false;
       if (f.dateTo     && e.date > f.dateTo)   return false;
       if (f.categoryId && e.categoryId !== f.categoryId) return false;
-      if (f.amountMin  && e.amount < parseFloat(f.amountMin)) return false;
-      if (f.amountMax  && e.amount > parseFloat(f.amountMax)) return false;
+      if (f.amountMin  && e.amount < UI.parseMoney(f.amountMin)) return false;
+      if (f.amountMax  && e.amount > UI.parseMoney(f.amountMax)) return false;
       if (f.text && !(e.description || '').toLowerCase().includes(f.text)) return false;
       if (f.planned === 'planned' && !e.isPlanned) return false;
       if (f.planned === 'real'    &&  e.isPlanned) return false;

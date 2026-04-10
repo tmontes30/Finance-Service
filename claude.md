@@ -118,7 +118,7 @@ The `expenses` table has:
   - `'auto'`: returns `Budget.compute()` result unchanged.
   - Works even with no history (returns current-month spending vs manual amount).
 - **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` card. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
-- **Progress bar color:** green < 75%, amber 75–99%, red ≥ 100%.
+- **Progress bar color:** green < 51%, amber 51–84%, red ≥ 85%.
 
 ## Presupuesto Tab (`js/budget-view.js`)
 

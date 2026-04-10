@@ -155,8 +155,8 @@ const Dashboard = {
     el.style.display = 'block';
 
     const pct   = Math.min(data.pct, 100);
-    const color = data.pct < 75  ? 'var(--color-success)'
-                : data.pct < 100 ? '#f59e0b'
+    const color = data.pct < 51 ? 'var(--color-success)'
+                : data.pct < 85 ? '#f59e0b'
                 : 'var(--color-danger)';
 
     document.getElementById('budget-bar-fill').style.width      = `${pct}%`;

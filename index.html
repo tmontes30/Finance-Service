@@ -663,6 +663,18 @@
             <div class="form-error" id="error-account-balance" style="display:none"></div>
             <div class="form-hint">Puedes ingresar valores negativos para créditos o deudas.</div>
           </div>
+          <!-- Ajuste de saldo — solo visible al editar -->
+          <div class="form-group account-adjust-section" id="account-adjust-section" style="display:none">
+            <label>Ajustar saldo</label>
+            <div class="adjust-row">
+              <div class="adjust-sign-toggle">
+                <button type="button" class="adjust-sign-btn active" id="adjust-sign-plus">+ Sumar</button>
+                <button type="button" class="adjust-sign-btn" id="adjust-sign-minus">− Restar</button>
+              </div>
+              <input type="number" id="account-adjust-amount" class="form-input adjust-amount-input" placeholder="0" step="0.01" min="0">
+            </div>
+            <div class="adjust-preview" id="account-adjust-preview"></div>
+          </div>
           <div class="form-group">
             <label for="account-notes">Notas</label>
             <textarea id="account-notes" class="form-input form-textarea" placeholder="Banco, número de cuenta, observaciones..." maxlength="300" rows="2"></textarea>

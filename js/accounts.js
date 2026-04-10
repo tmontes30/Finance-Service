@@ -20,6 +20,20 @@ const Accounts = {
 
     document.getElementById('btn-account-save').addEventListener('click',
       async () => this._saveAccount());
+
+    // Adjust sign toggle
+    document.getElementById('adjust-sign-plus').addEventListener('click', () => {
+      document.getElementById('adjust-sign-plus').classList.add('active');
+      document.getElementById('adjust-sign-minus').classList.remove('active');
+      this._updateAdjustPreview();
+    });
+    document.getElementById('adjust-sign-minus').addEventListener('click', () => {
+      document.getElementById('adjust-sign-minus').classList.add('active');
+      document.getElementById('adjust-sign-plus').classList.remove('active');
+      this._updateAdjustPreview();
+    });
+    document.getElementById('account-adjust-amount').addEventListener('input',
+      () => this._updateAdjustPreview());
     document.getElementById('account-form').addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
         e.preventDefault();
@@ -226,8 +240,14 @@ const Accounts = {
      ACCOUNT MODAL
      ========================================================= */
 
+  _editingBalance: null, // current balance of account being edited
+
   _openAccountModal(acc = null) {
-    const modal = document.getElementById('modal-account');
+    const modal      = document.getElementById('modal-account');
+    const adjustSect = document.getElementById('account-adjust-section');
+    const adjustAmt  = document.getElementById('account-adjust-amount');
+    const preview    = document.getElementById('account-adjust-preview');
+
     document.getElementById('modal-account-title').textContent = acc ? 'Editar Cuenta' : 'Nueva Cuenta';
     document.getElementById('account-id').value      = acc ? acc.id : '';
     document.getElementById('account-name').value    = acc ? acc.name : '';
@@ -235,9 +255,40 @@ const Accounts = {
     document.getElementById('account-balance').value = acc ? acc.balance : '';
     document.getElementById('account-notes').value   = acc ? acc.notes : '';
     document.getElementById('account-color').value   = acc ? acc.color : '#6366f1';
+
+    if (acc) {
+      this._editingBalance = acc.balance;
+      adjustSect.style.display = 'block';
+      adjustAmt.value = '';
+      preview.textContent = '';
+      // Reset sign toggle to +
+      document.getElementById('adjust-sign-plus').classList.add('active');
+      document.getElementById('adjust-sign-minus').classList.remove('active');
+    } else {
+      this._editingBalance = null;
+      adjustSect.style.display = 'none';
+    }
+
     this._clearAccountErrors();
     modal.style.display = 'flex';
     setTimeout(() => document.getElementById('account-name').focus(), 60);
+  },
+
+  _updateAdjustPreview() {
+    const preview  = document.getElementById('account-adjust-preview');
+    const raw      = parseFloat(document.getElementById('account-adjust-amount').value);
+    if (isNaN(raw) || raw === 0 || this._editingBalance === null) {
+      preview.textContent = '';
+      return;
+    }
+    const isPlus    = document.getElementById('adjust-sign-plus').classList.contains('active');
+    const newBal    = this._editingBalance + (isPlus ? raw : -raw);
+    const sign      = isPlus ? '+' : '−';
+    const delta     = Data.formatAmount(raw);
+    const current   = Data.formatAmount(this._editingBalance);
+    const result    = Data.formatAmount(newBal);
+    preview.innerHTML = `${current} ${sign} ${delta} = <strong>${result}</strong>`;
+    preview.style.color = newBal < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   },
 
   _closeAccountModal() {
@@ -260,14 +311,24 @@ const Accounts = {
 
     if (!valid) return;
 
+    // Compute final balance: apply adjustment if entered
+    let finalBalance = parseFloat(balance);
+    const id = document.getElementById('account-id').value;
+    if (id && this._editingBalance !== null) {
+      const adjustRaw = parseFloat(document.getElementById('account-adjust-amount').value);
+      if (!isNaN(adjustRaw) && adjustRaw !== 0) {
+        const isPlus = document.getElementById('adjust-sign-plus').classList.contains('active');
+        finalBalance = this._editingBalance + (isPlus ? adjustRaw : -adjustRaw);
+      }
+    }
+
     const saveBtn = document.getElementById('btn-account-save');
     saveBtn.disabled = true;
     try {
-      const id      = document.getElementById('account-id').value;
       const payload = {
         name:    name,
         type:    document.getElementById('account-type').value,
-        balance: document.getElementById('account-balance').value,
+        balance: finalBalance,
         notes:   document.getElementById('account-notes').value,
         color:   document.getElementById('account-color').value
       };
@@ -275,6 +336,7 @@ const Accounts = {
         const record = id
           ? await Data.updateAccount(id, payload)
           : await Data.addAccount(payload);
+
         if (record && record.color.toLowerCase() !== (payload.color || '').toLowerCase()) {
           UI.toast('El color ya estaba en uso — se asignó uno alternativo', 'info');
         }

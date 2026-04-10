@@ -21,7 +21,7 @@ The app is a vanilla JS single-page application backed by Supabase (PostgreSQL +
 1. `auth.js` — creates Supabase client, restores session, calls `Storage.init` + `Data.init`, then navigates to dashboard
 2. `storage.js` — CRUD wrapper around the Supabase JS client; translates between JS camelCase and DB snake_case
 3. `data.js` — Business logic on top of `storage.js`; handles balance side-effects for expenses/incomes
-4. Feature modules (`dashboard.js`, `expenses.js`, `accounts.js`, `categories.js`, `projection.js`, `export.js`)
+4. Feature modules (`dashboard.js`, `expenses.js`, `accounts.js`, `categories.js`, `projection.js`, `export.js`, `budget-view.js`)
 
 **Data flow:** Feature modules call `Data.*` → `Storage.*` → Supabase API.
 
@@ -140,24 +140,22 @@ The `expenses` table has:
 - **Early income warning** (`#proj-early-income-note`): shown when a snapshot exists. Warns about advance salary inflating the base.
 - **Projection subtitle:** `.view-subtitle` under the h1 header.
 
-## Importar movimientos desde foto (`js/import.js`)
+## Categorías (`js/categories.js`)
 
-El usuario saca una captura de pantalla de sus movimientos bancarios (Santander, Mercado Pago, etc.) y la sube a la app. Claude Vision extrae las transacciones automáticamente.
+Las categorías **no tienen pestaña propia** — están integradas como panel colapsable al inicio de la vista Gastos (`#view-expenses`).
 
-- **Entry points:** botón `📥 Importar` en la toolbar de gastos (`#btn-import`) + botón `📷 Importar foto` en el footer del modal de gastos (`#btn-modal-import-photo`).
-- **Flujo:** upload de imagen → `FileReader` convierte a base64 → POST a Supabase Edge Function `parse-bank-statement` → Claude Haiku Vision devuelve `[{date, amount, description, type}]` → preview con checkboxes → confirmar importación.
-- **Gastos:** importados via `Data.addExpense()` con `categoryId` obligatorio.
-- **Ingresos:** importados via `Data.addIncome()` con `accountId` obligatorio (Claude devuelve `type: "ingreso"` para créditos).
-- **Deduplicación:** cada transacción genera un `externalId = photo|YYYY-MM-DD|amount_cents|desc_40chars`. Se guarda en `expenses.external_id` e `incomes.external_id`. Al subir una foto que se superpone con una anterior, los movimientos ya importados aparecen desmarcados con badge "↩ dup".
-- **Edge Function:** `supabase/functions/parse-bank-statement/index.ts`. Requiere secret `ANTHROPIC_API_KEY` en Supabase. Usa `claude-haiku-4-5-20251001`.
-- **DB migrations:** `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS external_id TEXT` y lo mismo para `incomes`.
+- **Toggle:** `#btn-toggle-categories` muestra/oculta `#categories-panel-body`. El badge `#categories-count-badge` muestra el total de categorías.
+- **Agregar:** fila inline con `#new-cat-name`, `#new-cat-color`, `#btn-save-category`. Enter en el input también guarda.
+- **Lista:** chips compactos (`.cat-chip`) con swatch de color, nombre, contador de gastos, botón editar (✏️) y eliminar (✕). Las predefinidas no tienen botón eliminar.
+- **Editar inline:** `_startEdit(id)` reemplaza el nombre del chip con inputs en línea.
+- **Router:** `'categories'` fue eliminado de `Router._views` y `_viewNames`. `Categories.render()` ya no se llama desde el Router — se llama al abrir el panel.
 
 ## Responsive / Mobile
 
 - Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
 - **Mobile navbar:** Single-row `[⚡] [scrollable tabs] [☰]`. On mobile `.brand-name` ("Finance") is hidden — only the ⚡ icon shows — to maximise tab space. The 🌙 theme toggle is also hidden from the navbar (`display: none !important`) and moved to the mobile subheader instead.
 - **Mobile subheader** (`.mobile-subheader`, `#mobile-subheader`): `position: fixed; top: var(--nav-height); height: 40px`. Shows the current view name on the left and the 🌙 theme toggle on the right. `Router.navigate()` updates `#mobile-view-name`. The dashboard shows "Finance" (not "Dashboard") here — defined in `Router._viewNames`. Main content has extra `margin-top: calc(56px + 40px)` on mobile to account for this bar. View `h1` headings and `.view-subtitle` are hidden on mobile (`.view-header > h1 { display: none }`); `.view-title-group` (budget view wrapper div) is also hidden.
-- **Hamburger dropdown** (`#navbar-dropdown`): floating card (`padding: 0.4rem`, inner items use `border-radius: var(--radius)`, no per-item borders). Contains all 6 nav tabs (`.nav-link-drop[data-view]`) at the top, then a subtle divider (`.navbar-dropdown-divider`), then "Agregar Gasto" and "Salir". Nav links wired via `querySelectorAll('.nav-link-drop[data-view]')` in `app.js`.
+- **Hamburger dropdown** (`#navbar-dropdown`): floating card (`padding: 0.4rem`, inner items use `border-radius: var(--radius)`, no per-item borders). Contains 5 nav tabs (`.nav-link-drop[data-view]`) — Dashboard, Cuentas, Gastos, Proyección, Presupuesto — then a subtle divider (`.navbar-dropdown-divider`), then "Agregar Gasto" y "Salir". Nav links wired via `querySelectorAll('.nav-link-drop[data-view]')` in `app.js`. **Categorías fue eliminada del nav** — vive dentro de la vista Gastos.
 - **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. **FAB hides when expense modal opens** (`UI.openExpenseModal` removes `.fab-active`; `closeExpenseModal` restores it).
 - **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` — header and footer (Save button) always visible.
 - **Modal sizing:** Reduced padding (header `0.9rem 1.25rem`, body `1.1rem 1.25rem`, footer `0.75rem 1.25rem`). Inputs/selects inside modal use `font-size: 0.875rem; padding: 0.4rem 0.65rem` for a compact feel.

@@ -86,7 +86,10 @@ const Import = {
         body: JSON.stringify({ imageBase64: base64, mimeType: file.type })
       });
 
-      if (!res.ok) throw new Error(`Error del servidor: ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Error del servidor: ${res.status} — ${errText.substring(0, 200)}`);
+      }
       const { transactions } = await res.json();
 
       if (!transactions || !transactions.length) {

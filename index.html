@@ -286,7 +286,6 @@
           <div class="view-actions">
             <button class="btn btn-outline" id="btn-toggle-filters">🔎 Filtros</button>
             <button class="btn btn-outline" id="btn-export-csv">💾 Exportar CSV</button>
-            <button class="btn btn-outline" id="btn-import">📥 Importar</button>
             <button class="btn btn-danger" id="btn-delete-selected" style="display:none">💥 Eliminar seleccionados</button>
             <button class="btn btn-primary mobile-add-btn" id="btn-add-expense-mobile">+ Agregar</button>
           </div>
@@ -738,7 +737,6 @@
           </div>
         </form>
         <div class="modal-footer">
-          <button class="btn btn-outline btn-sm" id="btn-modal-import-photo" style="margin-right:auto">📷 Importar foto</button>
           <button class="btn btn-outline" id="btn-modal-cancel">Cancelar</button>
           <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
         </div>
@@ -761,63 +759,6 @@
       </div>
     </div>
 
-    <!-- ===== IMPORT MODAL ===== -->
-    <div class="modal-overlay" id="modal-import" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-import-title">
-      <div class="modal">
-        <div class="modal-header">
-          <h2 id="modal-import-title">Importar movimientos</h2>
-          <button class="modal-close" id="modal-import-close" aria-label="Cerrar">✕</button>
-        </div>
-        <div class="modal-body">
-
-          <!-- Step: upload -->
-          <div id="step-upload">
-            <p class="form-hint" style="margin-bottom:0.75rem">
-              Saca una captura de pantalla de tus movimientos (Santander, Mercado Pago u otro banco)
-              y súbela aquí. La IA extraerá los gastos e ingresos automáticamente.
-            </p>
-            <div class="form-group">
-              <label for="photo-file-input">Imagen de movimientos</label>
-              <input type="file" id="photo-file-input" class="form-input" accept="image/*">
-            </div>
-            <button class="btn btn-primary" id="btn-parse-photo">Analizar imagen</button>
-          </div>
-
-          <!-- Step: preview -->
-          <div id="step-preview" style="display:none">
-            <div class="form-group">
-              <label for="preview-account">Cuenta asociada <span class="label-optional">opcional</span></label>
-              <select id="preview-account" class="form-select"></select>
-              <div class="form-hint">Requerida para importar ingresos. Opcional para gastos.</div>
-            </div>
-            <div id="preview-dup-notice" class="form-hint import-dup-notice" style="display:none"></div>
-            <div class="import-preview-wrapper">
-              <table class="import-preview-table">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Fecha</th>
-                    <th>Descripción</th>
-                    <th>Monto</th>
-                    <th>Categoría / Tipo</th>
-                  </tr>
-                </thead>
-                <tbody id="preview-tbody"></tbody>
-              </table>
-            </div>
-            <p class="form-hint" style="margin-top:0.5rem">
-              Asigna una categoría a cada gasto antes de importar.
-            </p>
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-outline" id="btn-preview-back" style="display:none">← Volver</button>
-          <button class="btn btn-primary" id="btn-confirm-import" style="display:none">Importar</button>
-        </div>
-      </div>
-    </div>
-
   </div><!-- /app-wrapper -->
 
   <!-- Scripts (el orden importa) -->
@@ -836,7 +777,6 @@
   <script src="js/projection.js"></script>
   <script src="js/categories.js"></script>
   <script src="js/accounts.js"></script>
-  <script src="js/import.js"></script>
   <script src="js/app.js"></script>
 
   <!-- FAB: fuera de app-wrapper para que position:fixed funcione siempre -->

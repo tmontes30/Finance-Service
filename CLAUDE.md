@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development
 
-This is a **static SPA** with no build system. Development is done by editing files directly and refreshing the browser. All dependencies (Supabase JS v2, Chart.js v4.4.0) are loaded via CDN in `index.html`.
+This is a **static SPA** with no build system. Development is done by editing files directly and refreshing the browser. All dependencies (Firebase compat SDK v10, Chart.js v4.4.0) are loaded via CDN in `index.html`.
 
 To run locally, serve the files with any static file server, e.g.:
 ```bash
@@ -15,28 +15,29 @@ python -m http.server 8080
 
 ## Architecture
 
-The app is a vanilla JS single-page application backed by Supabase (PostgreSQL + Auth).
+The app is a vanilla JS single-page application backed by Firebase (Firestore + Auth).
 
 **Module initialization order** (defined in `auth.js` `_setupApp()`):
-1. `auth.js` — creates Supabase client, restores session, calls `Storage.init` + `Data.init`, then navigates to dashboard
-2. `storage.js` — CRUD wrapper around the Supabase JS client; translates between JS camelCase and DB snake_case
+1. `auth.js` — initializes the Firebase app, listens to `onAuthStateChanged`, calls `Storage.init` + `Data.init`, then navigates to dashboard
+2. `storage.js` — CRUD wrapper around the Firestore compat client; documents already use camelCase field names (no snake_case translation needed)
 3. `data.js` — Business logic on top of `storage.js`; handles balance side-effects for expenses/incomes
 4. Feature modules (`dashboard.js`, `expenses.js`, `accounts.js`, `categories.js`, `projection.js`, `export.js`, `budget-view.js`)
 
-**Data flow:** Feature modules call `Data.*` → `Storage.*` → Supabase API.
+**Data flow:** Feature modules call `Data.*` → `Storage.*` → Firestore API.
+
+**Firestore data model:** everything lives under `users/{uid}` — isolation is by document path, not a `user_id` filter column. `users/{uid}` itself holds the profile (`nombre`, `apellido`, `rut`, `telefono`, `email`) and the settings fields (`currency`, `dashboardPeriod`, `projIncome`, `projExpenses`, `projSnapshotPatrimony`, `projSnapshotDate`, `budgetAmount`, `budgetMode`). Subcollections `users/{uid}/expenses`, `.../incomes`, `.../accounts`, `.../categories` hold the corresponding records, same `id`s as `genId()` generates. Security rules (`firestore.rules`, must be published in Firebase Console → Firestore → Rules) allow read/write only when `request.auth.uid == uid`.
 
 **Routing:** `Router` object in `app.js` shows/hides `#view-{name}` elements and calls each module's `render()`. Active view is `Router._current` (string).
 
 **Account balance:** Stored directly on the `accounts` row and mutated by `Storage.adjustAccountBalance()` whenever an expense or income is added, updated, or deleted. There is no derived calculation. Planned expenses (`isPlanned: true`) do NOT adjust account balances.
-
 **Incomes:** A first-class entity (table: `incomes`) linked to an account. Adding income increases account balance; deleting reverses it. The `accounts.js` view renders both the account list and the income history for each account (`#income-history-section`).
 
 **Account balance adjustment:** When editing an account (⚙️), a "Ajustar saldo" section appears below the balance field. The user picks `+ Sumar` or `− Restar`, enters an amount, and sees a live preview (`$X + $Y = $Z`). On save, `finalBalance = storedBalance ± delta`. This is for reconciling investment accounts without recording the change as income or expense. The current balance during edit is stored in `Accounts._editingBalance`.
 
 ## Key Conventions
 
-- **Supabase credentials** are in `js/config.js` (public anon key — safe to commit).
-- **Row Level Security** is enabled on all tables; users can only access their own rows. Schema and RLS policies are in `supabase-schema.sql`. New columns are added via `ALTER TABLE … ADD COLUMN IF NOT EXISTS` at the bottom of that file.
+- **Firebase credentials** are in `js/config.js` (`FIREBASE_CONFIG` — public web config, safe to commit; protected by Firestore security rules, not secrecy).
+- **Firestore security rules** are in `firestore.rules` — must be manually published in Firebase Console → Firestore Database → Rules after any change (editing the file locally does nothing on its own).
 - **UI patterns:** Modals and toast notifications are managed through `ui.js`. Use `UI.confirm()` / `UI.toast()` for user feedback.
 - **Language:** The UI is in **neutral Spanish** (no Argentine voseo). Use `tú` forms: "quieres", "puedes", "ingresa", "define" — never "querés", "podés", "ingresá", "definí".
 - **Theme:** Dark/light toggle persisted to `localStorage` (`financeTheme`). CSS vars are defined in `:root` (dark) and overridden in `[data-theme="light"]` in `css/main.css`. **Never hardcode colors** — always use `var(--color-*)`. For Chart.js colors that can't use CSS vars, read them at render time with `getComputedStyle(document.documentElement).getPropertyValue('--color-surface')`.
@@ -56,18 +57,15 @@ Key behaviours:
 - A yellow `.planned-badge` shows the target month (`YYYY/MM`) in the expenses list.
 - The expense modal checkbox shows a hint explaining the concept; when checked, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?") replaces the date field; `date` is set to `YYYY-MM-01` on save.
 - Expenses list filter: "Solo previstos (futuros)" / "Solo reales (realizados)".
-- **Requires DB migration:** `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_planned BOOLEAN NOT NULL DEFAULT FALSE;`
+- Field: `isPlanned` on each `users/{uid}/expenses/{id}` document.
 
-## DB Schema Notes
+## Firestore Field Notes
 
-The `settings` table has columns (added via migrations):
-- `proj_income`, `proj_expenses` — projection monthly parameters
-- `proj_snapshot_patrimony`, `proj_snapshot_date` — frozen projection baseline
-- `budget_amount` NUMERIC — user-defined monthly budget (null = not set)
-- `budget_mode` TEXT DEFAULT `'auto'` — `'manual'` or `'auto'`
-
-The `expenses` table has:
-- `is_planned BOOLEAN NOT NULL DEFAULT FALSE`
+Firestore is schemaless — new fields just get written, no migration step needed (unlike the old Postgres `ALTER TABLE`). Fields currently expected on `users/{uid}` (settings, written via `Storage.saveSettings()`):
+- `projIncome`, `projExpenses` — projection monthly parameters
+- `projSnapshotPatrimony`, `projSnapshotDate` — frozen projection baseline
+- `budgetAmount` — user-defined monthly budget (`null` = not set)
+- `budgetMode` — `'manual'` or `'auto'` (default `'auto'`)
 
 ## Dashboard
 
@@ -85,22 +83,24 @@ The `expenses` table has:
 ### Splash Screen
 - `#splash-screen` (`.splash-screen`) is shown by default on page load (`z-index: 10000`, above everything).
 - `#auth-screen` starts with `display:none` — the splash covers it during session restore.
-- `Auth._hideSplash()` adds `.splash-hidden` (opacity → 0, transition 0.4s) then removes the element after 420ms. Called after `getSession()` resolves, regardless of whether a session exists.
+- `Auth._hideSplash()` adds `.splash-hidden` (opacity → 0, transition 0.4s) then removes the element after 420ms. Called after the first `onAuthStateChanged` resolution, regardless of whether a session exists.
 - Design: full-screen `--color-bg` background, large ⚡ with pulse animation, "Finance" gradient text, three bouncing dots (`@keyframes splash-dot`).
 
 ### Forgot Password Flow
 - "¿Olvidaste tu contraseña?" button (`#auth-forgot-link`) is visible in login mode only (hidden in register mode via `authToggle` click handler).
 - Clicking it hides `#auth-form` + toggle + itself, shows `#auth-forgot-section` and changes title.
 - "← Volver" (`#btn-forgot-back`) reverses that.
-- Send handler calls `Auth.sendPasswordReset(email)` → `supabase.auth.resetPasswordForEmail` with `redirectTo: 'https://tmontes30.github.io/Finance-Service/'`.
-- **Supabase dashboard required:** Add that URL in Authentication → URL Configuration → Redirect URLs.
-- After clicking the reset link in the email, `onAuthStateChange` fires `PASSWORD_RECOVERY` → `Auth._showRecovery()` shows `#auth-recovery-section` with new-password + confirm fields.
-- Save handler calls `Auth.updatePassword(newPassword)` → `supabase.auth.updateUser`. On success, `SIGNED_IN` fires and `_setupApp()` runs automatically.
+- Send handler calls `Auth.sendPasswordReset(email)` → `firebase.auth().sendPasswordResetEmail(email, { url: 'https://tmontes30.github.io/Finance-Service/', handleCodeInApp: true })`.
+- Firebase redirects back to the app with `?mode=resetPassword&oobCode=...` in the URL instead of firing an auth event. `Auth.init()` detects those params on load, strips them via `history.replaceState`, calls `verifyPasswordResetCode` and shows `#auth-recovery-section` directly (before the normal login/dashboard branching).
+- Save handler calls `Auth.updatePassword(newPassword)` → `confirmPasswordReset(oobCode, newPassword)` then `signInWithEmailAndPassword` with the recovered email. The already-attached `onAuthStateChanged` listener picks up the resulting sign-in and runs `_setupApp()` automatically, same as a normal login.
+- **Firebase Console required:** the redirect domain (`tmontes30.github.io`) must be listed under Authentication → Settings → Authorized domains, or `sendPasswordResetEmail` fails.
 
 ### Registration Security
-- Confirm password field (`#auth-password-confirm`, `register-only`) validated on submit before calling Supabase.
-- Minimum 8 characters enforced on frontend. **Supabase dashboard:** Authentication → Policies → Minimum password length = 8 (server-side enforcement).
+- Confirm password field (`#auth-password-confirm`, `register-only`) validated on submit before calling Firebase.
+- Minimum 8 characters enforced on frontend (Firebase's own minimum is 6 — the 8-char rule is app-side only).
 - Password strength bar (`#password-strength`, `.strength-bar-fill`) appears while typing in register mode: Débil (<8), Buena (8+ with number), Fuerte (8+ with number + symbol). Driven by `input` listener on `#auth-password`.
+- `Auth.signupWithEmail()` creates the Firebase user, writes `nombre`/`apellido`/`rut`/`telefono`/`email` to `users/{uid}` in Firestore, then explicitly signs the user back out (`_suppressAuthEvents` flag prevents the transient sign-in from triggering `_setupApp()`) — registration requires an explicit login afterward, matching the pre-migration UX.
+- `_mapAuthError()` in `app.js` maps Firebase `error.code` values (`auth/wrong-password`, `auth/email-already-in-use`, etc.), not message substrings.
 
 ### Visual
 - `#auth-screen` background: `radial-gradient` with subtle purple tint.
@@ -127,7 +127,6 @@ The `expenses` table has:
 - **Computed hint:** always shows the auto-computed estimate as a reference regardless of mode.
 - **Category insights** (`_renderCategoryInsights`): shows last ≤6 complete months of real expenses grouped by category. Per category: % of total, avg/month, last month value, and a peak-month note if a month had 1.5× the last month's spend. Sorted by avg desc.
 - **Monthly summary** (`_renderMonthlySummary`): table of last 7 months with total and vs-budget column (only when a budget is set). Green = under budget, red = over.
-- **DB migration required:** `ALTER TABLE settings ADD COLUMN IF NOT EXISTS budget_amount NUMERIC(14,2), ADD COLUMN IF NOT EXISTS budget_mode TEXT NOT NULL DEFAULT 'auto';`
 
 ## Proyección Fija (Frozen Projection)
 

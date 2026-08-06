@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('auth-card').classList.remove('register');
         authPass.value = '';
         authError.style.cssText = 'display:block;color:var(--color-success)';
-        authError.textContent   = '✅ Cuenta creada. Ahora iniciá sesión.';
+        authError.textContent   = '✅ Cuenta creada. Ahora inicia sesión.';
         authSubmitBtn.disabled    = false;
         authSubmitBtn.textContent = 'Entrar';
         return;
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (error) {
       authError.style.cssText   = 'display:block';
-      authError.textContent     = _mapAuthError(error.message);
+      authError.textContent     = _mapAuthError(error);
       authSubmitBtn.disabled    = false;
       authSubmitBtn.textContent = isLogin ? 'Entrar' : 'Crear cuenta';
     }
@@ -230,10 +230,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const error = await Auth.sendPasswordReset(email);
     if (error) {
       msgEl.style.cssText  = 'display:block';
-      msgEl.textContent    = 'No se pudo enviar el email. Verificá la dirección.';
+      msgEl.textContent    = 'No se pudo enviar el email. Verifica la dirección.';
     } else {
       msgEl.style.cssText  = 'display:block;color:var(--color-success)';
-      msgEl.textContent    = '✅ Revisá tu email para continuar.';
+      msgEl.textContent    = '✅ Revisa tu email para continuar.';
     }
     btn.disabled    = false;
     btn.textContent = 'Enviar link';
@@ -434,14 +434,17 @@ function _validarRut(rut) {
   return /^\d{1,2}\.\d{3}\.\d{3}-[\dkK]$/.test(rut) || /^\d{7,8}-[\dkK]$/.test(rut);
 }
 
-function _mapAuthError(msg) {
-  if (msg.includes('Invalid login') || msg.includes('invalid_credentials'))
+function _mapAuthError(err) {
+  const code = err.code || '';
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found')
     return 'Email o contraseña incorrectos';
-  if (msg.includes('Email not confirmed'))
-    return 'Debes confirmar tu email primero';
-  if (msg.includes('User already registered'))
+  if (code === 'auth/email-already-in-use')
     return 'Ya existe una cuenta con ese email';
-  if (msg.includes('Password should'))
+  if (code === 'auth/weak-password')
     return 'La contraseña debe tener al menos 6 caracteres';
-  return msg;
+  if (code === 'auth/invalid-email')
+    return 'El email no tiene un formato válido';
+  if (code === 'auth/too-many-requests')
+    return 'Demasiados intentos. Intenta de nuevo más tarde';
+  return err.message || 'Ocurrió un error inesperado';
 }

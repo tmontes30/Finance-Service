@@ -1,225 +1,206 @@
-/* Storage — async Supabase CRUD wrapper */
+/* Storage — async Firestore CRUD wrapper */
 
-let _sb  = null; // supabase client
+let _db  = null; // firestore instance
 let _uid = null; // user id
+
+function _userDoc() { return _db.collection('users').doc(_uid); }
+function _col(name) { return _userDoc().collection(name); }
+
+async function _deleteInBatches(refs) {
+  for (let i = 0; i < refs.length; i += 500) {
+    const batch = _db.batch();
+    refs.slice(i, i + 500).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
+}
 
 const Storage = {
 
-  init(client, userId) {
-    _sb  = client;
+  init(db, userId) {
+    _db  = db;
     _uid = userId;
   },
 
   /* ---------- Expenses ---------- */
 
   async getExpenses() {
-    const { data, error } = await _sb.from('expenses').select('*')
-      .eq('user_id', _uid).order('date', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(r => ({
-      id:          r.id,
-      amount:      parseFloat(r.amount),
-      categoryId:  r.category_id,
-      accountId:   r.account_id || null,
-      description: r.description || '',
-      date:        r.date,
-      isPlanned:   r.is_planned  || false,
-      externalId:  r.external_id || null,
-      createdAt:   new Date(r.created_at).getTime()
-    }));
+    const snap = await _col('expenses').orderBy('date', 'desc').get();
+    return snap.docs.map(d => {
+      const r = d.data();
+      return {
+        id:          d.id,
+        amount:      r.amount,
+        categoryId:  r.categoryId,
+        accountId:   r.accountId || null,
+        description: r.description || '',
+        date:        r.date,
+        isPlanned:   r.isPlanned || false,
+        externalId:  r.externalId || null,
+        createdAt:   r.createdAt || 0
+      };
+    });
   },
 
   async addExpense(r) {
-    const { data, error } = await _sb.from('expenses').insert({
-      id: r.id, user_id: _uid, amount: r.amount,
-      category_id: r.categoryId, account_id: r.accountId || null,
+    const payload = {
+      amount: r.amount, categoryId: r.categoryId, accountId: r.accountId || null,
       description: r.description || '', date: r.date,
-      is_planned: r.isPlanned || false, external_id: r.externalId || null
-    }).select().single();
-    if (error) throw error;
-    return { id: data.id, amount: parseFloat(data.amount), categoryId: data.category_id,
-             accountId: data.account_id || null, description: data.description || '',
-             date: data.date, isPlanned: data.is_planned || false,
-             externalId: data.external_id || null,
-             createdAt: new Date(data.created_at).getTime() };
+      isPlanned: r.isPlanned || false, externalId: r.externalId || null,
+      createdAt: Date.now()
+    };
+    await _col('expenses').doc(r.id).set(payload);
+    return { id: r.id, ...payload };
   },
 
   async updateExpense(id, r) {
-    const { data, error } = await _sb.from('expenses').update({
-      amount: r.amount, category_id: r.categoryId, account_id: r.accountId || null,
+    const payload = {
+      amount: r.amount, categoryId: r.categoryId, accountId: r.accountId || null,
       description: r.description || '', date: r.date,
-      is_planned: r.isPlanned || false
-    }).eq('id', id).eq('user_id', _uid).select().single();
-    if (error) throw error;
-    return { id: data.id, amount: parseFloat(data.amount), categoryId: data.category_id,
-             accountId: data.account_id || null, description: data.description || '',
-             date: data.date, isPlanned: data.is_planned || false,
-             createdAt: new Date(data.created_at).getTime() };
+      isPlanned: r.isPlanned || false
+    };
+    await _col('expenses').doc(id).update(payload);
+    return { id, ...payload };
   },
 
   async deleteExpense(id) {
-    const { error } = await _sb.from('expenses').delete().eq('id', id).eq('user_id', _uid);
-    if (error) throw error;
+    await _col('expenses').doc(id).delete();
   },
 
   async deleteExpenses(ids) {
-    const { error } = await _sb.from('expenses').delete().in('id', ids).eq('user_id', _uid);
-    if (error) throw error;
+    await _deleteInBatches(ids.map(id => _col('expenses').doc(id)));
   },
 
   /* ---------- Categories ---------- */
 
   async getCategories() {
-    const { data, error } = await _sb.from('categories').select('*')
-      .eq('user_id', _uid).order('created_at', { ascending: true });
-    if (error) throw error;
-    return (data || []).map(r => ({
-      id: r.id, name: r.name, color: r.color, isPredefined: r.is_predefined
-    }));
+    const snap = await _col('categories').orderBy('createdAt', 'asc').get();
+    return snap.docs.map(d => {
+      const r = d.data();
+      return { id: d.id, name: r.name, color: r.color, isPredefined: r.isPredefined || false };
+    });
   },
 
   async addCategory(r) {
-    const { data, error } = await _sb.from('categories').insert({
-      id: r.id, user_id: _uid, name: r.name, color: r.color,
-      is_predefined: r.isPredefined || false
-    }).select().single();
-    if (error) throw error;
-    return { id: data.id, name: data.name, color: data.color, isPredefined: data.is_predefined };
+    const payload = { name: r.name, color: r.color, isPredefined: r.isPredefined || false, createdAt: Date.now() };
+    await _col('categories').doc(r.id).set(payload);
+    return { id: r.id, name: payload.name, color: payload.color, isPredefined: payload.isPredefined };
   },
 
   async updateCategory(id, r) {
-    const { data, error } = await _sb.from('categories').update({
-      name: r.name, color: r.color
-    }).eq('id', id).eq('user_id', _uid).select().single();
-    if (error) throw error;
-    return { id: data.id, name: data.name, color: data.color, isPredefined: data.is_predefined };
+    const payload = { name: r.name, color: r.color };
+    await _col('categories').doc(id).update(payload);
+    return { id, name: payload.name, color: payload.color };
   },
 
   async deleteCategory(id) {
-    const { error } = await _sb.from('categories').delete().eq('id', id).eq('user_id', _uid);
-    if (error) throw error;
+    await _col('categories').doc(id).delete();
   },
 
   /* ---------- Accounts ---------- */
 
   async getAccounts() {
-    const { data, error } = await _sb.from('accounts').select('*')
-      .eq('user_id', _uid).order('created_at', { ascending: true });
-    if (error) throw error;
-    return (data || []).map(r => ({
-      id: r.id, name: r.name, type: r.type,
-      balance: parseFloat(r.balance), notes: r.notes || '', color: r.color
-    }));
+    const snap = await _col('accounts').orderBy('createdAt', 'asc').get();
+    return snap.docs.map(d => {
+      const r = d.data();
+      return { id: d.id, name: r.name, type: r.type, balance: r.balance, notes: r.notes || '', color: r.color };
+    });
   },
 
   async addAccount(r) {
-    const { data, error } = await _sb.from('accounts').insert({
-      id: r.id, user_id: _uid, name: r.name, type: r.type,
-      balance: r.balance, notes: r.notes || '', color: r.color
-    }).select().single();
-    if (error) throw error;
-    return { id: data.id, name: data.name, type: data.type,
-             balance: parseFloat(data.balance), notes: data.notes || '', color: data.color };
+    const payload = {
+      name: r.name, type: r.type, balance: r.balance,
+      notes: r.notes || '', color: r.color, createdAt: Date.now()
+    };
+    await _col('accounts').doc(r.id).set(payload);
+    return { id: r.id, name: payload.name, type: payload.type, balance: payload.balance,
+             notes: payload.notes, color: payload.color };
   },
 
   async updateAccount(id, r) {
-    const { data, error } = await _sb.from('accounts').update({
-      name: r.name, type: r.type, balance: r.balance, notes: r.notes || '', color: r.color
-    }).eq('id', id).eq('user_id', _uid).select().single();
-    if (error) throw error;
-    return { id: data.id, name: data.name, type: data.type,
-             balance: parseFloat(data.balance), notes: data.notes || '', color: data.color };
+    const payload = { name: r.name, type: r.type, balance: r.balance, notes: r.notes || '', color: r.color };
+    await _col('accounts').doc(id).update(payload);
+    return { id, ...payload };
   },
 
   async deleteAccount(id) {
-    const { error } = await _sb.from('accounts').delete().eq('id', id).eq('user_id', _uid);
-    if (error) throw error;
+    await _col('accounts').doc(id).delete();
   },
 
   async adjustAccountBalance(id, delta) {
-    const { data: acc, error: fetchErr } = await _sb.from('accounts')
-      .select('balance').eq('id', id).eq('user_id', _uid).single();
-    if (fetchErr || !acc) return;
-    const newBal = parseFloat((parseFloat(acc.balance) + delta).toFixed(2));
-    const { error } = await _sb.from('accounts').update({ balance: newBal })
-      .eq('id', id).eq('user_id', _uid);
-    if (error) throw error;
+    const ref = _col('accounts').doc(id);
+    await _db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      const newBal = parseFloat(((snap.data().balance || 0) + delta).toFixed(2));
+      tx.update(ref, { balance: newBal });
+    });
   },
 
   /* ---------- Incomes ---------- */
 
   async getIncomes() {
-    const { data, error } = await _sb.from('incomes').select('*')
-      .eq('user_id', _uid).order('date', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(r => ({
-      id: r.id, accountId: r.account_id, amount: parseFloat(r.amount),
-      description: r.description || '', date: r.date,
-      externalId: r.external_id || null,
-      createdAt: new Date(r.created_at).getTime()
-    }));
+    const snap = await _col('incomes').orderBy('date', 'desc').get();
+    return snap.docs.map(d => {
+      const r = d.data();
+      return {
+        id: d.id, accountId: r.accountId, amount: r.amount,
+        description: r.description || '', date: r.date,
+        externalId: r.externalId || null,
+        createdAt: r.createdAt || 0
+      };
+    });
   },
 
   async addIncome(r) {
-    const { data, error } = await _sb.from('incomes').insert({
-      id: r.id, user_id: _uid, account_id: r.accountId, amount: r.amount,
-      description: r.description || '', date: r.date, external_id: r.externalId || null
-    }).select().single();
-    if (error) throw error;
-    return { id: data.id, accountId: data.account_id, amount: parseFloat(data.amount),
-             description: data.description || '', date: data.date,
-             externalId: data.external_id || null,
-             createdAt: new Date(data.created_at).getTime() };
+    const payload = {
+      accountId: r.accountId, amount: r.amount,
+      description: r.description || '', date: r.date,
+      externalId: r.externalId || null, createdAt: Date.now()
+    };
+    await _col('incomes').doc(r.id).set(payload);
+    return { id: r.id, ...payload };
   },
 
   async updateIncome(id, r) {
-    const { data, error } = await _sb.from('incomes').update({
-      account_id: r.accountId, amount: r.amount,
-      description: r.description || '', date: r.date
-    }).eq('id', id).eq('user_id', _uid).select().single();
-    if (error) throw error;
-    return { id: data.id, accountId: data.account_id, amount: parseFloat(data.amount),
-             description: data.description || '', date: data.date,
-             createdAt: new Date(data.created_at).getTime() };
+    const payload = { accountId: r.accountId, amount: r.amount, description: r.description || '', date: r.date };
+    await _col('incomes').doc(id).update(payload);
+    return { id, ...payload };
   },
 
   async deleteIncome(id) {
-    const { error } = await _sb.from('incomes').delete().eq('id', id).eq('user_id', _uid);
-    if (error) throw error;
+    await _col('incomes').doc(id).delete();
   },
 
   /* ---------- Settings ---------- */
 
   async getSettings() {
-    const { data } = await _sb.from('settings').select('*').eq('user_id', _uid).maybeSingle();
-    if (!data) return { currency: '$', dashboardPeriod: 'month', version: 1, projIncome: null, projExpenses: null, projSnapshotPatrimony: null, projSnapshotDate: null, budgetAmount: null, budgetMode: 'auto' };
+    const snap = await _userDoc().get();
+    const data = snap.exists ? snap.data() : {};
     return {
-      currency:              data.currency,
-      dashboardPeriod:       data.dashboard_period,
-      version:               data.version,
-      projIncome:            data.proj_income    != null ? parseFloat(data.proj_income)    : null,
-      projExpenses:          data.proj_expenses  != null ? parseFloat(data.proj_expenses)  : null,
-      projSnapshotPatrimony: data.proj_snapshot_patrimony != null ? parseFloat(data.proj_snapshot_patrimony) : null,
-      projSnapshotDate:      data.proj_snapshot_date || null,
-      budgetAmount:          data.budget_amount  != null ? parseFloat(data.budget_amount)  : null,
-      budgetMode:            data.budget_mode    || 'auto'
+      currency:              data.currency || '$',
+      dashboardPeriod:       data.dashboardPeriod || 'month',
+      version:               data.version || 1,
+      projIncome:            data.projIncome            != null ? data.projIncome            : null,
+      projExpenses:          data.projExpenses          != null ? data.projExpenses          : null,
+      projSnapshotPatrimony: data.projSnapshotPatrimony != null ? data.projSnapshotPatrimony : null,
+      projSnapshotDate:      data.projSnapshotDate || null,
+      budgetAmount:          data.budgetAmount != null ? data.budgetAmount : null,
+      budgetMode:            data.budgetMode || 'auto'
     };
   },
 
   async saveSettings(s) {
     const payload = {
-      user_id:          _uid,
       currency:         s.currency,
-      dashboard_period: s.dashboardPeriod,
+      dashboardPeriod:  s.dashboardPeriod,
       version:          s.version || 1,
-      budget_mode:      s.budgetMode || 'auto',
-      budget_amount:    s.budgetAmount != null ? s.budgetAmount : null
+      budgetMode:       s.budgetMode || 'auto',
+      budgetAmount:     s.budgetAmount != null ? s.budgetAmount : null
     };
-    if (s.projIncome            != null) payload.proj_income              = s.projIncome;
-    if (s.projExpenses          != null) payload.proj_expenses            = s.projExpenses;
-    if (s.projSnapshotPatrimony != null) payload.proj_snapshot_patrimony  = s.projSnapshotPatrimony;
-    if (s.projSnapshotDate      != null) payload.proj_snapshot_date       = s.projSnapshotDate;
-    const { error } = await _sb.from('settings').upsert(payload);
-    if (error) throw error;
+    if (s.projIncome            != null) payload.projIncome            = s.projIncome;
+    if (s.projExpenses          != null) payload.projExpenses          = s.projExpenses;
+    if (s.projSnapshotPatrimony != null) payload.projSnapshotPatrimony = s.projSnapshotPatrimony;
+    if (s.projSnapshotDate      != null) payload.projSnapshotDate      = s.projSnapshotDate;
+    await _userDoc().set(payload, { merge: true });
   }
 };

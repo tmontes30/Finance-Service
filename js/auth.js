@@ -70,16 +70,13 @@ const Auth = {
       Projection.init();
       BudgetView.init();
 
-      const emailEl = document.getElementById('nav-user-email');
-      if (emailEl) {
-        let label = this._user.email;
-        try {
-          const profileSnap = await this._db.collection('users').doc(this._user.uid).get();
-          const p = profileSnap.data();
-          if (p && p.nombre && p.apellido) label = `${p.nombre} ${p.apellido}`;
-        } catch (_) { /* usa el email como fallback */ }
-        emailEl.textContent = label;
-      }
+      let name = this._user.displayName || '';
+      try {
+        const profileSnap = await this._db.collection('users').doc(this._user.uid).get();
+        const p = profileSnap.data();
+        if (p && p.nombre && p.apellido) name = `${p.nombre} ${p.apellido}`;
+      } catch (_) { /* usa el displayName / email como fallback */ }
+      setUserProfile(name, this._user.email);
 
       this._hideAuth();
       await Router.navigate('dashboard');
@@ -157,13 +154,11 @@ const Auth = {
   _showAuth() {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-wrapper').style.display = 'none';
-    document.getElementById('btn-fab').classList.remove('fab-active');
   },
 
   _hideAuth() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display  = 'block';
-    document.getElementById('btn-fab').classList.add('fab-active');
   },
 
   _hideSplash() {

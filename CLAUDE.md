@@ -25,25 +25,31 @@ The app is a vanilla JS single-page application backed by Firebase (Firestore + 
 
 **Data flow:** Feature modules call `Data.*` → `Storage.*` → Firestore API.
 
+**Storage cache:** `Storage.get{Expenses,Incomes,Accounts,Categories}()` keep an in-memory per-collection cache (the promise is cached so parallel reads share one query). Every write method is wrapped at the bottom of `storage.js` to invalidate its collection before and after the write. `Storage.invalidateAll()` runs when the app returns after >60s in background (`visibilitychange` in `app.js`) so changes made from other devices show up. If you add a new write method, add it to that wrapper list.
+
+**Dates:** always use `localISODate(d?)` (defined in `data.js`) for `YYYY-MM-DD`. Never `toISOString()` — it is UTC, and in Chile after ~21:00 it returns tomorrow's date.
+
 **Firestore data model:** everything lives under `users/{uid}` — isolation is by document path, not a `user_id` filter column. `users/{uid}` itself holds the profile (`nombre`, `apellido`, `rut`, `telefono`, `email`) and the settings fields (`currency`, `dashboardPeriod`, `projIncome`, `projExpenses`, `projSnapshotPatrimony`, `projSnapshotDate`, `budgetAmount`, `budgetMode`). Subcollections `users/{uid}/expenses`, `.../incomes`, `.../accounts`, `.../categories` hold the corresponding records, same `id`s as `genId()` generates. Security rules (`firestore.rules`, must be published in Firebase Console → Firestore → Rules) allow read/write only when `request.auth.uid == uid`.
 
-**Routing:** `Router` object in `app.js` shows/hides `#view-{name}` elements and calls each module's `render()`. Active view is `Router._current` (string).
+**Routing:** `Router` object in `app.js` shows/hides `#view-{name}` elements and calls each module's `render()`. Active view is `Router._current` (string). `Router.refresh()` re-renders only the current view — call it after any save/delete (other views render when navigated to).
 
 **Account balance:** Stored directly on the `accounts` row and mutated by `Storage.adjustAccountBalance()` whenever an expense or income is added, updated, or deleted. There is no derived calculation. Planned expenses (`isPlanned: true`) do NOT adjust account balances.
 **Incomes:** A first-class entity (table: `incomes`) linked to an account. Adding income increases account balance; deleting reverses it. The `accounts.js` view renders both the account list and the income history for each account (`#income-history-section`).
 
-**Account balance adjustment:** When editing an account (⚙️), a "Ajustar saldo" section appears below the balance field. The user picks `+ Sumar` or `− Restar`, enters an amount, and sees a live preview (`$X + $Y = $Z`). On save, `finalBalance = storedBalance ± delta`. This is for reconciling investment accounts without recording the change as income or expense. The current balance during edit is stored in `Accounts._editingBalance`.
+**Account balance adjustment:** When editing an account (tap its row), a "Ajustar saldo" section appears below the balance field. The user picks `+ Sumar` or `− Restar`, enters an amount, and sees a live preview (`$X + $Y = $Z`). On save, `finalBalance = storedBalance ± delta`. This is for reconciling investment accounts without recording the change as income or expense. The current balance during edit is stored in `Accounts._editingBalance`.
 
 ## Key Conventions
 
 - **Firebase credentials** are in `js/config.js` (`FIREBASE_CONFIG` — public web config, safe to commit; protected by Firestore security rules, not secrecy).
 - **Firestore security rules** are in `firestore.rules` — must be manually published in Firebase Console → Firestore Database → Rules after any change (editing the file locally does nothing on its own).
-- **UI patterns:** Modals and toast notifications are managed through `ui.js`. Use `UI.confirm()` / `UI.toast()` for user feedback.
+- **UI patterns:** Modals and toast notifications are managed through `ui.js`. Use `UI.confirm(message, onConfirm, { okLabel, danger })` / `UI.toast()` for user feedback. Open/close every modal with `UI.openModal(id, { onClose })` / `UI.closeModal(id)` — never set `style.display` directly (the helpers handle the stack, animation, body scroll lock, swipe-to-dismiss and the iOS keyboard viewport). Buttons with `data-close="modal-id"` close automatically; ESC closes the top modal.
+- **Icons:** SVG sprite at the top of `<body>` in `index.html` (`<symbol id="i-NAME">`). In HTML: `<svg class="i"><use href="#i-NAME"/></svg>`; in JS: `UI.icon('NAME')`. No emoji in UI chrome. New icons go in the sprite (stroke-based, 24×24, lucide style). `ACCOUNT_TYPES[type].svg` names the icon of each account type.
+- **Lists:** rows are `.tx-row` inside `.list-group` (iOS inset grouped). `UI.txIcon(color, content)` draws the colored leading icon. Tapping a row opens its edit sheet; delete lives inside the edit sheet (`#btn-expense-delete`, `#btn-income-delete`, `#btn-account-delete`).
 - **Language:** The UI is in **neutral Spanish** (no Argentine voseo). Use `tú` forms: "quieres", "puedes", "ingresa", "define" — never "querés", "podés", "ingresá", "definí".
-- **Theme:** Dark/light toggle persisted to `localStorage` (`financeTheme`). CSS vars are defined in `:root` (dark) and overridden in `[data-theme="light"]` in `css/main.css`. **Never hardcode colors** — always use `var(--color-*)`. For Chart.js colors that can't use CSS vars, read them at render time with `getComputedStyle(document.documentElement).getPropertyValue('--color-surface')`.
+- **Theme:** `Theme` object in `app.js`; preference `'dark' | 'light' | 'system'` persisted to `localStorage` (`financeTheme`), chosen in the Ajustes sheet (`#theme-segment`). An inline script in `<head>` applies it before first paint. Tokens are defined in `:root` (dark) and overridden in `[data-theme="light"]` in `css/main.css`, including `--chart-*` (charts) and `--hero-*` (purple hero card). **Never hardcode colors** — always use `var(--color-*)`. Chart.js reads colors via `Dashboard._theme()` (getComputedStyle); on theme change `Dashboard.resetCharts()` + `Projection.resetChart()` destroy the charts so they are rebuilt with the new colors. `meta[name=theme-color]` is synced to `--color-bg`.
 - **Predefined categories:** 8 default categories (`PREDEFINED_CATEGORIES` in `data.js`) are seeded into the database on first login. `ACCOUNT_TYPES` (6 types) is a client-side constant only, never stored in DB.
 - **`PatrimonioToggle`** in `app.js` persists wealth-masking state to `localStorage` (`patrimonioHidden`).
-- **Favicon:** Inline SVG in `<head>` — purple rounded square with ⚡, no external file needed.
+- **Favicon / PWA:** Inline SVG favicon in `<head>`. `icons/apple-touch-icon.png` (180), `icons/icon-192.png`, `icons/icon-512.png`, `icons/icon-maskable-512.png` + `manifest.webmanifest` let users "Agregar a pantalla de inicio" on iPhone and run it standalone (`apple-mobile-web-app-status-bar-style: black-translucent`, so safe-area padding matters). No service worker.
 
 ## Gastos Previstos
 
@@ -54,9 +60,9 @@ Key behaviours:
 - `updateExpense` compares old/new `isPlanned` state to correctly apply or reverse balance adjustments.
 - In `projection.js`, planned expenses for future months are subtracted as one-off deductions from the projected line (`plannedThisMonth` per month key); excluded from real-line reconstruction. Each month object carries `plannedThisMonth` so the detail table adds it to Gastos and Balance columns.
 - **Dashboard filtering:** `dashboard.js` excludes planned expenses whose month ≠ selected month at the top of `render()`. Monthly stat uses `date.startsWith(selKey)` — never `>= monthFrom` — to prevent future dates leaking into current month totals.
-- A yellow `.planned-badge` shows the target month (`YYYY/MM`) in the expenses list.
-- The expense modal checkbox shows a hint explaining the concept; when checked, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?") replaces the date field; `date` is set to `YYYY-MM-01` on save.
-- Expenses list filter: "Solo previstos (futuros)" / "Solo reales (realizados)".
+- In the expenses list, planned expenses are grouped under "Previsto · <Mes Año>" with a yellow `.planned-badge` ("Previsto"; flat lists and the dashboard show `Previsto MM/YYYY`).
+- The expense sheet toggle ("Gasto previsto") shows a hint explaining the concept; when on, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?", defaults to next month) replaces the date field; `date` is set to `YYYY-MM-01` on save.
+- Expenses list segmented control `#type-segment`: Todos / Realizados / Previstos (`Expenses._type`).
 - Field: `isPlanned` on each `users/{uid}/expenses/{id}` document.
 
 ## Firestore Field Notes
@@ -69,22 +75,25 @@ Firestore is schemaless — new fields just get written, no migration step neede
 
 ## Dashboard
 
+- **Layout (mobile):** greeting + large title → purple hero card (patrimonio + net savings of the selected month in `#hero-sub`) → month navigator → "Gastado este mes" card (`#stat-cards`: big `#stat-month`, budget bar, mini stats Hoy / Ingresos del mes / En el año) → "Últimos gastos" (`#recent-list`, 5 most recent of the selected month, tap to edit) → charts. Desktop (≥1024px) splits into two columns (`.dash-grid`).
 - **Month navigation:** `Dashboard._monthOffset` (0 = current month, negative = past). `‹`/`›` arrows update offset and re-render. All stats filter to the selected month (`selKey = YYYY-MM`). The `›` arrow is disabled when on the current month. Charts shift their 12-month window based on `selDate`.
-- **Period selector** (Este mes / 3 meses / Año / Todo) is hidden when `_monthOffset !== 0` — it doesn't make sense for past months.
-- **Category chart** uses `monthExpenses` (filtered to `selKey`) when `_monthOffset !== 0`, so navigating to a past month shows that month's category breakdown.
-- **Chart theme awareness:** When the theme toggle is clicked and `Router._current === 'dashboard'`, `Dashboard.render()` is called to refresh charts with the new theme's surface color.
+- **Period selector** (Mes / 3M / Año / Todo, `#period-selector`) lives in the "Por categoría" card header because it only affects that chart. Hidden when `_monthOffset !== 0`.
+- **Category chart** uses `monthExpenses` (filtered to `selKey`) when `_monthOffset !== 0`. Doughnut with the total in the center (`#donut-total`) and an HTML legend (`#category-legend`, top 5 + "Otras").
+- **Chart axes** use `Dashboard._compact()` ($1,2M / $450k) so they fit on iPhone; tooltips show full amounts and full month names.
 - **Charts:**
   - Monthly bar (12 months, shifts with `selDate`)
   - Category doughnut (respects selected month)
   - Net savings bar (`_renderSavingsChart`) — income minus real expenses per month for last 12 months, green/red per month. Always uses current date, not `selDate`. Canvas `#chart-savings`.
+  - Accounts section: income vs expenses (6 months) and balance per account (height grows with the number of accounts).
 
 ## Auth / Login
 
 ### Splash Screen
 - `#splash-screen` (`.splash-screen`) is shown by default on page load (`z-index: 10000`, above everything).
 - `#auth-screen` starts with `display:none` — the splash covers it during session restore.
+- After login, `auth.js` calls `setUserProfile(name, email)` (app.js), which fills the avatars (`[data-avatar]` initials), the Ajustes profile and the dashboard greeting.
 - `Auth._hideSplash()` adds `.splash-hidden` (opacity → 0, transition 0.4s) then removes the element after 420ms. Called after the first `onAuthStateChanged` resolution, regardless of whether a session exists.
-- Design: full-screen `--color-bg` background, large ⚡ with pulse animation, "Finance" gradient text, three bouncing dots (`@keyframes splash-dot`).
+- Design: full-screen `--color-bg` background, purple app icon with ⚡ (pulse animation) and three bouncing dots (`@keyframes splash-dot`).
 
 ### Forgot Password Flow
 - "¿Olvidaste tu contraseña?" button (`#auth-forgot-link`) is visible in login mode only (hidden in register mode via `authToggle` click handler).
@@ -103,8 +112,7 @@ Firestore is schemaless — new fields just get written, no migration step neede
 - `_mapAuthError()` in `app.js` maps Firebase `error.code` values (`auth/wrong-password`, `auth/email-already-in-use`, etc.), not message substrings.
 
 ### Visual
-- `#auth-screen` background: `radial-gradient` with subtle purple tint.
-- `.auth-card`: `border-top: 3px solid var(--color-primary)`, `box-shadow: 0 8px 32px rgba(0,0,0,0.25)`.
+- Flat full-screen layout (no card) with the app icon, large 16px inputs (required so iOS doesn't zoom) and a show/hide password button (`.password-reveal`).
 
 ## Budget Prediction (`js/budget.js`)
 
@@ -117,16 +125,16 @@ Firestore is schemaless — new fields just get written, no migration step neede
   - `'manual'`: uses `settings.budgetAmount` as the budget; recomputes `pct` and `delta` against that amount. Adds `isManual: true` and `computedBudget` (the auto estimate) to the result.
   - `'auto'`: returns `Budget.compute()` result unchanged.
   - Works even with no history (returns current-month spending vs manual amount).
-- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` card. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
+- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` (inside the month card), `#budget-months-tag` and a "Te quedan $X / Te pasaste por $X" footer. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
 - **Progress bar color:** green < 51%, amber 51–84%, red ≥ 85%.
 
 ## Presupuesto Tab (`js/budget-view.js`)
 
-- 6th nav tab, `#view-budget`, rendered by `BudgetView.render()`.
+- `#view-budget`, rendered by `BudgetView.render()`. On iPhone it shares the "Plan" tab with Proyección: both views have a `.plan-switch` segmented control (`.plan-switch-btn[data-view]`), and the tab remembers the last one used (`Router._lastPlan`).
 - **Budget mode toggle:** Manual (user sets amount) vs Automático (uses `Budget.compute()`). Saved to `settings.budgetMode` + `settings.budgetAmount`.
 - **Computed hint:** always shows the auto-computed estimate as a reference regardless of mode.
 - **Category insights** (`_renderCategoryInsights`): shows last ≤6 complete months of real expenses grouped by category. Per category: % of total, avg/month, last month value, and a peak-month note if a month had 1.5× the last month's spend. Sorted by avg desc.
-- **Monthly summary** (`_renderMonthlySummary`): table of last 7 months with total and vs-budget column (only when a budget is set). Green = under budget, red = over.
+- **Monthly summary** (`_renderMonthlySummary`): rows (`.month-row`, not a table — tables overflowed on iPhone) for the last 7 months with total, count, and a progress bar + difference vs the effective budget (manual amount or auto estimate). Green = under, red = over.
 
 ## Proyección Fija (Frozen Projection)
 
@@ -141,21 +149,25 @@ Firestore is schemaless — new fields just get written, no migration step neede
 
 ## Categorías (`js/categories.js`)
 
-Las categorías **no tienen pestaña propia** — están integradas como panel colapsable al inicio de la vista Gastos (`#view-expenses`).
+Las categorías **no tienen pestaña propia**: se gestionan en una hoja (`#modal-categories`) que se abre desde Ajustes (fila `#btn-toggle-categories`, con el total en `#categories-count-badge`) o desde el botón "Categorías" de la vista Gastos en escritorio (`#btn-open-categories`). `Categories.open()` abre la hoja y renderiza.
 
-- **Toggle:** `#btn-toggle-categories` muestra/oculta `#categories-panel-body`. El badge `#categories-count-badge` muestra el total de categorías.
-- **Agregar:** fila inline con `#new-cat-name`, `#new-cat-color`, `#btn-save-category`. Enter en el input también guarda.
-- **Lista:** chips compactos (`.cat-chip`) con swatch de color, nombre, contador de gastos, botón editar (✏️) y eliminar (✕). Las predefinidas no tienen botón eliminar.
-- **Editar inline:** `_startEdit(id)` reemplaza el nombre del chip con inputs en línea.
-- **Router:** `'categories'` fue eliminado de `Router._views` y `_viewNames`. `Categories.render()` ya no se llama desde el Router — se llama al abrir el panel.
+- **Agregar:** fila con `#new-cat-color`, `#new-cat-name`, `#btn-save-category`. Enter en el input también guarda.
+- **Lista:** filas `.tx-row.cat-row` con inicial de color, nombre, contador de gastos, editar (lápiz) y eliminar (papelera). Las predefinidas no tienen botón eliminar; una categoría con gastos tampoco se puede eliminar.
+- **Editar inline:** `_startEdit(id)` reemplaza el contenido de la fila con color + nombre + guardar/cancelar.
+- En el formulario de gasto las categorías se eligen con chips (`#expense-category-chips`); el valor va en el input oculto `#expense-category`.
 
-## Responsive / Mobile
+## Responsive / Mobile (iPhone-first)
 
-- Breakpoints: `≤900px` (tablet), `≤640px` (mobile), `≤380px` (very small) — all in `css/responsive.css`.
-- **Mobile navbar:** Single-row `[⚡] [scrollable tabs] [☰]`. On mobile `.brand-name` ("Finance") is hidden — only the ⚡ icon shows — to maximise tab space. The 🌙 theme toggle is also hidden from the navbar (`display: none !important`) and moved to the mobile subheader instead.
-- **Mobile subheader** (`.mobile-subheader`, `#mobile-subheader`): `position: fixed; top: var(--nav-height); height: 40px`. Shows the current view name on the left and the 🌙 theme toggle on the right. `Router.navigate()` updates `#mobile-view-name`. The dashboard shows "Finance" (not "Dashboard") here — defined in `Router._viewNames`. Main content has extra `margin-top: calc(56px + 40px)` on mobile to account for this bar. View `h1` headings and `.view-subtitle` are hidden on mobile (`.view-header > h1 { display: none }`); `.view-title-group` (budget view wrapper div) is also hidden.
-- **Hamburger dropdown** (`#navbar-dropdown`): floating card (`padding: 0.4rem`, inner items use `border-radius: var(--radius)`, no per-item borders). Contains 5 nav tabs (`.nav-link-drop[data-view]`) — Dashboard, Cuentas, Gastos, Proyección, Presupuesto — then a subtle divider (`.navbar-dropdown-divider`), then "Agregar Gasto" y "Salir". Nav links wired via `querySelectorAll('.nav-link-drop[data-view]')` in `app.js`. **Categorías fue eliminada del nav** — vive dentro de la vista Gastos.
-- **FAB** (`#btn-fab`): 58px purple circle with `+`, `position: fixed` bottom-right, `z-index: 500`. Outside `#app-wrapper` (end of `<body>`) so `position: fixed` works reliably on iOS Safari. Shown via `.fab-active` class toggled in `auth._hideAuth()` / `auth._showAuth()`; only visible on mobile via `@media (max-width: 640px)`. **FAB hides when expense modal opens** (`UI.openExpenseModal` removes `.fab-active`; `closeExpenseModal` restores it).
-- **Modal scroll:** `.modal` uses `display:flex; flex-direction:column; max-height:90vh`. Only `.modal-body` has `overflow-y:auto` — header and footer (Save button) always visible.
-- **Modal sizing:** Reduced padding (header `0.9rem 1.25rem`, body `1.1rem 1.25rem`, footer `0.75rem 1.25rem`). Inputs/selects inside modal use `font-size: 0.875rem; padding: 0.4rem 0.65rem` for a compact feel.
+The base CSS is **mobile-first** (designed for iPhone). `css/responsive.css` adds `≥600px` (tablet: centered dialogs instead of bottom sheets, 2-col charts) and `≥1024px` (desktop: top navbar, two-column dashboard/plan), plus a `≤375px` tweak for iPhone SE/mini. Hover styles only apply under `@media (hover: hover) and (pointer: fine)`.
+
+- **Viewport:** `viewport-fit=cover`; safe areas via `--safe-top/bottom/left/right` (`env(safe-area-inset-*)`). Header, tab bar, sheets and toasts all pad for the notch / Dynamic Island and the home indicator.
+- **Inputs:** every input/select is ≥16px (`1rem`) — smaller sizes make iOS Safari zoom on focus. Money fields use `inputmode="numeric"` + `UI.attachMoneyFormat`. Touch targets are ≥44px.
+- **Tab bar** (`.tabbar`, phone/tablet only): Inicio · Gastos · ➕ (`#btn-fab`, opens the new-expense sheet) · Cuentas · Plan (`data-group="plan"` → Presupuesto/Proyección). Tapping the active tab scrolls to top.
+- **Header** (`#app-header`, phone/tablet only): transparent over the large view title; turns into a blurred bar with the compact title (`#mobile-view-name`, from `Router._viewNames`) after scrolling 36px (`Header` in `app.js`). Right side: avatar button → Ajustes.
+- **Desktop navbar** (`.navbar`, ≥1024px): links, "+ Agregar" (`#btn-add-expense`) and avatar (`#btn-open-settings`).
+- **Ajustes sheet** (`#modal-settings`): profile, theme (Oscuro/Claro/Auto), "Ocultar patrimonio" (synced with `PatrimonioToggle`), Categorías, Exportar CSV, Cerrar sesión (`#btn-logout`, asks for confirmation).
+- **Sheets:** on phones every modal is a bottom sheet (`.modal` slides up, `.sheet-grabber`, drag the header down to dismiss). The overlay follows `visualViewport` (`--vvh`, `--vv-top`) so the sheet sits above the iOS keyboard. Footer buttons are full-width and padded for the home indicator. `UI.confirm` renders as an iOS action sheet.
+- **Keyboard on open:** iOS only shows the keyboard if `focus()` happens inside the tap. `UI.focusWithKeyboard(el)` focuses a hidden proxy input synchronously and then moves focus to the real field; `openExpenseModal` / `Accounts.openIncomeModal` do their synchronous setup first and only then await data.
+- **Gasto ↔ Ingreso:** the new-expense and new-income sheets have a segmented switch at the top (`#expense-kind-switch`, `#income-kind-switch`) that swaps sheets keeping the typed amount. The last account used for an expense is preselected (`localStorage.lastAccountId`).
+- **Expenses view:** live search (`#filter-text`), filters sheet (`#modal-filters`: sort field, category, dates, amounts), removable active-filter chips, list grouped by day with daily totals, "Mostrar más" (40 per page), and "Seleccionar" mode with a floating `.bulk-bar` for bulk delete.
 - **Logo click:** `#navbar-brand` click → `Router.navigate('dashboard')`.

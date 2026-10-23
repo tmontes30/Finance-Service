@@ -2,23 +2,85 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Finance</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237c3aed'/><text y='78' x='50' text-anchor='middle' font-size='68'>⚡</text></svg>">
+  <meta name="description" content="Tus finanzas personales en la nube">
+  <meta name="theme-color" id="meta-theme-color" content="#0a0a10">
+  <meta name="color-scheme" content="dark light">
+  <meta name="format-detection" content="telephone=no">
+  <!-- iPhone: instalar como app desde "Agregar a pantalla de inicio" -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Finance">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237c5cff'/><text y='78' x='50' text-anchor='middle' font-size='68'>⚡</text></svg>">
+  <!-- Aplica el tema antes de pintar para evitar el parpadeo -->
+  <script>
+    (function () {
+      var pref = 'dark';
+      try { pref = localStorage.getItem('financeTheme') || 'dark'; } catch (_) {}
+      var theme = pref === 'system'
+        ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+        : pref;
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 
+  <!-- ===== ICON SPRITE ===== -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
+      <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+      <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><path d="M3 7h16a2 2 0 0 1 2 2v3h-5a2 2 0 0 0 0 4h5"/></symbol>
+      <symbol id="i-pie" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9v9z"/><path d="M15 3.3A9 9 0 0 1 20.7 9H15z"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+      <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.7 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.2 3.1M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M2 2l20 20"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/></symbol>
+      <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="m15 5 4 4"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-sort" viewBox="0 0 24 24"><path d="m3 16 4 4 4-4M7 20V4M21 8l-4-4-4 4M17 4v16"/></symbol>
+      <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+      <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+      <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></symbol>
+      <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21 8 9l4-6 4 6-4 12"/></symbol>
+      <symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
+      <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+      <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+      <symbol id="i-arrow-in" viewBox="0 0 24 24"><path d="M17 7 7 17M17 17H7V7"/></symbol>
+      <symbol id="i-arrow-out" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></symbol>
+    </defs>
+  </svg>
+
   <!-- ===== SPLASH SCREEN ===== -->
   <div id="splash-screen" class="splash-screen">
     <div class="splash-content">
-      <span class="splash-icon">⚡</span>
-      <h1 class="splash-name">Finance</h1>
-      <div class="splash-dots">
-        <span></span><span></span><span></span>
-      </div>
+      <div class="splash-icon"><svg class="i i-fill"><use href="#i-zap"/></svg></div>
+      <div class="splash-dots"><span></span><span></span><span></span></div>
     </div>
   </div>
 
@@ -26,24 +88,23 @@
   <div id="auth-screen" class="auth-screen" style="display:none">
     <div class="auth-card" id="auth-card">
       <div class="auth-logo">
-        <span class="auth-logo-icon">⚡</span>
+        <div class="app-icon"><svg class="i i-fill"><use href="#i-zap"/></svg></div>
         <h1 class="auth-logo-name">Finance</h1>
-        <p class="auth-logo-sub">Tus finanzas personales en la nube</p>
+        <p class="auth-logo-sub">Tus finanzas personales, claras y en un solo lugar</p>
       </div>
 
       <h2 class="auth-title" id="auth-title">Iniciar sesión</h2>
 
       <form id="auth-form" novalidate>
-
         <!-- Campos solo para registro -->
         <div class="form-row register-only" style="display:none">
           <div class="form-group">
             <label for="auth-nombre">Nombre</label>
-            <input type="text" id="auth-nombre" class="form-input" placeholder="Juan" autocomplete="given-name">
+            <input type="text" id="auth-nombre" class="form-input" placeholder="Juan" autocomplete="given-name" autocapitalize="words">
           </div>
           <div class="form-group">
             <label for="auth-apellido">Apellido</label>
-            <input type="text" id="auth-apellido" class="form-input" placeholder="Pérez" autocomplete="family-name">
+            <input type="text" id="auth-apellido" class="form-input" placeholder="Pérez" autocomplete="family-name" autocapitalize="words">
           </div>
         </div>
         <div class="form-group register-only" style="display:none">
@@ -59,12 +120,17 @@
         <div class="form-group">
           <label for="auth-email">Email</label>
           <input type="email" id="auth-email" class="form-input" placeholder="tu@email.com"
-                 required autocomplete="email">
+                 required autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
         </div>
         <div class="form-group">
           <label for="auth-password">Contraseña</label>
-          <input type="password" id="auth-password" class="form-input" placeholder="••••••••"
-                 required autocomplete="current-password">
+          <div class="password-field">
+            <input type="password" id="auth-password" class="form-input" placeholder="••••••••"
+                   required autocomplete="current-password">
+            <button type="button" class="password-reveal" data-target="auth-password" aria-label="Mostrar contraseña">
+              <svg class="i"><use href="#i-eye"/></svg>
+            </button>
+          </div>
           <div class="password-strength" id="password-strength">
             <div class="strength-bar"><div class="strength-bar-fill"></div></div>
             <span class="strength-label"></span>
@@ -76,22 +142,23 @@
                  autocomplete="new-password">
         </div>
 
-        <div id="auth-error" class="auth-error" style="display:none"></div>
-        <button type="submit" class="btn btn-primary auth-submit-btn" id="auth-submit">Entrar</button>
-      </form>
+        <button type="button" class="auth-forgot-link" id="auth-forgot-link">¿Olvidaste tu contraseña?</button>
 
-      <button class="auth-forgot-link" id="auth-forgot-link">¿Olvidaste tu contraseña?</button>
+        <div id="auth-error" class="auth-error" style="display:none"></div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="auth-submit">Entrar</button>
+      </form>
 
       <!-- Sección: restablecer contraseña (paso 1 — pedir email) -->
       <div id="auth-forgot-section" style="display:none">
-        <p class="auth-recovery-hint">Ingresa tu email y te enviamos un link para restablecer tu contraseña.</p>
+        <p class="auth-recovery-hint">Ingresa tu email y te enviaremos un link para restablecer tu contraseña.</p>
         <div class="form-group">
           <label for="auth-forgot-email">Email</label>
-          <input type="email" id="auth-forgot-email" class="form-input" placeholder="tu@email.com">
+          <input type="email" id="auth-forgot-email" class="form-input" placeholder="tu@email.com"
+                 autocomplete="email" autocapitalize="off" inputmode="email">
         </div>
         <div id="auth-forgot-msg" class="auth-error" style="display:none"></div>
-        <button class="btn btn-primary auth-submit-btn" id="btn-forgot-send">Enviar link</button>
-        <button class="auth-toggle-link" id="btn-forgot-back" style="margin-top:0.5rem">← Volver al inicio de sesión</button>
+        <button class="btn btn-primary btn-lg btn-block" id="btn-forgot-send">Enviar link</button>
+        <button class="auth-toggle-link" id="btn-forgot-back">Volver al inicio de sesión</button>
       </div>
 
       <!-- Sección: nueva contraseña (paso 2 — después de clic en email) -->
@@ -99,63 +166,54 @@
         <p class="auth-recovery-hint">Ingresa tu nueva contraseña.</p>
         <div class="form-group">
           <label for="auth-new-password">Nueva contraseña</label>
-          <input type="password" id="auth-new-password" class="form-input" placeholder="••••••••">
+          <input type="password" id="auth-new-password" class="form-input" placeholder="••••••••" autocomplete="new-password">
         </div>
         <div class="form-group">
           <label for="auth-new-password-confirm">Confirmar nueva contraseña</label>
-          <input type="password" id="auth-new-password-confirm" class="form-input" placeholder="••••••••">
+          <input type="password" id="auth-new-password-confirm" class="form-input" placeholder="••••••••" autocomplete="new-password">
         </div>
         <div id="auth-recovery-error" class="auth-error" style="display:none"></div>
-        <button class="btn btn-primary auth-submit-btn" id="btn-recovery-save">Guardar nueva contraseña</button>
+        <button class="btn btn-primary btn-lg btn-block" id="btn-recovery-save">Guardar nueva contraseña</button>
       </div>
 
-      <button class="auth-toggle-link" id="auth-mode-toggle">¿No tienes cuenta? Regístrate</button>
+      <button class="auth-toggle-link" id="auth-mode-toggle">¿No tienes cuenta? <strong>Regístrate</strong></button>
     </div>
   </div>
 
   <!-- ===== APP WRAPPER (oculto hasta iniciar sesión) ===== -->
   <div id="app-wrapper" style="display:none">
 
-    <!-- Navbar -->
-    <nav class="navbar">
+    <!-- Navbar superior (escritorio) -->
+    <nav class="navbar" aria-label="Navegación principal">
       <div class="navbar-brand" id="navbar-brand">
-        <span class="brand-icon">⚡</span>
+        <span class="brand-icon"><svg class="i i-fill"><use href="#i-zap"/></svg></span>
         <span class="brand-name">Finance</span>
       </div>
       <div class="navbar-nav" id="navbar-nav">
-        <a href="#" class="nav-link active" data-view="dashboard">Dashboard</a>
-        <a href="#" class="nav-link" data-view="accounts">Cuentas</a>
+        <a href="#" class="nav-link active" data-view="dashboard">Inicio</a>
         <a href="#" class="nav-link" data-view="expenses">Gastos</a>
-        <a href="#" class="nav-link" data-view="projection">Proyección</a>
+        <a href="#" class="nav-link" data-view="accounts">Cuentas</a>
         <a href="#" class="nav-link" data-view="budget">Presupuesto</a>
+        <a href="#" class="nav-link" data-view="projection">Proyección</a>
       </div>
-      <div class="navbar-user">
-        <span class="nav-user-email" id="nav-user-email"></span>
-        <button class="btn btn-outline btn-sm btn-logout" id="btn-logout">Salir</button>
-      </div>
-      <button class="btn btn-primary navbar-add-btn" id="btn-add-expense">+ Agregar Gasto</button>
-      <button class="theme-toggle" id="btn-theme" aria-label="Cambiar tema" title="Cambiar tema">🌙</button>
-      <button class="navbar-toggle" id="navbar-toggle" aria-label="Menú">☰</button>
+      <button class="btn btn-primary btn-sm" id="btn-add-expense">
+        <svg class="i"><use href="#i-plus"/></svg> Agregar
+      </button>
+      <button class="avatar-btn" id="btn-open-settings" aria-label="Ajustes y perfil">
+        <span class="avatar" data-avatar>·</span>
+      </button>
     </nav>
-    <div class="navbar-dropdown" id="navbar-dropdown">
-      <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="dashboard">Dashboard</a>
-      <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="accounts">Cuentas</a>
-      <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="expenses">Gastos</a>
-      <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="projection">Proyección</a>
-      <a href="#" class="navbar-dropdown-item nav-link-drop" data-view="budget">Presupuesto</a>
-      <div class="navbar-dropdown-divider"></div>
-      <button class="navbar-dropdown-item" id="nav-mobile-add">+ Agregar Gasto</button>
-      <button class="navbar-dropdown-item nav-dropdown-logout" id="nav-mobile-logout">Salir</button>
-    </div>
-    <!-- Mobile subheader: view title + theme toggle (only on mobile) -->
-    <div class="mobile-subheader" id="mobile-subheader">
-      <span class="mobile-view-name" id="mobile-view-name">Dashboard</span>
-      <button class="theme-toggle-inline" id="btn-theme-mobile" aria-label="Cambiar tema">🌙</button>
-    </div>
+
+    <!-- Header compacto (iPhone): aparece al hacer scroll, estilo iOS -->
+    <header class="app-header" id="app-header">
+      <span class="app-header-title" id="mobile-view-name">Inicio</span>
+      <button class="avatar-btn app-header-avatar" id="btn-open-settings-mobile" aria-label="Ajustes y perfil">
+        <span class="avatar" data-avatar>·</span>
+      </button>
+    </header>
 
     <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
-
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -163,313 +221,298 @@
       <!-- ===== DASHBOARD VIEW ===== -->
       <section class="view" id="view-dashboard">
         <div class="view-header">
-          <h1>Dashboard</h1>
-          <div class="period-selector" id="period-selector">
-            <button class="period-btn active" data-period="month">Este mes</button>
-            <button class="period-btn" data-period="3months">3 meses</button>
-            <button class="period-btn" data-period="year">Este año</button>
-            <button class="period-btn" data-period="all">Todo</button>
+          <div class="view-title-group">
+            <p class="view-eyebrow" id="dash-greeting">Hola</p>
+            <h1>Resumen</h1>
           </div>
         </div>
-        <div class="month-nav" id="month-nav">
-          <button class="month-nav-btn" id="btn-month-prev" aria-label="Mes anterior">‹</button>
-          <span class="month-nav-label" id="month-nav-label">Abril 2026</span>
-          <button class="month-nav-btn" id="btn-month-next" aria-label="Mes siguiente" disabled>›</button>
-        </div>
 
-        <!-- Fila principal: 4 tarjetas grandes -->
-        <div class="stat-cards stat-cards-primary" id="stat-cards">
-          <div class="stat-card stat-card-highlight">
-            <div class="stat-icon">💎</div>
-            <div class="stat-info">
-              <div class="stat-label-row">
-                <div class="stat-label">Patrimonio total</div>
-                <button class="btn-toggle-patrimonio" title="Ocultar patrimonio" aria-label="Ocultar patrimonio"></button>
+        <div class="dash-grid">
+          <div class="dash-col">
+            <!-- Patrimonio -->
+            <div class="hero-card">
+              <div class="hero-top">
+                <span class="hero-label">Patrimonio total</span>
+                <button class="btn-toggle-patrimonio" aria-label="Ocultar patrimonio"></button>
               </div>
-              <div class="stat-value" id="stat-patrimonio">$0</div>
+              <div class="hero-value" id="stat-patrimonio">$0</div>
+              <div class="hero-sub" id="hero-sub"></div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">📅</div>
-            <div class="stat-info">
-              <div class="stat-label">Gasto de hoy</div>
-              <div class="stat-value" id="stat-today">$0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">⚡</div>
-            <div class="stat-info">
-              <div class="stat-label">Gasto del mes</div>
-              <div class="stat-value" id="stat-month">$0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">🔥</div>
-            <div class="stat-info">
-              <div class="stat-label">Gasto del año</div>
-              <div class="stat-value" id="stat-year">$0</div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Budget insight — solo mes actual -->
-        <div id="budget-insight" class="budget-insight" style="display:none">
-          <div class="budget-insight-top">
-            <span class="budget-insight-title">Presupuesto estimado del mes</span>
-            <span class="budget-months-tag" id="budget-months-tag"></span>
-          </div>
-          <div class="budget-bar-track">
-            <div class="budget-bar-fill" id="budget-bar-fill"></div>
-          </div>
-          <div class="budget-insight-row">
-            <span id="budget-text-spent"></span>
-            <span id="budget-text-pct" class="budget-pct"></span>
-          </div>
-          <div id="budget-text-footer" class="budget-footer"></div>
-        </div>
+            <!-- Navegación por mes -->
+            <div class="month-nav" id="month-nav">
+              <button class="month-nav-btn" id="btn-month-prev" aria-label="Mes anterior"><svg class="i"><use href="#i-chev-left"/></svg></button>
+              <span class="month-nav-label" id="month-nav-label">—</span>
+              <button class="month-nav-btn" id="btn-month-next" aria-label="Mes siguiente" disabled><svg class="i"><use href="#i-chev-right"/></svg></button>
+            </div>
 
-        <div class="charts-grid" id="charts-grid">
-          <div class="chart-card">
-            <h3>Gasto por mes (últimos 12 meses)</h3>
-            <div class="chart-wrapper">
-              <canvas id="chart-monthly"></canvas>
-            </div>
-          </div>
-          <div class="chart-card">
-            <h3>Por categoría</h3>
-            <div class="chart-wrapper">
-              <canvas id="chart-category"></canvas>
-            </div>
-          </div>
-          <div class="chart-card chart-card-wide">
-            <h3>Ahorro neto — últimos 12 meses</h3>
-            <div class="chart-wrapper">
-              <canvas id="chart-savings"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div id="accounts-analysis-section" style="display:none">
-          <div class="section-divider">
-            <h2 class="section-title">Análisis de cuentas</h2>
-          </div>
-          <div class="charts-grid">
-            <div class="chart-card">
-              <h3>Balance por cuenta</h3>
-              <div class="chart-wrapper">
-                <canvas id="chart-accounts-balance"></canvas>
+            <!-- Gasto del mes + presupuesto -->
+            <div class="card month-card" id="stat-cards">
+              <div class="month-card-top">
+                <div>
+                  <div class="stat-label">Gastado este mes</div>
+                  <div class="month-card-value" id="stat-month">$0</div>
+                </div>
+                <span class="budget-months-tag" id="budget-months-tag" style="display:none"></span>
+              </div>
+              <div id="budget-insight" class="budget-insight" style="display:none">
+                <div class="budget-bar-track"><div class="budget-bar-fill" id="budget-bar-fill"></div></div>
+                <div class="budget-insight-row">
+                  <span id="budget-text-spent"></span>
+                  <span id="budget-text-pct" class="budget-pct"></span>
+                </div>
+                <div id="budget-text-footer" class="budget-footer"></div>
+              </div>
+              <div class="mini-stats">
+                <div class="mini-stat">
+                  <span class="mini-stat-label">Hoy</span>
+                  <span class="mini-stat-value" id="stat-today">$0</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-stat-label">Ingresos del mes</span>
+                  <span class="mini-stat-value amount-pos" id="stat-month-income">$0</span>
+                </div>
+                <div class="mini-stat">
+                  <span class="mini-stat-label">En el año</span>
+                  <span class="mini-stat-value" id="stat-year">$0</span>
+                </div>
               </div>
             </div>
-            <div class="chart-card">
-              <h3>Ingresos vs Gastos — últimos 6 meses</h3>
-              <div class="chart-wrapper">
-                <canvas id="chart-flow"></canvas>
+
+            <!-- Últimos movimientos -->
+            <div class="section-header">
+              <h2 class="section-title">Últimos gastos</h2>
+              <button class="link-btn" id="btn-see-all-expenses">Ver todos</button>
+            </div>
+            <div class="list-group" id="recent-list"></div>
+          </div>
+
+          <div class="dash-col">
+            <div class="charts-grid" id="charts-grid">
+              <div class="chart-card">
+                <div class="chart-card-head">
+                  <h3>Por categoría</h3>
+                  <div class="segmented segmented-sm" id="period-selector">
+                    <button class="period-btn active" data-period="month">Mes</button>
+                    <button class="period-btn" data-period="3months">3M</button>
+                    <button class="period-btn" data-period="year">Año</button>
+                    <button class="period-btn" data-period="all">Todo</button>
+                  </div>
+                </div>
+                <div class="donut-wrap">
+                  <div class="chart-wrapper chart-wrapper-donut">
+                    <canvas id="chart-category"></canvas>
+                    <div class="donut-center">
+                      <span class="donut-center-label">Total</span>
+                      <span class="donut-center-value" id="donut-total">$0</span>
+                    </div>
+                  </div>
+                  <div class="category-legend" id="category-legend"></div>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-card-head"><h3>Gasto por mes</h3><span class="chart-card-hint">12 meses</span></div>
+                <div class="chart-wrapper"><canvas id="chart-monthly"></canvas></div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-card-head"><h3>Ahorro neto</h3><span class="chart-card-hint">Ingresos − gastos</span></div>
+                <div class="chart-wrapper"><canvas id="chart-savings"></canvas></div>
+              </div>
+            </div>
+
+            <div id="accounts-analysis-section" style="display:none">
+              <div class="charts-grid">
+                <div class="chart-card">
+                  <div class="chart-card-head"><h3>Ingresos vs gastos</h3><span class="chart-card-hint">6 meses</span></div>
+                  <div class="chart-wrapper"><canvas id="chart-flow"></canvas></div>
+                </div>
+                <div class="chart-card">
+                  <div class="chart-card-head"><h3>Saldo por cuenta</h3></div>
+                  <div class="chart-wrapper" id="accounts-chart-wrapper"><canvas id="chart-accounts-balance"></canvas></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div id="dashboard-empty" class="empty-state" style="display:none">
-          <div class="empty-icon">🤖</div>
-          <h3>Sin datos aún</h3>
-          <p>Agrega tu primer gasto para ver las estadísticas aquí.</p>
-          <button class="btn btn-primary" id="btn-add-first">+ Agregar primer gasto</button>
+          <div class="empty-icon"><svg class="i"><use href="#i-sparkle"/></svg></div>
+          <h3>Empecemos</h3>
+          <p>Registra tu primer gasto para ver tus estadísticas aquí.</p>
+          <button class="btn btn-primary" id="btn-add-first">Agregar primer gasto</button>
         </div>
       </section>
 
       <!-- ===== EXPENSES VIEW ===== -->
       <section class="view" id="view-expenses" style="display:none">
         <div class="view-header">
-          <h1>Finance</h1>
+          <div class="view-title-group"><h1>Gastos</h1></div>
           <div class="view-actions">
-            <button class="btn btn-outline" id="btn-toggle-filters">🔎 Filtros</button>
-            <button class="btn btn-outline" id="btn-export-csv">💾 Exportar CSV</button>
-            <button class="btn btn-danger" id="btn-delete-selected" style="display:none">💥 Eliminar seleccionados</button>
-            <button class="btn btn-primary mobile-add-btn" id="btn-add-expense-mobile">+ Agregar</button>
+            <button class="btn btn-ghost btn-sm" id="btn-select-mode">Seleccionar</button>
+            <button class="btn btn-ghost btn-sm desktop-only" id="btn-open-categories">
+              <svg class="i"><use href="#i-tag"/></svg> Categorías
+            </button>
+            <button class="btn btn-ghost btn-sm desktop-only" id="btn-export-csv">
+              <svg class="i"><use href="#i-download"/></svg> Exportar
+            </button>
           </div>
         </div>
 
-        <div class="filter-panel" id="filter-panel" style="display:none">
-          <div class="filter-grid">
-            <div class="filter-group">
-              <label>Desde</label>
-              <input type="date" id="filter-date-from" class="form-input">
-            </div>
-            <div class="filter-group">
-              <label>Hasta</label>
-              <input type="date" id="filter-date-to" class="form-input">
-            </div>
-            <div class="filter-group">
-              <label>Categoría</label>
-              <select id="filter-category" class="form-select">
-                <option value="">Todas</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label>Monto mínimo</label>
-              <input type="text" id="filter-amount-min" class="form-input" placeholder="0" inputmode="numeric">
-            </div>
-            <div class="filter-group">
-              <label>Monto máximo</label>
-              <input type="text" id="filter-amount-max" class="form-input" placeholder="Sin límite" inputmode="numeric">
-            </div>
-            <div class="filter-group">
-              <label>Descripción</label>
-              <input type="text" id="filter-text" class="form-input" placeholder="Buscar...">
-            </div>
-            <div class="filter-group">
-              <label>Tipo</label>
-              <select id="filter-planned" class="form-select">
-                <option value="">Todos</option>
-                <option value="planned">Solo previstos (futuros)</option>
-                <option value="real">Solo reales (realizados)</option>
-              </select>
-            </div>
-          </div>
-          <div class="filter-actions">
-            <button class="btn btn-primary" id="btn-apply-filters">Aplicar filtros</button>
-            <button class="btn btn-outline" id="btn-reset-filters">Limpiar</button>
-          </div>
-        </div>
-
-        <!-- ===== CATEGORIES PANEL ===== -->
-        <div class="categories-panel" id="categories-panel">
-          <button class="categories-panel-toggle" id="btn-toggle-categories">
-            <span>Categorías</span>
-            <span id="categories-count-badge" class="cat-count-badge"></span>
-            <span class="categories-toggle-arrow">▾</span>
+        <div class="toolbar">
+          <label class="search-field">
+            <svg class="i"><use href="#i-search"/></svg>
+            <input type="search" id="filter-text" placeholder="Buscar por descripción" autocomplete="off" enterkeyhint="search">
+          </label>
+          <button class="icon-btn" id="btn-toggle-filters" aria-label="Filtros">
+            <svg class="i"><use href="#i-sliders"/></svg>
+            <span class="icon-btn-dot" id="filters-dot" style="display:none"></span>
           </button>
-          <div class="categories-panel-body" id="categories-panel-body" style="display:none">
-            <div class="cat-add-row">
-              <input type="text" id="new-cat-name" class="form-input" placeholder="Nueva categoría..." maxlength="50">
-              <input type="color" id="new-cat-color" class="form-color" value="#6366f1">
-              <button class="btn btn-primary btn-sm" id="btn-save-category">Agregar</button>
-            </div>
-            <div id="cat-form-error" class="form-error" style="display:none"></div>
-            <div id="categories-list"></div>
-          </div>
         </div>
+
+        <div class="segmented segmented-full" id="type-segment" role="tablist">
+          <button class="active" data-type="">Todos</button>
+          <button data-type="real">Realizados</button>
+          <button data-type="planned">Previstos</button>
+        </div>
+
+        <div class="filter-chips" id="active-filter-chips"></div>
 
         <div class="list-header" id="list-header">
-          <span id="list-count" class="list-count">0 gastos</span>
-          <div class="sort-controls">
-            <label>Ordenar:</label>
-            <select id="sort-field" class="form-select form-select-sm">
-              <option value="date">Fecha</option>
-              <option value="amount">Monto</option>
-              <option value="category">Categoría</option>
-            </select>
-            <button class="btn-sort" id="btn-sort-dir" title="Cambiar orden">↓</button>
-          </div>
+          <span class="list-count"><span id="list-count">0 gastos</span> · <strong id="list-total">$0</strong></span>
+          <button class="link-btn" id="btn-sort-dir" aria-label="Cambiar orden">
+            <svg class="i"><use href="#i-sort"/></svg> <span id="sort-label">Recientes</span>
+          </button>
         </div>
 
         <div id="expenses-list"></div>
 
+        <button class="btn btn-ghost btn-block load-more" id="btn-load-more" style="display:none">Mostrar más</button>
+
         <div id="expenses-empty" class="empty-state" style="display:none">
-          <div class="empty-icon">📡</div>
-          <h3>Sin gastos registrados</h3>
-          <p>Agrega tu primer gasto con el botón de arriba.</p>
+          <div class="empty-icon"><svg class="i"><use href="#i-receipt"/></svg></div>
+          <h3 id="expenses-empty-title">Sin gastos registrados</h3>
+          <p id="expenses-empty-text">Toca el botón + para agregar tu primer gasto.</p>
         </div>
 
-        <div class="pagination" id="pagination" style="display:none">
-          <button class="btn btn-outline btn-sm" id="btn-prev">← Anterior</button>
-          <span id="page-info">Página 1 de 1</span>
-          <button class="btn btn-outline btn-sm" id="btn-next">Siguiente →</button>
+        <!-- Barra de acciones en modo selección -->
+        <div class="bulk-bar" id="bulk-bar">
+          <span id="bulk-count">0 seleccionados</span>
+          <div class="bulk-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-bulk-cancel">Cancelar</button>
+            <button class="btn btn-danger btn-sm" id="btn-delete-selected" disabled>
+              <svg class="i"><use href="#i-trash"/></svg> Eliminar
+            </button>
+          </div>
         </div>
       </section>
-
-      <!-- ===== CATEGORIES VIEW ===== -->
 
       <!-- ===== PROJECTION VIEW ===== -->
       <section class="view" id="view-projection" style="display:none">
         <div class="view-header">
-          <h1>Proyección</h1>
-          <p class="view-subtitle">¿Cómo va a crecer tu patrimonio según tus ingresos y gastos típicos?</p>
-        </div>
-
-        <!-- Parámetros -->
-        <div class="card projection-inputs">
-          <h3>Parámetros mensuales</h3>
-
-          <div id="projection-avg-hint" class="projection-hint">
-            💡 Basado en tu historial, tu gasto promedio mensual es <strong id="projection-avg-value"></strong>.
-            <button class="btn btn-outline btn-sm" id="btn-use-avg">Usar este valor</button>
-          </div>
-          <div id="projection-no-hist" class="projection-no-hist" style="display:none"></div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label for="proj-income">Ingreso mensual líquido</label>
-              <input type="text" id="proj-income" class="form-input" placeholder="0" inputmode="numeric">
-            </div>
-            <div class="form-group">
-              <label for="proj-expenses">Gasto mensual aproximado</label>
-              <input type="text" id="proj-expenses" class="form-input" placeholder="0" inputmode="numeric">
-            </div>
-          </div>
-          <button class="btn btn-primary" id="btn-proj-save">Calcular proyección</button>
-          <div id="proj-snapshot-info" class="proj-snapshot-info" style="display:none"></div>
-          <button class="btn btn-outline btn-sm" id="btn-reset-snapshot" style="display:none;margin-top:0.5rem">↺ Actualizar base de proyección</button>
-          <div id="proj-early-income-note" class="proj-early-income-note" style="display:none">
-            ⚠ Si recibiste ingresos de meses futuros (ej: sueldo adelantado), el patrimonio base puede estar sobreestimado. Usa "Actualizar base" al inicio de cada mes, cuando normalmente recibes tu ingreso.
+          <div class="view-title-group">
+            <h1>Proyección</h1>
+            <p class="view-subtitle">Cómo crecerá tu patrimonio según tus ingresos y gastos típicos</p>
           </div>
         </div>
-
-        <!-- Resultados -->
-        <div id="projection-results" style="display:none">
-          <!-- Trend card -->
-          <div class="proj-trend-card" id="proj-trend-card" style="display:none">
-            <span class="proj-trend-icon" id="proj-trend-icon"></span>
-            <span id="proj-trend-text"></span>
-          </div>
-
-          <!-- Base + balance -->
-          <div class="projection-summary projection-summary-2">
-            <div class="proj-sum-card">
-              <div class="proj-sum-label">Patrimonio hoy</div>
-              <div class="proj-sum-value" id="proj-sum-inicio">$0</div>
-            </div>
-            <div class="proj-sum-card">
-              <div class="proj-sum-label">Balance mensual</div>
-              <div class="proj-sum-value" id="proj-sum-balance">$0</div>
-            </div>
-          </div>
-
-          <!-- Horizon cards: 3m / 6m / 12m -->
-          <div class="proj-horizons">
-            <div class="proj-horizon-card">
-              <div class="proj-horizon-label">En 3 meses</div>
-              <div class="proj-horizon-value" id="proj-h3">—</div>
-              <div class="proj-horizon-delta" id="proj-h3-delta"></div>
-              <div class="proj-horizon-note" id="proj-h3-note"></div>
-            </div>
-            <div class="proj-horizon-card">
-              <div class="proj-horizon-label">En 6 meses</div>
-              <div class="proj-horizon-value" id="proj-h6">—</div>
-              <div class="proj-horizon-delta" id="proj-h6-delta"></div>
-              <div class="proj-horizon-note" id="proj-h6-note"></div>
-            </div>
-            <div class="proj-horizon-card proj-horizon-featured">
-              <div class="proj-horizon-label">En 12 meses</div>
-              <div class="proj-horizon-value" id="proj-h12">—</div>
-              <div class="proj-horizon-delta" id="proj-h12-delta"></div>
-              <div class="proj-horizon-note" id="proj-h12-note"></div>
-            </div>
-          </div>
-
-          <!-- Chart -->
-          <div class="chart-card">
-            <h3>Evolución proyectada — próximos 12 meses</h3>
-            <div class="chart-wrapper chart-wrapper-tall">
-              <canvas id="chart-projection"></canvas>
-            </div>
-          </div>
+        <div class="segmented segmented-full plan-switch">
+          <button class="plan-switch-btn" data-view="budget">Presupuesto</button>
+          <button class="plan-switch-btn active" data-view="projection">Proyección</button>
         </div>
 
-        <div id="projection-empty" class="empty-state" style="display:none">
-          <div class="empty-icon">📈</div>
-          <h3>Ingresa tus parámetros</h3>
-          <p>Completa tu ingreso y gasto mensual estimado para ver la proyección de tu patrimonio a 12 meses.</p>
+        <div class="plan-grid">
+          <!-- Parámetros -->
+          <div class="card projection-inputs">
+            <h3 class="card-title">Parámetros mensuales</h3>
+
+            <div id="projection-avg-hint" class="callout callout-info" style="display:none">
+              <svg class="i"><use href="#i-info"/></svg>
+              <div>
+                Según tu historial, gastas en promedio <strong id="projection-avg-value"></strong> al mes.
+                <button class="link-btn" id="btn-use-avg">Usar este valor</button>
+              </div>
+            </div>
+            <div id="projection-no-hist" class="callout callout-muted" style="display:none"></div>
+
+            <div class="form-row-2-eq">
+              <div class="form-group">
+                <label for="proj-income">Ingreso mensual líquido</label>
+                <div class="money-input"><span>$</span><input type="text" id="proj-income" class="form-input" placeholder="0" inputmode="numeric"></div>
+              </div>
+              <div class="form-group">
+                <label for="proj-expenses">Gasto mensual aproximado</label>
+                <div class="money-input"><span>$</span><input type="text" id="proj-expenses" class="form-input" placeholder="0" inputmode="numeric"></div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-proj-save">Calcular proyección</button>
+
+            <div id="proj-snapshot-info" class="snapshot-row" style="display:none"></div>
+            <button class="btn btn-ghost btn-sm btn-block" id="btn-reset-snapshot" style="display:none">
+              <svg class="i"><use href="#i-refresh"/></svg> Actualizar base de proyección
+            </button>
+            <div id="proj-early-income-note" class="callout callout-warning" style="display:none">
+              <svg class="i"><use href="#i-alert"/></svg>
+              <div>Si recibiste ingresos por adelantado (ej: sueldo anticipado), la base puede estar sobreestimada. Actualiza la base al inicio de cada mes, cuando normalmente recibes tu ingreso.</div>
+            </div>
+          </div>
+
+          <!-- Resultados -->
+          <div>
+            <div id="projection-results" style="display:none">
+              <div class="proj-trend-card" id="proj-trend-card" style="display:none">
+                <span class="proj-trend-icon" id="proj-trend-icon"></span>
+                <span id="proj-trend-text"></span>
+              </div>
+
+              <div class="projection-summary">
+                <div class="proj-sum-card">
+                  <div class="stat-label">Base de hoy</div>
+                  <div class="proj-sum-value" id="proj-sum-inicio">$0</div>
+                </div>
+                <div class="proj-sum-card">
+                  <div class="stat-label">Balance mensual</div>
+                  <div class="proj-sum-value" id="proj-sum-balance">$0</div>
+                </div>
+              </div>
+
+              <div class="proj-horizons">
+                <div class="proj-horizon-card">
+                  <div class="proj-horizon-label">En 3 meses</div>
+                  <div class="proj-horizon-body">
+                    <div class="proj-horizon-value" id="proj-h3">—</div>
+                    <div class="proj-horizon-delta" id="proj-h3-delta"></div>
+                  </div>
+                  <div class="proj-horizon-note" id="proj-h3-note"></div>
+                </div>
+                <div class="proj-horizon-card">
+                  <div class="proj-horizon-label">En 6 meses</div>
+                  <div class="proj-horizon-body">
+                    <div class="proj-horizon-value" id="proj-h6">—</div>
+                    <div class="proj-horizon-delta" id="proj-h6-delta"></div>
+                  </div>
+                  <div class="proj-horizon-note" id="proj-h6-note"></div>
+                </div>
+                <div class="proj-horizon-card proj-horizon-featured">
+                  <div class="proj-horizon-label">En 12 meses</div>
+                  <div class="proj-horizon-body">
+                    <div class="proj-horizon-value" id="proj-h12">—</div>
+                    <div class="proj-horizon-delta" id="proj-h12-delta"></div>
+                  </div>
+                  <div class="proj-horizon-note" id="proj-h12-note"></div>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-card-head"><h3>Evolución proyectada</h3><span class="chart-card-hint">12 meses</span></div>
+                <div class="chart-wrapper chart-wrapper-tall"><canvas id="chart-projection"></canvas></div>
+              </div>
+            </div>
+
+            <div id="projection-empty" class="empty-state" style="display:none">
+              <div class="empty-icon"><svg class="i"><use href="#i-trend-up"/></svg></div>
+              <h3>Ingresa tus parámetros</h3>
+              <p>Completa tu ingreso y gasto mensual para ver cómo evolucionará tu patrimonio en los próximos 12 meses.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -481,264 +524,196 @@
             <p class="view-subtitle">Define cuánto quieres gastar y analiza tus patrones</p>
           </div>
         </div>
+        <div class="segmented segmented-full plan-switch">
+          <button class="plan-switch-btn active" data-view="budget">Presupuesto</button>
+          <button class="plan-switch-btn" data-view="projection">Proyección</button>
+        </div>
 
-        <!-- Budget setup card -->
-        <div class="card budget-setup-card">
-          <h3>Tu presupuesto mensual</h3>
+        <div class="plan-grid">
+          <div>
+            <div class="card budget-setup-card">
+              <h3 class="card-title">Tu presupuesto mensual</h3>
 
-          <div class="budget-mode-toggle">
-            <button class="budget-mode-btn" id="btn-mode-manual" data-mode="manual">✏️ Manual</button>
-            <button class="budget-mode-btn" id="btn-mode-auto" data-mode="auto">🤖 Automático</button>
-          </div>
+              <div class="segmented segmented-full budget-mode-toggle">
+                <button class="budget-mode-btn" id="btn-mode-auto" data-mode="auto">Automático</button>
+                <button class="budget-mode-btn" id="btn-mode-manual" data-mode="manual">Manual</button>
+              </div>
 
-          <div id="budget-manual-section" style="display:none">
-            <div class="form-group" style="margin-top:1rem">
-              <label for="budget-manual-amount">Monto mensual que quieres gastar</label>
-              <input type="text" id="budget-manual-amount" class="form-input" placeholder="0" inputmode="numeric">
+              <div id="budget-manual-section" style="display:none">
+                <div class="form-group">
+                  <label for="budget-manual-amount">Monto mensual que quieres gastar</label>
+                  <div class="money-input"><span>$</span><input type="text" id="budget-manual-amount" class="form-input" placeholder="0" inputmode="numeric"></div>
+                </div>
+              </div>
+
+              <div id="budget-auto-section" class="callout callout-info" style="display:none">
+                <svg class="i"><use href="#i-sparkle"/></svg>
+                <div>Se calcula automáticamente con tus últimos meses de gasto real, ignorando compras excepcionales.</div>
+              </div>
+
+              <div id="budget-computed-hint" class="computed-row" style="display:none">
+                <span>Estimado según tu historial</span>
+                <strong id="budget-computed-value"></strong>
+                <span id="budget-computed-note" class="computed-note"></span>
+              </div>
+
+              <button class="btn btn-primary btn-block" id="btn-save-budget">Guardar presupuesto</button>
+            </div>
+
+            <div id="budget-no-history" class="callout callout-warning" style="display:none">
+              <svg class="i"><use href="#i-info"/></svg>
+              <span id="budget-no-history-text"></span>
             </div>
           </div>
 
-          <div id="budget-auto-section" class="budget-auto-hint" style="display:none">
-            El presupuesto se calcula automáticamente en base a tus últimos meses de gasto real.
-          </div>
-
-          <div id="budget-computed-hint" class="budget-computed-hint" style="display:none">
-            <span>Estimado con historial: <strong id="budget-computed-value"></strong></span>
-            <span id="budget-computed-note" class="budget-computed-note"></span>
-          </div>
-
-          <button class="btn btn-primary" id="btn-save-budget" style="margin-top:1.25rem">Guardar presupuesto</button>
-        </div>
-
-        <!-- No history note -->
-        <div id="budget-no-history" class="budget-no-history" style="display:none">
-          <span id="budget-no-history-text"></span>
-        </div>
-
-        <!-- Insights section -->
-        <div id="budget-insights-section" style="display:none">
-
-          <!-- Category breakdown -->
-          <div class="card">
-            <div class="budget-section-header">
-              <h3>Por categoría</h3>
-              <span class="budget-months-badge" id="budget-cat-months"></span>
+          <div id="budget-insights-section" style="display:none">
+            <div class="card">
+              <div class="card-title-row">
+                <h3 class="card-title">Por categoría</h3>
+                <span class="pill" id="budget-cat-months"></span>
+              </div>
+              <div id="budget-cat-container"></div>
             </div>
-            <div id="budget-cat-container"></div>
-          </div>
 
-          <!-- Monthly summary -->
-          <div class="card" style="margin-top:1rem">
-            <h3>Resumen mensual</h3>
-            <div class="budget-table-wrapper" id="budget-monthly-container"></div>
+            <div class="card">
+              <h3 class="card-title">Resumen mensual</h3>
+              <div id="budget-monthly-container"></div>
+            </div>
           </div>
         </div>
 
         <div id="budget-empty" class="empty-state" style="display:none">
-          <div class="empty-icon">📊</div>
+          <div class="empty-icon"><svg class="i"><use href="#i-pie"/></svg></div>
           <h3>Sin datos aún</h3>
-          <p>Agregá tus primeros gastos para ver el análisis por categoría.</p>
+          <p>Agrega tus primeros gastos para ver el análisis por categoría.</p>
         </div>
       </section>
 
       <!-- ===== ACCOUNTS VIEW ===== -->
       <section class="view" id="view-accounts" style="display:none">
         <div class="view-header">
-          <h1>Mis Cuentas</h1>
+          <div class="view-title-group"><h1>Cuentas</h1></div>
           <div class="view-actions">
-            <button class="btn btn-success" id="btn-add-income">+ Ingreso</button>
-            <button class="btn btn-primary" id="btn-add-account">+ Nueva cuenta</button>
+            <button class="btn btn-ghost btn-sm" id="btn-add-income">
+              <svg class="i"><use href="#i-arrow-in"/></svg> Ingreso
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-add-account">
+              <svg class="i"><use href="#i-plus"/></svg> Cuenta
+            </button>
           </div>
         </div>
 
-        <div class="accounts-summary card" id="accounts-summary">
-          <div class="accounts-summary-inner">
-            <div>
-              <div class="stat-label-row">
-                <div class="stat-label">Patrimonio total</div>
-                <button class="btn-toggle-patrimonio" title="Ocultar patrimonio" aria-label="Ocultar patrimonio"></button>
-              </div>
-              <div class="accounts-total" id="accounts-total">$0</div>
-            </div>
-            <div class="accounts-breakdown" id="accounts-breakdown"></div>
+        <div class="hero-card" id="accounts-summary">
+          <div class="hero-top">
+            <span class="hero-label">Patrimonio total</span>
+            <button class="btn-toggle-patrimonio" aria-label="Ocultar patrimonio"></button>
           </div>
+          <div class="hero-value" id="accounts-total">$0</div>
+          <div class="alloc-bar" id="accounts-alloc-bar"></div>
+          <div class="accounts-breakdown" id="accounts-breakdown"></div>
         </div>
 
-        <div id="accounts-list"></div>
+        <div class="section-header" id="accounts-list-header">
+          <h2 class="section-title">Mis cuentas</h2>
+          <span class="section-hint">Toca una cuenta para editarla</span>
+        </div>
+        <div class="list-group" id="accounts-list"></div>
 
         <div id="accounts-empty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏦</div>
+          <div class="empty-icon"><svg class="i"><use href="#i-wallet"/></svg></div>
           <h3>Sin cuentas registradas</h3>
           <p>Agrega tus cuentas bancarias, ahorros e inversiones para llevar el control de tu patrimonio.</p>
-          <button class="btn btn-primary" id="btn-add-account-empty">+ Nueva cuenta</button>
+          <button class="btn btn-primary" id="btn-add-account-empty">Nueva cuenta</button>
         </div>
 
         <div id="income-history-section" style="display:none">
-          <div class="section-divider">
-            <h2 class="section-title">Historial de ingresos</h2>
-            <span id="income-list-count" class="list-count"></span>
+          <div class="section-header">
+            <h2 class="section-title">Ingresos</h2>
+            <span id="income-list-count" class="section-hint"></span>
           </div>
           <div id="income-list"></div>
+          <button class="btn btn-ghost btn-block load-more" id="btn-income-more" style="display:none">Mostrar más</button>
         </div>
       </section>
 
     </main>
 
-    <!-- ===== ADD/EDIT INCOME MODAL ===== -->
-    <div class="modal-overlay" id="modal-income" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-income-title">
-      <div class="modal modal-expense-new">
-        <div class="modal-header">
-          <h2 id="modal-income-title">Registrar Ingreso</h2>
-          <button class="modal-close" id="modal-income-close" aria-label="Cerrar">✕</button>
-        </div>
-        <form class="modal-body" id="income-form" novalidate>
-          <input type="hidden" id="income-id">
+    <!-- Barra de pestañas inferior (iPhone) -->
+    <nav class="tabbar" id="tabbar" aria-label="Navegación">
+      <a href="#" class="tab" data-view="dashboard">
+        <svg class="i"><use href="#i-home"/></svg><span>Inicio</span>
+      </a>
+      <a href="#" class="tab" data-view="expenses">
+        <svg class="i"><use href="#i-receipt"/></svg><span>Gastos</span>
+      </a>
+      <button class="tab-add" id="btn-fab" aria-label="Agregar movimiento">
+        <svg class="i"><use href="#i-plus"/></svg>
+      </button>
+      <a href="#" class="tab" data-view="accounts">
+        <svg class="i"><use href="#i-wallet"/></svg><span>Cuentas</span>
+      </a>
+      <a href="#" class="tab" data-view="budget" data-group="plan">
+        <svg class="i"><use href="#i-pie"/></svg><span>Plan</span>
+      </a>
+    </nav>
 
-          <!-- Amount hero -->
-          <div class="expense-amount-hero">
-            <span class="expense-amount-prefix">$</span>
-            <input type="text" id="income-amount" class="expense-amount-input" placeholder="0" inputmode="numeric" required>
-          </div>
-          <div class="form-error" id="error-income-amount" style="display:none;text-align:center;margin-top:-0.5rem;margin-bottom:0.5rem"></div>
-
-          <!-- Account -->
-          <div class="form-group">
-            <select id="income-account" class="form-select" required>
-              <option value="">Seleccionar cuenta</option>
-            </select>
-            <div class="form-error" id="error-income-account" style="display:none"></div>
-          </div>
-
-          <!-- Description -->
-          <div class="form-group">
-            <input type="text" id="income-description" class="form-input" placeholder="Descripción (opcional)" maxlength="200">
-          </div>
-
-          <!-- Date -->
-          <div class="form-group">
-            <label for="income-date" class="form-label-sm">Fecha</label>
-            <input type="date" id="income-date" class="form-input" required>
-            <div class="form-error" id="error-income-date" style="display:none"></div>
-          </div>
-        </form>
-        <div class="modal-footer">
-          <button class="btn btn-outline" id="btn-income-cancel">Cancelar</button>
-          <button class="btn btn-success" id="btn-income-save">Guardar ingreso</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ADD/EDIT ACCOUNT MODAL ===== -->
-    <div class="modal-overlay" id="modal-account" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-account-title">
-      <div class="modal">
-        <div class="modal-header">
-          <h2 id="modal-account-title">Nueva Cuenta</h2>
-          <button class="modal-close" id="modal-account-close" aria-label="Cerrar">✕</button>
-        </div>
-        <form class="modal-body" id="account-form" novalidate>
-          <input type="hidden" id="account-id">
-          <div class="form-group">
-            <label for="account-name">Nombre *</label>
-            <input type="text" id="account-name" class="form-input" placeholder="Ej: BBVA Nómina, ETF S&P500..." maxlength="100" required>
-            <div class="form-error" id="error-account-name" style="display:none"></div>
-          </div>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label for="account-type">Tipo *</label>
-              <select id="account-type" class="form-select" required>
-                <option value="bank">🏦 Cuenta bancaria</option>
-                <option value="savings">💎 Ahorro</option>
-                <option value="investment">🚀 Inversión</option>
-                <option value="cash">💸 Efectivo</option>
-                <option value="credit">🔐 Crédito</option>
-                <option value="other">🔮 Otro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="account-color">Color</label>
-              <input type="color" id="account-color" class="form-color form-color-lg" value="#6366f1">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="account-balance">Saldo actual *</label>
-            <input type="text" id="account-balance" class="form-input" placeholder="0" inputmode="numeric" required>
-            <div class="form-error" id="error-account-balance" style="display:none"></div>
-            <div class="form-hint">Puedes ingresar valores negativos para créditos o deudas.</div>
-          </div>
-          <!-- Ajuste de saldo — solo visible al editar -->
-          <div class="form-group account-adjust-section" id="account-adjust-section" style="display:none">
-            <label>Ajustar saldo</label>
-            <div class="adjust-row">
-              <div class="adjust-sign-toggle">
-                <button type="button" class="adjust-sign-btn active" id="adjust-sign-plus">+ Sumar</button>
-                <button type="button" class="adjust-sign-btn" id="adjust-sign-minus">− Restar</button>
-              </div>
-              <input type="text" id="account-adjust-amount" class="form-input adjust-amount-input" placeholder="0" inputmode="numeric">
-            </div>
-            <div class="adjust-preview" id="account-adjust-preview"></div>
-          </div>
-          <div class="form-group">
-            <label for="account-notes">Notas</label>
-            <textarea id="account-notes" class="form-input form-textarea" placeholder="Banco, número de cuenta, observaciones..." maxlength="300" rows="2"></textarea>
-          </div>
-        </form>
-        <div class="modal-footer">
-          <button class="btn btn-outline" id="btn-account-cancel">Cancelar</button>
-          <button class="btn btn-primary" id="btn-account-save">Guardar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ADD/EDIT EXPENSE MODAL ===== -->
+    <!-- ===== ADD/EDIT EXPENSE SHEET ===== -->
     <div class="modal-overlay" id="modal-expense" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-expense-title">
-      <div class="modal modal-expense-new">
+      <div class="modal">
+        <div class="sheet-grabber"></div>
         <div class="modal-header">
-          <h2 id="modal-expense-title">Agregar Gasto</h2>
-          <button class="modal-close" id="modal-close" aria-label="Cerrar">✕</button>
+          <h2 id="modal-expense-title">Nuevo gasto</h2>
+          <button class="modal-close" id="modal-close" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
         </div>
         <form class="modal-body" id="expense-form" novalidate>
           <input type="hidden" id="expense-id">
 
-          <!-- Amount — hero field -->
-          <div class="expense-amount-hero">
-            <span class="expense-amount-prefix">$</span>
-            <input type="text" id="expense-amount" class="expense-amount-input" placeholder="0" inputmode="numeric" required>
+          <div class="segmented segmented-full kind-switch" id="expense-kind-switch">
+            <button type="button" class="active">Gasto</button>
+            <button type="button" data-switch-to="income">Ingreso</button>
           </div>
-          <div class="form-error" id="error-amount" style="display:none;text-align:center;margin-top:-0.5rem;margin-bottom:0.5rem"></div>
 
-          <!-- Category -->
+          <div class="amount-hero">
+            <span class="amount-prefix">$</span>
+            <input type="text" id="expense-amount" class="amount-input" placeholder="0" inputmode="numeric" autocomplete="off" required aria-label="Monto">
+          </div>
+          <div class="form-error form-error-center" id="error-amount" style="display:none"></div>
+
           <div class="form-group">
-            <select id="expense-category" class="form-select" required>
-              <option value="">Seleccionar categoría</option>
-            </select>
+            <span class="form-label">Categoría</span>
+            <input type="hidden" id="expense-category">
+            <div class="chip-picker" id="expense-category-chips"></div>
             <div class="form-error" id="error-category" style="display:none"></div>
           </div>
 
-          <!-- Description -->
           <div class="form-group">
-            <input type="text" id="expense-description" class="form-input" placeholder="Descripción (opcional)" maxlength="200">
+            <label for="expense-description" class="form-label">Descripción</label>
+            <input type="text" id="expense-description" class="form-input" placeholder="Ej: Supermercado, Uber…" maxlength="200" autocomplete="off" enterkeyhint="done">
           </div>
 
-          <!-- Date + Account row -->
-          <div class="expense-row-2col">
-            <div class="form-group">
-              <label for="expense-date" class="form-label-sm">Fecha</label>
-              <input type="date" id="expense-date" class="form-input" required>
-              <div class="form-error" id="error-date" style="display:none"></div>
+          <div class="form-group" id="expense-date-group">
+            <span class="form-label">Fecha</span>
+            <div class="date-row">
+              <div class="quick-dates" data-for="expense-date">
+                <button type="button" data-offset="0">Hoy</button>
+                <button type="button" data-offset="-1">Ayer</button>
+              </div>
+              <input type="date" id="expense-date" class="form-input" required aria-label="Fecha">
             </div>
-            <div class="form-group">
-              <label for="expense-account" class="form-label-sm">Cuenta</label>
-              <select id="expense-account" class="form-select">
-                <option value="">Sin cuenta</option>
-              </select>
-            </div>
+            <div class="form-error" id="error-date" style="display:none"></div>
           </div>
 
-          <!-- Planned toggle -->
-          <div class="expense-planned-row">
-            <div class="expense-planned-info">
-              <span class="expense-planned-title">Gasto Previsto</span>
-              <span class="expense-planned-hint">No descuenta saldo todavía</span>
+          <div class="form-group">
+            <label for="expense-account" class="form-label">Cuenta</label>
+            <select id="expense-account" class="form-select">
+              <option value="">Sin cuenta</option>
+            </select>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-row-info">
+              <span class="toggle-row-title">Gasto previsto</span>
+              <span class="toggle-row-hint">Ocurrirá en un mes futuro. No descuenta saldo todavía.</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="expense-is-planned">
@@ -746,30 +721,286 @@
             </label>
           </div>
           <div class="form-group" id="expense-planned-month-group" style="display:none">
-            <label for="expense-planned-month" class="form-label-sm">¿En qué mes?</label>
+            <label for="expense-planned-month" class="form-label">¿En qué mes va a ocurrir?</label>
             <input type="month" id="expense-planned-month" class="form-input">
             <div class="form-error" id="error-planned-month" style="display:none"></div>
           </div>
         </form>
         <div class="modal-footer">
-          <button class="btn btn-outline" id="btn-modal-cancel">Cancelar</button>
-          <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
+          <button class="btn btn-danger-ghost" id="btn-expense-delete" style="display:none" aria-label="Eliminar gasto">
+            <svg class="i"><use href="#i-trash"/></svg>
+          </button>
+          <button class="btn btn-primary btn-lg btn-grow" id="btn-modal-save">Guardar gasto</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADD/EDIT INCOME SHEET ===== -->
+    <div class="modal-overlay" id="modal-income" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-income-title">
+      <div class="modal">
+        <div class="sheet-grabber"></div>
+        <div class="modal-header">
+          <h2 id="modal-income-title">Nuevo ingreso</h2>
+          <button class="modal-close" id="modal-income-close" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <form class="modal-body" id="income-form" novalidate>
+          <input type="hidden" id="income-id">
+
+          <div class="segmented segmented-full kind-switch" id="income-kind-switch">
+            <button type="button" data-switch-to="expense">Gasto</button>
+            <button type="button" class="active">Ingreso</button>
+          </div>
+
+          <div class="amount-hero amount-hero-income">
+            <span class="amount-prefix">$</span>
+            <input type="text" id="income-amount" class="amount-input" placeholder="0" inputmode="numeric" autocomplete="off" required aria-label="Monto">
+          </div>
+          <div class="form-error form-error-center" id="error-income-amount" style="display:none"></div>
+
+          <div class="form-group">
+            <label for="income-account" class="form-label">Cuenta de destino</label>
+            <select id="income-account" class="form-select" required>
+              <option value="">Seleccionar cuenta</option>
+            </select>
+            <div class="form-error" id="error-income-account" style="display:none"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="income-description" class="form-label">Descripción</label>
+            <input type="text" id="income-description" class="form-input" placeholder="Ej: Sueldo, Freelance…" maxlength="200" autocomplete="off" enterkeyhint="done">
+          </div>
+
+          <div class="form-group">
+            <span class="form-label">Fecha</span>
+            <div class="date-row">
+              <div class="quick-dates" data-for="income-date">
+                <button type="button" data-offset="0">Hoy</button>
+                <button type="button" data-offset="-1">Ayer</button>
+              </div>
+              <input type="date" id="income-date" class="form-input" required aria-label="Fecha">
+            </div>
+            <div class="form-error" id="error-income-date" style="display:none"></div>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button class="btn btn-danger-ghost" id="btn-income-delete" style="display:none" aria-label="Eliminar ingreso">
+            <svg class="i"><use href="#i-trash"/></svg>
+          </button>
+          <button class="btn btn-success btn-lg btn-grow" id="btn-income-save">Guardar ingreso</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADD/EDIT ACCOUNT SHEET ===== -->
+    <div class="modal-overlay" id="modal-account" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-account-title">
+      <div class="modal">
+        <div class="sheet-grabber"></div>
+        <div class="modal-header">
+          <h2 id="modal-account-title">Nueva cuenta</h2>
+          <button class="modal-close" id="modal-account-close" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <form class="modal-body" id="account-form" novalidate>
+          <input type="hidden" id="account-id">
+          <div class="form-group">
+            <label for="account-name" class="form-label">Nombre</label>
+            <input type="text" id="account-name" class="form-input" placeholder="Ej: Cuenta corriente, ETF S&amp;P500…" maxlength="100" required autocomplete="off">
+            <div class="form-error" id="error-account-name" style="display:none"></div>
+          </div>
+
+          <div class="form-group">
+            <span class="form-label">Tipo</span>
+            <input type="hidden" id="account-type" value="bank">
+            <div class="type-grid" id="account-type-grid"></div>
+          </div>
+
+          <div class="form-group">
+            <span class="form-label">Color</span>
+            <div class="swatch-row" id="account-swatches"></div>
+            <input type="color" id="account-color" class="visually-hidden" value="#6366f1" tabindex="-1">
+          </div>
+
+          <div class="form-group">
+            <label for="account-balance" class="form-label">Saldo actual</label>
+            <div class="money-input"><span>$</span><input type="text" id="account-balance" class="form-input" placeholder="0" inputmode="numeric" required></div>
+            <div class="form-error" id="error-account-balance" style="display:none"></div>
+            <div class="form-hint">Puedes ingresar valores negativos para créditos o deudas (escribe “-” al inicio).</div>
+          </div>
+
+          <!-- Ajuste de saldo — solo visible al editar -->
+          <div class="form-group account-adjust-section" id="account-adjust-section" style="display:none">
+            <span class="form-label">Ajustar saldo</span>
+            <p class="form-hint form-hint-top">Para reconciliar inversiones sin registrar un ingreso o gasto.</p>
+            <div class="adjust-row">
+              <div class="segmented adjust-sign-toggle">
+                <button type="button" class="adjust-sign-btn active" id="adjust-sign-plus">+ Sumar</button>
+                <button type="button" class="adjust-sign-btn" id="adjust-sign-minus">− Restar</button>
+              </div>
+              <div class="money-input adjust-amount-input"><span>$</span><input type="text" id="account-adjust-amount" class="form-input" placeholder="0" inputmode="numeric"></div>
+            </div>
+            <div class="adjust-preview" id="account-adjust-preview"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="account-notes" class="form-label">Notas</label>
+            <textarea id="account-notes" class="form-input form-textarea" placeholder="Banco, número de cuenta, observaciones…" maxlength="300" rows="2"></textarea>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button class="btn btn-danger-ghost" id="btn-account-delete" style="display:none" aria-label="Eliminar cuenta">
+            <svg class="i"><use href="#i-trash"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-lg desktop-only" id="btn-account-cancel">Cancelar</button>
+          <button class="btn btn-primary btn-lg btn-grow" id="btn-account-save">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FILTERS SHEET ===== -->
+    <div class="modal-overlay" id="modal-filters" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-filters-title">
+      <div class="modal">
+        <div class="sheet-grabber"></div>
+        <div class="modal-header">
+          <h2 id="modal-filters-title">Filtrar y ordenar</h2>
+          <button class="modal-close" data-close="modal-filters" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <span class="form-label">Ordenar por</span>
+            <div class="segmented segmented-full" id="sort-field-segment">
+              <button type="button" class="active" data-sort="date">Fecha</button>
+              <button type="button" data-sort="amount">Monto</button>
+              <button type="button" data-sort="category">Categoría</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="filter-category" class="form-label">Categoría</label>
+            <select id="filter-category" class="form-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="form-row-2-eq">
+            <div class="form-group">
+              <label for="filter-date-from" class="form-label">Desde</label>
+              <input type="date" id="filter-date-from" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="filter-date-to" class="form-label">Hasta</label>
+              <input type="date" id="filter-date-to" class="form-input">
+            </div>
+          </div>
+          <div class="form-row-2-eq">
+            <div class="form-group">
+              <label for="filter-amount-min" class="form-label">Monto mínimo</label>
+              <div class="money-input"><span>$</span><input type="text" id="filter-amount-min" class="form-input" placeholder="0" inputmode="numeric"></div>
+            </div>
+            <div class="form-group">
+              <label for="filter-amount-max" class="form-label">Monto máximo</label>
+              <div class="money-input"><span>$</span><input type="text" id="filter-amount-max" class="form-input" placeholder="Sin límite" inputmode="numeric"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost btn-lg" id="btn-reset-filters">Limpiar</button>
+          <button class="btn btn-primary btn-lg btn-grow" id="btn-apply-filters">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CATEGORIES SHEET ===== -->
+    <div class="modal-overlay" id="modal-categories" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-categories-title">
+      <div class="modal">
+        <div class="sheet-grabber"></div>
+        <div class="modal-header">
+          <h2 id="modal-categories-title">Categorías</h2>
+          <button class="modal-close" data-close="modal-categories" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="cat-add-row">
+            <label class="color-dot-input" aria-label="Color">
+              <input type="color" id="new-cat-color" value="#6366f1">
+            </label>
+            <input type="text" id="new-cat-name" class="form-input" placeholder="Nueva categoría" maxlength="50" autocomplete="off" enterkeyhint="done">
+            <button class="btn btn-primary" id="btn-save-category">Agregar</button>
+          </div>
+          <div id="cat-form-error" class="form-error" style="display:none"></div>
+          <div class="list-group" id="categories-list"></div>
+          <p class="form-hint">Las categorías predefinidas se pueden renombrar pero no eliminar. Una categoría con gastos asociados no se puede eliminar.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS SHEET ===== -->
+    <div class="modal-overlay" id="modal-settings" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-settings-title">
+      <div class="modal">
+        <div class="sheet-grabber"></div>
+        <div class="modal-header">
+          <h2 id="modal-settings-title">Ajustes</h2>
+          <button class="modal-close" data-close="modal-settings" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="profile-row">
+            <span class="avatar avatar-lg" data-avatar>·</span>
+            <div class="profile-info">
+              <div class="profile-name" id="nav-user-email">—</div>
+              <div class="profile-email" id="settings-user-email"></div>
+            </div>
+          </div>
+
+          <div class="settings-group-label">Apariencia</div>
+          <div class="list-group">
+            <div class="settings-row settings-row-stack">
+              <span class="settings-row-title">Tema</span>
+              <div class="segmented segmented-full" id="theme-segment">
+                <button type="button" data-theme-pref="dark"><svg class="i"><use href="#i-moon"/></svg> Oscuro</button>
+                <button type="button" data-theme-pref="light"><svg class="i"><use href="#i-sun"/></svg> Claro</button>
+                <button type="button" data-theme-pref="system">Auto</button>
+              </div>
+            </div>
+            <label class="settings-row">
+              <span class="settings-row-title">Ocultar patrimonio</span>
+              <span class="toggle-switch">
+                <input type="checkbox" id="settings-hide-patrimonio">
+                <span class="toggle-slider"></span>
+              </span>
+            </label>
+          </div>
+
+          <div class="settings-group-label">Datos</div>
+          <div class="list-group">
+            <button class="settings-row" id="btn-toggle-categories">
+              <span class="settings-row-icon"><svg class="i"><use href="#i-tag"/></svg></span>
+              <span class="settings-row-title">Categorías</span>
+              <span class="settings-row-value" id="categories-count-badge"></span>
+              <svg class="i settings-chevron"><use href="#i-chev-right"/></svg>
+            </button>
+            <button class="settings-row" id="btn-export-csv-settings">
+              <span class="settings-row-icon"><svg class="i"><use href="#i-download"/></svg></span>
+              <span class="settings-row-title">Exportar gastos (CSV)</span>
+              <svg class="i settings-chevron"><use href="#i-chev-right"/></svg>
+            </button>
+          </div>
+
+          <div class="list-group">
+            <button class="settings-row settings-row-danger" id="btn-logout">
+              <span class="settings-row-icon"><svg class="i"><use href="#i-logout"/></svg></span>
+              <span class="settings-row-title">Cerrar sesión</span>
+            </button>
+          </div>
+
+          <p class="settings-foot">Tip: en Safari toca Compartir → “Agregar a pantalla de inicio” para usar Finance como una app.</p>
         </div>
       </div>
     </div>
 
     <!-- ===== CONFIRM DIALOG ===== -->
-    <div class="modal-overlay" id="modal-confirm" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title">
-      <div class="modal modal-sm">
-        <div class="modal-header">
-          <h2 id="modal-confirm-title">Confirmar acción</h2>
-        </div>
+    <div class="modal-overlay modal-overlay-confirm" id="modal-confirm" style="display:none" role="alertdialog" aria-modal="true" aria-labelledby="confirm-message">
+      <div class="modal modal-sm modal-confirm">
         <div class="modal-body">
           <p id="confirm-message">¿Estás seguro?</p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" id="btn-confirm-cancel">Cancelar</button>
-          <button class="btn btn-danger" id="btn-confirm-ok">Eliminar</button>
+          <button class="btn btn-ghost btn-lg" id="btn-confirm-cancel">Cancelar</button>
+          <button class="btn btn-danger btn-lg" id="btn-confirm-ok">Eliminar</button>
         </div>
       </div>
     </div>
@@ -795,8 +1026,5 @@
   <script src="js/categories.js"></script>
   <script src="js/accounts.js"></script>
   <script src="js/app.js"></script>
-
-  <!-- FAB: fuera de app-wrapper para que position:fixed funcione siempre -->
-  <button id="btn-fab" class="fab" aria-label="Agregar Gasto">+</button>
 </body>
 </html>

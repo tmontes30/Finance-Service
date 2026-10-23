@@ -3,6 +3,18 @@
 let _db  = null; // firestore instance
 let _uid = null; // user id
 
+/* Caché en memoria por colección: evita re-descargar todo Firestore en cada render.
+   Guarda la promesa para que lecturas en paralelo compartan una sola consulta.
+   Toda escritura pasa por Storage, así que basta con invalidar ahí. */
+const _cache = {};
+function _cached(key, loader) {
+  if (!_cache[key]) {
+    _cache[key] = loader().catch(err => { delete _cache[key]; throw err; });
+  }
+  return _cache[key].then(list => list.slice());
+}
+function _invalidate(...keys) { keys.forEach(k => delete _cache[k]); }
+
 function _userDoc() { return _db.collection('users').doc(_uid); }
 function _col(name) { return _userDoc().collection(name); }
 
@@ -19,11 +31,21 @@ const Storage = {
   init(db, userId) {
     _db  = db;
     _uid = userId;
+    _invalidate('expenses', 'incomes', 'accounts', 'categories');
+  },
+
+  // Descarta el caché (p. ej. al volver a la app tras un rato, por cambios hechos desde otro dispositivo)
+  invalidateAll() {
+    _invalidate('expenses', 'incomes', 'accounts', 'categories');
   },
 
   /* ---------- Expenses ---------- */
 
   async getExpenses() {
+    return _cached('expenses', () => this._fetchExpenses());
+  },
+
+  async _fetchExpenses() {
     const snap = await _col('expenses').orderBy('date', 'desc').get();
     return snap.docs.map(d => {
       const r = d.data();
@@ -73,6 +95,10 @@ const Storage = {
   /* ---------- Categories ---------- */
 
   async getCategories() {
+    return _cached('categories', () => this._fetchCategories());
+  },
+
+  async _fetchCategories() {
     const snap = await _col('categories').orderBy('createdAt', 'asc').get();
     return snap.docs.map(d => {
       const r = d.data();
@@ -99,6 +125,10 @@ const Storage = {
   /* ---------- Accounts ---------- */
 
   async getAccounts() {
+    return _cached('accounts', () => this._fetchAccounts());
+  },
+
+  async _fetchAccounts() {
     const snap = await _col('accounts').orderBy('createdAt', 'asc').get();
     return snap.docs.map(d => {
       const r = d.data();
@@ -139,6 +169,10 @@ const Storage = {
   /* ---------- Incomes ---------- */
 
   async getIncomes() {
+    return _cached('incomes', () => this._fetchIncomes());
+  },
+
+  async _fetchIncomes() {
     const snap = await _col('incomes').orderBy('date', 'desc').get();
     return snap.docs.map(d => {
       const r = d.data();
@@ -204,3 +238,19 @@ const Storage = {
     await _userDoc().set(payload, { merge: true });
   }
 };
+
+/* Cada escritura invalida su colección antes y después: así una lectura que ocurra
+   mientras se escribe no deja datos viejos en caché. */
+[
+  ['addExpense', 'expenses'], ['updateExpense', 'expenses'], ['deleteExpense', 'expenses'], ['deleteExpenses', 'expenses'],
+  ['addCategory', 'categories'], ['updateCategory', 'categories'], ['deleteCategory', 'categories'],
+  ['addAccount', 'accounts'], ['updateAccount', 'accounts'], ['deleteAccount', 'accounts'], ['adjustAccountBalance', 'accounts'],
+  ['addIncome', 'incomes'], ['updateIncome', 'incomes'], ['deleteIncome', 'incomes']
+].forEach(([fn, key]) => {
+  const write = Storage[fn];
+  Storage[fn] = async function (...args) {
+    _invalidate(key);
+    try { return await write.apply(this, args); }
+    finally { _invalidate(key); }
+  };
+});

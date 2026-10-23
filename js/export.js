@@ -21,7 +21,7 @@ const Export = {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `gastos-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `gastos-${localISODate()}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

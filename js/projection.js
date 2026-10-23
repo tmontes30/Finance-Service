@@ -56,7 +56,7 @@ const Projection = {
       noHistEl.style.display = 'none';
     } else {
       const remaining        = 6 - months.size;
-      noHistEl.textContent   = `💡 Con ${remaining} ${remaining === 1 ? 'mes más' : 'meses más'} de historial te sugeriremos un gasto promedio mensual basado en tus datos reales.`;
+      noHistEl.textContent   = `Con ${remaining} ${remaining === 1 ? 'mes más' : 'meses más'} de historial te sugeriremos un gasto promedio mensual basado en tus datos reales.`;
       noHistEl.style.display = 'block';
       hintEl.style.display   = 'none';
     }
@@ -150,14 +150,14 @@ const Projection = {
     const trendText = document.getElementById('proj-trend-text');
     const trendIcon = document.getElementById('proj-trend-icon');
     if (balance > 0) {
-      trendIcon.textContent = '↗';
+      trendIcon.innerHTML   = UI.icon('trend-up');
       trendText.textContent = `Tu patrimonio crece ${Data.formatAmount(balance)} por mes. En 12 meses tendrás ${Data.formatAmount(months[12].projected)}.`;
       trendEl.className     = 'proj-trend-card proj-trend-up';
       trendEl.style.display = 'flex';
     } else if (balance < 0) {
       const monthsLeft = projBase > 0 ? projBase / Math.abs(balance) : 0;
-      trendIcon.textContent = '↘';
-      trendText.textContent = `Tu patrimonio cae ${Data.formatAmount(Math.abs(balance))} por mes.${monthsLeft > 0 && monthsLeft < 36 ? ` A este ritmo, los ahorros se agotan en ~${Math.round(monthsLeft)} meses.` : ' Revisá tus gastos.'}`;
+      trendIcon.innerHTML   = UI.icon('trend-down');
+      trendText.textContent = `Tu patrimonio cae ${Data.formatAmount(Math.abs(balance))} por mes.${monthsLeft > 0 && monthsLeft < 36 ? ` A este ritmo, los ahorros se agotan en ~${Math.round(monthsLeft)} meses.` : ' Revisa tus gastos.'}`;
       trendEl.className     = 'proj-trend-card proj-trend-down';
       trendEl.style.display = 'flex';
     } else {
@@ -169,10 +169,10 @@ const Projection = {
     const resetBtn = document.getElementById('btn-reset-snapshot');
     const earlyNote = document.getElementById('proj-early-income-note');
     if (settings.projSnapshotDate) {
-      infoEl.textContent      = `Base fija desde ${Data.formatDate(settings.projSnapshotDate)} — ${Data.formatAmount(projBase)}`;
+      infoEl.textContent      = `Base fija desde el ${Data.formatDate(settings.projSnapshotDate)}: ${Data.formatAmount(projBase)}`;
       infoEl.style.display    = 'block';
-      resetBtn.style.display  = 'inline-block';
-      earlyNote.style.display = 'block';
+      resetBtn.style.display  = '';
+      earlyNote.style.display = 'flex';
     } else {
       infoEl.style.display    = 'none';
       resetBtn.style.display  = 'none';
@@ -212,71 +212,70 @@ const Projection = {
     });
   },
 
-  _renderChart(months, balance) {
-    const labels    = months.map(m => m.label);
-    const projected = months.map(m => m.projected);
+  resetChart() {
+    if (this._chart) { this._chart.destroy(); this._chart = null; }
+  },
 
-    const isPos     = balance >= 0;
-    const projColor = isPos ? 'rgba(16, 185, 129,' : 'rgba(244, 63, 94,';
+  _renderChart(months, balance) {
+    const labels    = months.map(m => {
+      const [y, mo] = m.key.split('-').map(Number);
+      return new Date(y, mo - 1, 1).toLocaleDateString('es-CL', { month: 'short' }).replace('.', '');
+    });
+    const projected = months.map(m => m.projected);
+    const t         = Dashboard._theme();
+    const color     = balance >= 0 ? t.pos : t.neg;
 
     if (this._chart) {
-      this._chart.data.labels                       = labels;
-      this._chart.data.datasets[0].data             = projected;
-      this._chart.data.datasets[0].borderColor      = projColor + '0.65)';
-      this._chart.data.datasets[0].backgroundColor  = projColor + '0.07)';
-      this._chart.update('active');
+      this._chart.data.labels                      = labels;
+      this._chart.data.datasets[0].data            = projected;
+      this._chart.data.datasets[0].borderColor     = color;
+      this._chart.data.datasets[0].pointBackgroundColor = color;
+      this._chart.$months = months;
+      this._chart.update();
       return;
     }
 
-    const axisStyle = { color: '#4a5578', font: { size: 11 } };
-    const gridStyle = { color: 'rgba(255,255,255,0.05)', drawBorder: false };
+    const canvas = document.getElementById('chart-projection');
+    const grad   = canvas.getContext('2d').createLinearGradient(0, 0, 0, 260);
+    grad.addColorStop(0, t.barTo);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
 
-    this._chart = new Chart(document.getElementById('chart-projection'), {
+    this._chart = new Chart(canvas, {
       type: 'line',
       data: {
         labels,
         datasets: [{
-          label:            'Patrimonio proyectado',
-          data:             projected,
-          borderColor:      projColor + '0.65)',
-          backgroundColor:  projColor + '0.07)',
-          borderWidth:      2.5,
-          borderDash:       [7, 4],
-          pointRadius:      4,
-          pointHoverRadius: 6,
-          fill:             true,
-          tension:          0.4
+          label:                'Patrimonio proyectado',
+          data:                 projected,
+          borderColor:          color,
+          backgroundColor:      grad,
+          pointBackgroundColor: color,
+          borderWidth:          2.5,
+          pointRadius:          0,
+          pointHoverRadius:     5,
+          pointHitRadius:       16,
+          fill:                 true,
+          tension:              0.35
         }]
       },
       options: {
         responsive:          true,
         maintainAspectRatio: false,
-        animation: { duration: 700, easing: 'easeOutQuart' },
+        animation: { duration: 600 },
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(8, 10, 22, 0.92)',
-            titleColor:      '#8892b0',
-            bodyColor:       '#e2e8f0',
-            borderColor:     'rgba(124, 58, 237, 0.4)',
-            borderWidth:     1,
-            padding:         10,
-            cornerRadius:    8,
-            displayColors:   false,
+            ...Dashboard._tooltip(t),
             callbacks: {
-              label: ctx => ` Patrimonio: ${Data.formatAmount(ctx.parsed.y)}`
+              title: items => this._chart.$months[items[0].dataIndex].label,
+              label: ctx => Data.formatAmount(ctx.parsed.y)
             }
           }
         },
-        scales: {
-          x: { grid: gridStyle, ticks: { ...axisStyle, maxRotation: 40 }, border: { display: false } },
-          y: {
-            grid:   gridStyle,
-            ticks:  { ...axisStyle, callback: val => Data.formatAmount(val) },
-            border: { display: false }
-          }
-        }
+        scales: Dashboard._axes(t, { beginAtZero: false })
       }
     });
+    this._chart.$months = months;
   }
 };

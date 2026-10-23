@@ -1,12 +1,13 @@
 /* Data — async CRUD operations and business logic */
 
+// svg = id del símbolo en el sprite de index.html (#i-<svg>)
 const ACCOUNT_TYPES = {
-  bank:       { label: 'Cuenta bancaria', icon: '🏦' },
-  savings:    { label: 'Ahorro',          icon: '💎' },
-  investment: { label: 'Inversión',       icon: '🚀' },
-  cash:       { label: 'Efectivo',        icon: '💸' },
-  credit:     { label: 'Crédito',         icon: '🔐' },
-  other:      { label: 'Otro',            icon: '🔮' }
+  bank:       { label: 'Cuenta bancaria', short: 'Banco',     svg: 'bank' },
+  savings:    { label: 'Ahorro',          short: 'Ahorro',    svg: 'gem' },
+  investment: { label: 'Inversión',       short: 'Inversión', svg: 'trend-up' },
+  cash:       { label: 'Efectivo',        short: 'Efectivo',  svg: 'cash' },
+  credit:     { label: 'Crédito',         short: 'Crédito',   svg: 'card' },
+  other:      { label: 'Otro',            short: 'Otro',      svg: 'dots' }
 };
 
 const PREDEFINED_CATEGORIES = [
@@ -19,6 +20,12 @@ const PREDEFINED_CATEGORIES = [
   { id: 'cat_education',     name: 'Educación',       color: '#06b6d4' },
   { id: 'cat_other',         name: 'Otros',           color: '#94a3b8' }
 ];
+
+// Fecha local YYYY-MM-DD. No usar toISOString(): es UTC y en Chile (UTC-3/-4)
+// después de las ~21:00 devuelve la fecha del día siguiente.
+function localISODate(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function genId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -96,7 +103,7 @@ const Data = {
 
   async resetProjectionSnapshot() {
     const patrimony = await this.getTotalPatrimonio();
-    const date      = new Date().toISOString().split('T')[0];
+    const date      = localISODate();
     await this.updateSettings({ projSnapshotPatrimony: patrimony, projSnapshotDate: date });
     return { patrimony, date };
   },
@@ -286,8 +293,9 @@ const Data = {
   /* ---------- Helpers (síncronos — usan caché) ---------- */
 
   formatAmount(amount) {
-    const n = Number(amount);
-    return `${this._currency}${Math.round(n).toLocaleString('es-CL')}`;
+    const n = Math.round(Number(amount) || 0);
+    const abs = `${this._currency}${Math.abs(n).toLocaleString('es-CL')}`;
+    return n < 0 ? `-${abs}` : abs;
   },
 
   formatDate(isoDate) {

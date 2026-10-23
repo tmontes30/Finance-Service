@@ -1,15 +1,18 @@
-/* App — async bootstrap y router */
+/* App — bootstrap, router, tema y acciones globales */
 
 /* ===== PatrimonioToggle ===== */
 const PatrimonioToggle = {
   _hidden: false,
   _MASK: '••••••',
+  _IDS: ['stat-patrimonio', 'accounts-total'],
 
   init() {
-    this._hidden = localStorage.getItem('patrimonioHidden') === '1';
+    try { this._hidden = localStorage.getItem('patrimonioHidden') === '1'; } catch (_) {}
     document.querySelectorAll('.btn-toggle-patrimonio').forEach(btn => {
-      btn.addEventListener('click', () => this._toggle());
+      btn.addEventListener('click', () => this.set(!this._hidden));
     });
+    const cb = document.getElementById('settings-hide-patrimonio');
+    if (cb) cb.addEventListener('change', () => this.set(cb.checked));
     this._updateButtons();
   },
 
@@ -21,13 +24,13 @@ const PatrimonioToggle = {
     this._updateButtons();
   },
 
-  _toggle() {
-    this._hidden = !this._hidden;
-    localStorage.setItem('patrimonioHidden', this._hidden ? '1' : '0');
-    ['stat-patrimonio', 'accounts-total'].forEach(id => {
+  set(hidden) {
+    this._hidden = hidden;
+    try { localStorage.setItem('patrimonioHidden', hidden ? '1' : '0'); } catch (_) {}
+    this._IDS.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
-      if (this._hidden) {
+      if (hidden) {
         if (el.textContent !== this._MASK) el.dataset.realValue = el.textContent;
         el.textContent = this._MASK;
       } else {
@@ -38,59 +41,165 @@ const PatrimonioToggle = {
   },
 
   _updateButtons() {
-    const eyeOpen = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-    const eyeOff  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
     document.querySelectorAll('.btn-toggle-patrimonio').forEach(btn => {
-      btn.innerHTML = this._hidden ? eyeOff : eyeOpen;
-      btn.title = this._hidden ? 'Mostrar patrimonio' : 'Ocultar patrimonio';
+      btn.innerHTML = UI.icon(this._hidden ? 'eye-off' : 'eye');
+      btn.setAttribute('aria-label', this._hidden ? 'Mostrar patrimonio' : 'Ocultar patrimonio');
     });
+    const cb = document.getElementById('settings-hide-patrimonio');
+    if (cb) cb.checked = this._hidden;
   }
 };
 
+/* ===== Theme: 'dark' | 'light' | 'system' (guardado en localStorage financeTheme) ===== */
+const Theme = {
+  _pref: 'dark',
+
+  init() {
+    try { this._pref = localStorage.getItem('financeTheme') || 'dark'; } catch (_) {}
+    this._apply(false);
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const onSystemChange = () => { if (this._pref === 'system') this._apply(true); };
+    if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
+    else if (mq.addListener) mq.addListener(onSystemChange);
+
+    document.querySelectorAll('[data-theme-pref]').forEach(btn => {
+      btn.addEventListener('click', () => this.set(btn.dataset.themePref));
+    });
+  },
+
+  set(pref) {
+    this._pref = pref;
+    try { localStorage.setItem('financeTheme', pref); } catch (_) {}
+    this._apply(true);
+  },
+
+  resolved() {
+    if (this._pref !== 'system') return this._pref;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  },
+
+  _apply(rerender) {
+    const theme = this.resolved();
+    const changed = document.documentElement.getAttribute('data-theme') !== theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim();
+    const meta = document.getElementById('meta-theme-color');
+    if (meta && bg) meta.setAttribute('content', bg);
+    document.querySelectorAll('[data-theme-pref]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.themePref === this._pref);
+    });
+    // Los gráficos leen los colores al crearse: hay que reconstruirlos
+    if (rerender && changed && Auth._ready) {
+      Dashboard.resetCharts();
+      Projection.resetChart();
+      Router.refresh();
+    }
+  }
+};
+
+/* ===== Router ===== */
 const Router = {
   _views: ['dashboard', 'accounts', 'expenses', 'projection', 'budget'],
   _current: null,
+  _lastPlan: 'budget',
   _viewNames: {
-    dashboard: 'Finance', accounts: 'Cuentas', expenses: 'Gastos',
+    dashboard: 'Resumen', accounts: 'Cuentas', expenses: 'Gastos',
     projection: 'Proyección', budget: 'Presupuesto'
   },
 
   async navigate(viewName) {
+    const same = this._current === viewName;
+    if (Expenses._selecting && viewName !== 'expenses') Expenses._setSelecting(false);
     this._views.forEach(v => {
       const el = document.getElementById(`view-${v}`);
       if (el) el.style.display = v === viewName ? 'block' : 'none';
     });
+    const isPlan = viewName === 'budget' || viewName === 'projection';
+    if (isPlan) this._lastPlan = viewName;
+
     document.querySelectorAll('.nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.view === viewName);
     });
-    // Update mobile subheader title
+    document.querySelectorAll('.tab').forEach(tab => {
+      const active = tab.dataset.group === 'plan' ? isPlan : tab.dataset.view === viewName;
+      tab.classList.toggle('active', active);
+      if (active) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
+    });
+    document.querySelectorAll('.plan-switch-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === viewName);
+    });
+
     const mobileTitle = document.getElementById('mobile-view-name');
     if (mobileTitle) mobileTitle.textContent = this._viewNames[viewName] || viewName;
     this._current = viewName;
+    if (!same) window.scrollTo(0, 0);
+    Header.update();
 
-    if (viewName === 'dashboard')  await Dashboard.render();
-    if (viewName === 'accounts')   await Accounts.render();
-    if (viewName === 'expenses')   await Expenses.render();
-    if (viewName === 'projection') await Projection.render();
-    if (viewName === 'budget')     await BudgetView.render();
+    await this.refresh();
+  },
+
+  async refresh() {
+    const v = this._current;
+    try {
+      if (v === 'dashboard')  await Dashboard.render();
+      if (v === 'accounts')   await Accounts.render();
+      if (v === 'expenses')   await Expenses.render();
+      if (v === 'projection') await Projection.render();
+      if (v === 'budget')     await BudgetView.render();
+    } catch (err) {
+      console.error(err);
+      UI.toast('No se pudieron cargar los datos. Revisa tu conexión.', 'error');
+    }
   }
 };
+
+/* ===== Header compacto: se vuelve sólido al hacer scroll (iOS large title) ===== */
+const Header = {
+  _ticking: false,
+  init() {
+    window.addEventListener('scroll', () => {
+      if (this._ticking) return;
+      this._ticking = true;
+      requestAnimationFrame(() => { this.update(); this._ticking = false; });
+    }, { passive: true });
+  },
+  update() {
+    const header = document.getElementById('app-header');
+    if (header) header.classList.toggle('scrolled', window.scrollY > 36);
+  }
+};
+
+/* ===== Perfil del usuario (llamado desde auth.js) ===== */
+function setUserProfile(name, email) {
+  const display  = name || email || '';
+  const initials = (name || email || '?')
+    .split(/[\s@.]+/).filter(Boolean).slice(0, 2)
+    .map(w => w.charAt(0).toUpperCase()).join('') || '?';
+  document.querySelectorAll('[data-avatar]').forEach(el => { el.textContent = initials; });
+  const nameEl  = document.getElementById('nav-user-email');
+  const emailEl = document.getElementById('settings-user-email');
+  if (nameEl)  nameEl.textContent  = display;
+  if (emailEl) emailEl.textContent = name ? email : '';
+
+  const firstName = name ? name.split(' ')[0] : '';
+  const h = new Date().getHours();
+  const greet = h < 6 ? 'Buenas noches' : h < 13 ? 'Buenos días' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
+  const greetEl = document.getElementById('dash-greeting');
+  if (greetEl) greetEl.textContent = firstName ? `${greet}, ${firstName}` : greet;
+}
 
 /* ===== Bootstrap ===== */
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Apply saved theme
-  const savedTheme = localStorage.getItem('financeTheme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  const themeIcon = savedTheme === 'light' ? '☀️' : '🌙';
-  document.getElementById('btn-theme').textContent = themeIcon;
-  document.getElementById('btn-theme-mobile').textContent = themeIcon;
+  UI.init();
+  Theme.init();
+  Header.init();
 
-  // Attach CLP live formatters to all money inputs
+  // Formato CLP en vivo para todos los campos de dinero
   ['expense-amount', 'income-amount', 'proj-income', 'proj-expenses',
    'budget-manual-amount', 'account-adjust-amount',
    'filter-amount-min', 'filter-amount-max'].forEach(id => UI.attachMoneyFormat(id));
-  UI.attachMoneyFormat('account-balance', true); // allows negative
+  UI.attachMoneyFormat('account-balance', true); // permite negativos
 
   /* Auth maneja: Storage.init, Data.init, módulos de vistas, y el primer navigate */
   await Auth.init();
@@ -106,20 +215,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authToggle    = document.getElementById('auth-mode-toggle');
   let isLogin = true;
 
-  authToggle.addEventListener('click', () => {
-    isLogin = !isLogin;
+  const setAuthMode = login => {
+    isLogin = login;
     authTitle.textContent     = isLogin ? 'Iniciar sesión' : 'Crear cuenta';
     authSubmitBtn.textContent = isLogin ? 'Entrar' : 'Crear cuenta';
-    authToggle.textContent    = isLogin
-      ? '¿No tienes cuenta? Regístrate'
-      : '¿Ya tienes cuenta? Inicia sesión';
-    authError.style.display = 'none';
+    authToggle.innerHTML      = isLogin
+      ? '¿No tienes cuenta? <strong>Regístrate</strong>'
+      : '¿Ya tienes cuenta? <strong>Inicia sesión</strong>';
     document.querySelectorAll('.register-only').forEach(el => {
       el.style.display = isLogin ? 'none' : '';
     });
     document.getElementById('auth-card').classList.toggle('register', !isLogin);
     document.getElementById('auth-forgot-link').style.display = isLogin ? '' : 'none';
     document.getElementById('password-strength').style.display = 'none';
+    authPass.setAttribute('autocomplete', isLogin ? 'current-password' : 'new-password');
+  };
+
+  const showAuthError = (msg, success = false) => {
+    authError.style.cssText = success ? 'display:block;color:var(--color-success);background:var(--color-success-light)' : 'display:block';
+    authError.textContent   = msg;
+  };
+
+  authToggle.addEventListener('click', () => {
+    authError.style.display = 'none';
+    setAuthMode(!isLogin);
   });
 
   // RUT auto-format
@@ -131,10 +250,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     authError.style.display   = 'none';
     authSubmitBtn.disabled    = true;
-    authSubmitBtn.textContent = '⚡ Cargando...';
+    authSubmitBtn.textContent = isLogin ? 'Entrando…' : 'Creando cuenta…';
 
     const email = authEmail.value.trim();
     const pass  = authPass.value;
+    const resetBtn = () => {
+      authSubmitBtn.disabled    = false;
+      authSubmitBtn.textContent = isLogin ? 'Entrar' : 'Crear cuenta';
+    };
     let error;
 
     if (isLogin) {
@@ -144,78 +267,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       const apellido = document.getElementById('auth-apellido').value.trim();
       const rut      = document.getElementById('auth-rut').value.trim();
       const telefono = document.getElementById('auth-telefono').value.trim();
-
-      if (!nombre || !apellido) {
-        authError.style.cssText   = 'display:block';
-        authError.textContent     = 'Nombre y apellido son requeridos';
-        authSubmitBtn.disabled    = false;
-        authSubmitBtn.textContent = 'Crear cuenta';
-        return;
-      }
-      if (pass.length < 8) {
-        authError.style.cssText   = 'display:block';
-        authError.textContent     = 'La contraseña debe tener al menos 8 caracteres';
-        authSubmitBtn.disabled    = false;
-        authSubmitBtn.textContent = 'Crear cuenta';
-        return;
-      }
       const passConfirm = document.getElementById('auth-password-confirm').value;
-      if (pass !== passConfirm) {
-        authError.style.cssText   = 'display:block';
-        authError.textContent     = 'Las contraseñas no coinciden';
-        authSubmitBtn.disabled    = false;
-        authSubmitBtn.textContent = 'Crear cuenta';
-        return;
-      }
-      if (rut && !_validarRut(rut)) {
-        authError.style.cssText   = 'display:block';
-        authError.textContent     = 'El RUT no tiene un formato válido (ej: 12.345.678-9)';
-        authSubmitBtn.disabled    = false;
-        authSubmitBtn.textContent = 'Crear cuenta';
-        return;
-      }
+
+      const invalid =
+        (!nombre || !apellido)        ? 'Nombre y apellido son requeridos' :
+        pass.length < 8               ? 'La contraseña debe tener al menos 8 caracteres' :
+        pass !== passConfirm          ? 'Las contraseñas no coinciden' :
+        (rut && !_validarRut(rut))    ? 'El RUT no tiene un formato válido (ej: 12.345.678-9)' :
+        null;
+      if (invalid) { showAuthError(invalid); resetBtn(); return; }
 
       error = await Auth.signupWithEmail(email, pass, { nombre, apellido, rut, telefono });
       if (!error) {
         // Volver al modo login con el email pre-llenado
-        isLogin = true;
-        authTitle.textContent = 'Iniciar sesión';
-        authSubmitBtn.textContent = 'Entrar';
-        authToggle.textContent = '¿No tienes cuenta? Regístrate';
-        document.querySelectorAll('.register-only').forEach(el => { el.style.display = 'none'; });
-        document.getElementById('auth-card').classList.remove('register');
+        setAuthMode(true);
         authPass.value = '';
-        authError.style.cssText = 'display:block;color:var(--color-success)';
-        authError.textContent   = '✅ Cuenta creada. Ahora inicia sesión.';
-        authSubmitBtn.disabled    = false;
-        authSubmitBtn.textContent = 'Entrar';
+        showAuthError('Cuenta creada. Ahora inicia sesión.', true);
+        resetBtn();
         return;
       }
     }
 
     if (error) {
-      authError.style.cssText   = 'display:block';
-      authError.textContent     = _mapAuthError(error);
-      authSubmitBtn.disabled    = false;
-      authSubmitBtn.textContent = isLogin ? 'Entrar' : 'Crear cuenta';
+      showAuthError(_mapAuthError(error));
+      resetBtn();
     }
   });
 
   /* ----- Forgot password flow ----- */
   document.getElementById('auth-forgot-link').addEventListener('click', () => {
-    document.getElementById('auth-form').style.display          = 'none';
-    document.getElementById('auth-mode-toggle').style.display   = 'none';
-    document.getElementById('auth-forgot-link').style.display   = 'none';
-    document.getElementById('auth-title').textContent           = 'Restablecer contraseña';
+    document.getElementById('auth-form').style.display           = 'none';
+    document.getElementById('auth-mode-toggle').style.display    = 'none';
+    document.getElementById('auth-title').textContent            = 'Restablecer contraseña';
     document.getElementById('auth-forgot-section').style.display = 'block';
-    document.getElementById('auth-forgot-email').focus();
+    document.getElementById('auth-forgot-email').value           = authEmail.value.trim();
   });
 
   document.getElementById('btn-forgot-back').addEventListener('click', () => {
     document.getElementById('auth-forgot-section').style.display = 'none';
     document.getElementById('auth-form').style.display           = 'block';
     document.getElementById('auth-mode-toggle').style.display    = '';
-    document.getElementById('auth-forgot-link').style.display    = '';
     document.getElementById('auth-title').textContent            = 'Iniciar sesión';
     document.getElementById('auth-forgot-msg').style.display     = 'none';
   });
@@ -226,14 +317,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn    = document.getElementById('btn-forgot-send');
     const msgEl  = document.getElementById('auth-forgot-msg');
     btn.disabled    = true;
-    btn.textContent = '⚡ Enviando...';
+    btn.textContent = 'Enviando…';
     const error = await Auth.sendPasswordReset(email);
     if (error) {
       msgEl.style.cssText  = 'display:block';
       msgEl.textContent    = 'No se pudo enviar el email. Verifica la dirección.';
     } else {
-      msgEl.style.cssText  = 'display:block;color:var(--color-success)';
-      msgEl.textContent    = '✅ Revisa tu email para continuar.';
+      msgEl.style.cssText  = 'display:block;color:var(--color-success);background:var(--color-success-light)';
+      msgEl.textContent    = 'Listo. Revisa tu email para continuar.';
     }
     btn.disabled    = false;
     btn.textContent = 'Enviar link';
@@ -256,7 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const btn = document.getElementById('btn-recovery-save');
     btn.disabled    = true;
-    btn.textContent = '⚡ Guardando...';
+    btn.textContent = 'Guardando…';
     const error = await Auth.updatePassword(np);
     if (error) {
       errEl.style.cssText = 'display:block';
@@ -264,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.disabled    = false;
       btn.textContent = 'Guardar nueva contraseña';
     }
-    // On success, onAuthStateChange fires SIGNED_IN and _setupApp runs automatically
+    // Si funciona, onAuthStateChanged dispara _setupApp automáticamente
   });
 
   /* ----- Password strength indicator ----- */
@@ -277,93 +368,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (val.length >= 8 && /[0-9]/.test(val)) level = 2;
     if (val.length >= 8 && /[0-9]/.test(val) && /[^a-zA-Z0-9]/.test(val)) level = 3;
     const labels = ['', 'Débil', 'Buena', 'Fuerte'];
-    const colors = ['', 'var(--color-danger)', '#f59e0b', 'var(--color-success)'];
+    const colors = ['', 'var(--color-danger)', 'var(--color-warning)', 'var(--color-success)'];
     bar.style.display = val ? 'flex' : 'none';
-    bar.querySelector('.strength-bar-fill').style.width      = `${level * 33.3}%`;
+    bar.querySelector('.strength-bar-fill').style.width      = `${Math.max(level, 1) * 33.3}%`;
     bar.querySelector('.strength-bar-fill').style.background = colors[level] || colors[1];
-    bar.querySelector('.strength-label').textContent         = labels[level] || '';
+    bar.querySelector('.strength-label').textContent         = labels[level] || 'Débil';
   });
 
-  /* ----- Nav links ----- */
-  document.querySelectorAll('.nav-link[data-view]').forEach(link => {
+  /* ----- Navegación: navbar (escritorio), tab bar (iPhone) y selector de Plan ----- */
+  document.querySelectorAll('.nav-link[data-view], .plan-switch-btn').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
       Router.navigate(link.dataset.view);
     });
   });
-
-  /* ----- Hamburger ----- */
-  document.getElementById('navbar-toggle').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('navbar-dropdown').classList.toggle('open');
-  });
-
-  /* ----- Logo click → dashboard ----- */
-  document.getElementById('navbar-brand').addEventListener('click', () => {
-    Router.navigate('dashboard');
-  });
-
-  /* ----- Theme toggle ----- */
-  async function applyThemeToggle() {
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    const icon = next === 'light' ? '☀️' : '🌙';
-    document.getElementById('btn-theme').textContent = icon;
-    document.getElementById('btn-theme-mobile').textContent = icon;
-    localStorage.setItem('financeTheme', next);
-    if (Router._current === 'dashboard') await Dashboard.render();
-  }
-  document.getElementById('btn-theme').addEventListener('click', applyThemeToggle);
-  document.getElementById('btn-theme-mobile').addEventListener('click', applyThemeToggle);
-
-  /* ----- Close dropdown when clicking outside ----- */
-  document.addEventListener('click', () => {
-    document.getElementById('navbar-dropdown').classList.remove('open');
-  });
-
-  /* ----- Dropdown nav links ----- */
-  document.querySelectorAll('.nav-link-drop[data-view]').forEach(link => {
-    link.addEventListener('click', e => {
+  document.querySelectorAll('.tab[data-view]').forEach(tab => {
+    tab.addEventListener('click', e => {
       e.preventDefault();
-      document.getElementById('navbar-dropdown').classList.remove('open');
-      Router.navigate(link.dataset.view);
+      const target = tab.dataset.group === 'plan' ? Router._lastPlan : tab.dataset.view;
+      // Tocar la pestaña activa vuelve arriba (como en iOS)
+      if (tab.classList.contains('active')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      Router.navigate(target);
     });
   });
+  document.getElementById('navbar-brand').addEventListener('click', () => Router.navigate('dashboard'));
+  document.getElementById('btn-see-all-expenses').addEventListener('click', () => Router.navigate('expenses'));
 
-  /* ----- Mobile nav links (hamburger dropdown) ----- */
-  document.getElementById('nav-mobile-add').addEventListener('click', () => {
-    document.getElementById('navbar-dropdown').classList.remove('open');
-    UI.openExpenseModal();
+  /* ----- Agregar movimiento ----- */
+  document.getElementById('btn-add-expense').addEventListener('click', () => UI.openExpenseModal());
+  document.getElementById('btn-fab').addEventListener('click', () => UI.openExpenseModal());
+
+  // Cambiar entre Gasto ↔ Ingreso dentro de la hoja (conserva el monto escrito)
+  document.querySelector('#expense-kind-switch [data-switch-to="income"]').addEventListener('click', () => {
+    const amount = document.getElementById('expense-amount').value;
+    UI.closeModal('modal-expense');
+    Accounts.openIncomeModal(null, null, { amount });
   });
-  document.getElementById('nav-mobile-logout').addEventListener('click', () => {
-    document.getElementById('navbar-dropdown').classList.remove('open');
-    document.getElementById('btn-logout').click();
+  document.querySelector('#income-kind-switch [data-switch-to="expense"]').addEventListener('click', () => {
+    const amount = document.getElementById('income-amount').value;
+    UI.closeModal('modal-income');
+    UI.openExpenseModal(null, { amount });
   });
 
-  /* ----- Add expense buttons ----- */
-  document.getElementById('btn-add-expense').addEventListener('click',
-    async () => UI.openExpenseModal());
-  document.getElementById('btn-add-expense-mobile').addEventListener('click',
-    async () => UI.openExpenseModal());
-  document.getElementById('btn-fab').addEventListener('click',
-    () => UI.openExpenseModal());
-
-  /* ----- Expense modal: close ----- */
+  /* ----- Expense sheet: cerrar ----- */
   document.getElementById('modal-close').addEventListener('click', () => UI.closeExpenseModal());
-  document.getElementById('btn-modal-cancel').addEventListener('click', () => UI.closeExpenseModal());
-  document.getElementById('modal-expense').addEventListener('click', e => {
-    if (e.target === e.currentTarget) UI.closeExpenseModal();
-  });
 
-  /* ----- Expense modal: save ----- */
+  /* ----- Expense sheet: guardar ----- */
   document.getElementById('btn-modal-save').addEventListener('click', async () => {
     if (!UI.validateExpenseForm()) return;
     const saveBtn = document.getElementById('btn-modal-save');
     saveBtn.disabled = true;
     try {
-      const id         = document.getElementById('expense-id').value;
-      const isPlanned  = document.getElementById('expense-is-planned').checked;
+      const id           = document.getElementById('expense-id').value;
+      const isPlanned    = document.getElementById('expense-is-planned').checked;
       const plannedMonth = document.getElementById('expense-planned-month').value;
       const payload = {
         amount:      UI.parseMoney(document.getElementById('expense-amount').value),
@@ -379,12 +439,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           UI.toast('Gasto actualizado', 'success');
         } else {
           await Data.addExpense(payload);
-          UI.toast('Gasto agregado', 'success');
+          UI.rememberAccount(payload.accountId);
+          UI.toast(isPlanned ? 'Gasto previsto agregado' : 'Gasto agregado', 'success');
         }
         UI.closeExpenseModal();
-        await Expenses.render();
-        await Dashboard.render();
-        if (Router._current === 'accounts') await Accounts.render();
+        await Router.refresh();
       } catch (err) {
         UI.toast('Error al guardar: ' + (err.message || err), 'error');
       }
@@ -393,7 +452,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  /* Save on Enter inside modal form */
+  /* ----- Expense sheet: eliminar ----- */
+  document.getElementById('btn-expense-delete').addEventListener('click', () => {
+    const id = document.getElementById('expense-id').value;
+    if (!id) return;
+    UI.confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.', async () => {
+      try {
+        await Data.deleteExpense(id);
+        UI.closeExpenseModal();
+        UI.toast('Gasto eliminado', 'success');
+        await Router.refresh();
+      } catch (err) {
+        UI.toast('Error al eliminar: ' + (err.message || err), 'error');
+      }
+    });
+  });
+
+  /* Enter en el formulario guarda (excepto en textarea) */
   document.getElementById('expense-form').addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
       e.preventDefault();
@@ -401,19 +476,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  /* ESC closes modals */
+  /* ESC cierra la hoja de arriba */
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      UI.closeExpenseModal();
-      document.getElementById('modal-income').style.display  = 'none';
-      document.getElementById('modal-account').style.display = 'none';
-      document.getElementById('modal-confirm').style.display = 'none';
-    }
+    if (e.key === 'Escape') UI.closeTopModal();
   });
 
-  /* ----- Logout ----- */
-  document.getElementById('btn-logout').addEventListener('click', async () => {
-    await Auth.logout();
+  /* ----- Ajustes ----- */
+  const openSettings = () => {
+    Categories.updateCount();
+    UI.openModal('modal-settings');
+  };
+  document.getElementById('btn-open-settings').addEventListener('click', openSettings);
+  document.getElementById('btn-open-settings-mobile').addEventListener('click', openSettings);
+
+  document.getElementById('btn-export-csv-settings').addEventListener('click', () => Expenses.exportCSV());
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    UI.confirm('¿Quieres cerrar sesión?', async () => {
+      await Auth.logout();
+    }, { okLabel: 'Cerrar sesión' });
+  });
+
+  /* ----- Volver a la app: refrescar datos si estuvo un rato en segundo plano ----- */
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+    if (Auth._ready && hiddenAt && Date.now() - hiddenAt > 60 * 1000) {
+      Storage.invalidateAll();
+      Router.refresh();
+    }
   });
 });
 
@@ -446,5 +537,7 @@ function _mapAuthError(err) {
     return 'El email no tiene un formato válido';
   if (code === 'auth/too-many-requests')
     return 'Demasiados intentos. Intenta de nuevo más tarde';
+  if (code === 'auth/network-request-failed')
+    return 'Sin conexión. Revisa tu internet e intenta de nuevo';
   return err.message || 'Ocurrió un error inesperado';
 }

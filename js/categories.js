@@ -1,17 +1,10 @@
-/* Categories — collapsible panel inside Expenses view */
+/* Categories — hoja de gestión (se abre desde Ajustes o desde Gastos en escritorio) */
 
 const Categories = {
 
   init() {
-    // Toggle panel open/close
-    document.getElementById('btn-toggle-categories').addEventListener('click', () => {
-      const body  = document.getElementById('categories-panel-body');
-      const arrow = document.querySelector('.categories-toggle-arrow');
-      const open  = body.style.display === 'none';
-      body.style.display = open ? '' : 'none';
-      arrow.textContent  = open ? '▴' : '▾';
-      if (open) this.render();
-    });
+    // Fila "Categorías" dentro de Ajustes
+    document.getElementById('btn-toggle-categories').addEventListener('click', () => this.open());
 
     const nameInp = document.getElementById('new-cat-name');
     const errorEl = document.getElementById('cat-form-error');
@@ -20,7 +13,7 @@ const Categories = {
       const name  = nameInp.value.trim();
       const color = document.getElementById('new-cat-color').value;
       if (!name) {
-        errorEl.textContent   = 'El nombre es requerido';
+        errorEl.textContent   = 'Escribe un nombre para la categoría';
         errorEl.style.display = 'block';
         nameInp.focus();
         return;
@@ -33,69 +26,78 @@ const Categories = {
         return;
       }
       const newCat = await Data.addCategory(name, color);
-      nameInp.value                                   = '';
-      document.getElementById('new-cat-color').value = '#6366f1';
-      errorEl.style.display                          = 'none';
+      nameInp.value         = '';
+      errorEl.style.display = 'none';
       await this.render();
       await Expenses.refreshCategoryFilter();
       if (newCat && newCat.color.toLowerCase() !== color.toLowerCase()) {
-        UI.toast('El color ya estaba en uso — se asignó uno alternativo', 'info');
+        UI.toast('Ese color ya estaba en uso: se asignó otro', 'info');
       }
       UI.toast('Categoría creada', 'success');
     };
 
     document.getElementById('btn-save-category').addEventListener('click', trySave);
-    nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') trySave(); });
+    nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); trySave(); } });
+
+    // Acciones en filas (delegación)
+    document.getElementById('categories-list').addEventListener('click', e => {
+      const edit = e.target.closest('.btn-cat-edit');
+      const del  = e.target.closest('.btn-cat-delete');
+      if (edit) this._startEdit(edit.dataset.id);
+      if (del)  this._delete(del.dataset.id);
+    });
+  },
+
+  async open() {
+    UI.openModal('modal-categories');
+    await this.render();
+  },
+
+  async updateCount() {
+    const cats  = await Data.getCategories();
+    const badge = document.getElementById('categories-count-badge');
+    if (badge) badge.textContent = cats.length;
   },
 
   async render() {
-    const [categories, expenses] = await Promise.all([
-      Data.getCategories(), Data.getExpenses()
-    ]);
+    const [categories, expenses] = await Promise.all([Data.getCategories(), Data.getExpenses()]);
     const countMap = {};
     expenses.forEach(e => { countMap[e.categoryId] = (countMap[e.categoryId] || 0) + 1; });
+    this._countMap = countMap;
 
-    // Update badge with total count
     const badge = document.getElementById('categories-count-badge');
     if (badge) badge.textContent = categories.length;
 
-    const container = document.getElementById('categories-list');
-    if (!container) return;
-
-    container.innerHTML = categories.map(cat => {
+    document.getElementById('categories-list').innerHTML = categories.map(cat => {
       const count = countMap[cat.id] || 0;
       return `
-        <div class="cat-chip" id="cat-item-${cat.id}">
-          <span class="cat-chip-swatch" style="background:${cat.color}"></span>
-          <span class="cat-chip-name" id="cat-name-${cat.id}">${UI._esc(cat.name)}</span>
-          <span class="cat-chip-count">${count}</span>
-          <div class="cat-chip-actions">
-            <button class="btn-icon btn-cat-edit" data-id="${cat.id}" title="Editar">✏️</button>
-            ${!cat.isPredefined
-              ? `<button class="btn-icon danger btn-cat-delete" data-id="${cat.id}" title="Eliminar">✕</button>`
-              : ''}
+        <div class="tx-row cat-row" id="cat-item-${cat.id}">
+          ${UI.txIcon(cat.color, UI.initial(cat.name))}
+          <div class="tx-main" id="cat-main-${cat.id}">
+            <div class="tx-title">${UI._esc(cat.name)}</div>
+            <div class="cat-count">${count} gasto${count !== 1 ? 's' : ''}${cat.isPredefined ? ' · predefinida' : ''}</div>
           </div>
+          <button class="row-icon-btn btn-cat-edit" data-id="${cat.id}" aria-label="Editar ${UI._esc(cat.name)}">${UI.icon('pencil')}</button>
+          ${!cat.isPredefined
+            ? `<button class="row-icon-btn danger btn-cat-delete" data-id="${cat.id}" aria-label="Eliminar ${UI._esc(cat.name)}">${UI.icon('trash')}</button>`
+            : ''}
         </div>`;
     }).join('');
+  },
 
-    container.querySelectorAll('.btn-cat-edit').forEach(btn =>
-      btn.addEventListener('click', () => this._startEdit(btn.dataset.id))
-    );
-    container.querySelectorAll('.btn-cat-delete').forEach(btn => {
-      const cat   = categories.find(c => c.id === btn.dataset.id);
-      const count = countMap[btn.dataset.id] || 0;
-      btn.addEventListener('click', () => {
-        if (!cat) return;
-        if (count > 0) {
-          UI.toast(`No se puede eliminar "${cat.name}" — tiene ${count} gasto${count !== 1 ? 's' : ''} asociado${count !== 1 ? 's' : ''}`, 'error');
-          return;
-        }
-        UI.confirm(`¿Eliminar la categoría "${cat.name}"?`, async () => {
-          await Data.deleteCategory(cat.id);
-          await this.render();
-          await Expenses.refreshCategoryFilter();
-          UI.toast('Categoría eliminada', 'success');
-        });
+  _delete(id) {
+    Data.getCategoryById(id).then(cat => {
+      if (!cat) return;
+      const count = (this._countMap || {})[id] || 0;
+      if (count > 0) {
+        UI.toast(`No se puede eliminar "${cat.name}": tiene ${count} gasto${count !== 1 ? 's' : ''} asociado${count !== 1 ? 's' : ''}`, 'error');
+        return;
+      }
+      UI.confirm(`¿Eliminar la categoría "${cat.name}"?`, async () => {
+        await Data.deleteCategory(cat.id);
+        await this.render();
+        await Expenses.refreshCategoryFilter();
+        UI.toast('Categoría eliminada', 'success');
       });
     });
   },
@@ -103,20 +105,23 @@ const Categories = {
   async _startEdit(id) {
     const cat = await Data.getCategoryById(id);
     if (!cat) return;
-    const nameSpan = document.getElementById(`cat-name-${id}`);
-    const item     = document.getElementById(`cat-item-${id}`);
+    const main = document.getElementById(`cat-main-${id}`);
+    const item = document.getElementById(`cat-item-${id}`);
+    item.querySelectorAll('.row-icon-btn').forEach(b => { b.style.display = 'none'; });
 
-    nameSpan.innerHTML = `
+    main.innerHTML = `
       <div class="cat-edit-row">
-        <input type="text" class="form-input" id="edit-name-${id}" value="${UI._esc(cat.name)}" maxlength="50">
-        <input type="color" class="form-color" id="edit-color-${id}" value="${cat.color}">
-        <button class="btn btn-primary btn-sm" id="btn-cat-save-${id}">Guardar</button>
-        <button class="btn btn-outline btn-sm" id="btn-cat-cancel-${id}">✕</button>
+        <label class="color-dot-input" aria-label="Color"><input type="color" id="edit-color-${id}" value="${cat.color}"></label>
+        <input type="text" class="form-input" id="edit-name-${id}" value="${UI._esc(cat.name)}" maxlength="50" enterkeyhint="done">
+        <button class="row-icon-btn" id="btn-cat-save-${id}" aria-label="Guardar">${UI.icon('check')}</button>
+        <button class="row-icon-btn" id="btn-cat-cancel-${id}" aria-label="Cancelar">${UI.icon('x')}</button>
       </div>`;
 
     const colorInp = document.getElementById(`edit-color-${id}`);
+    const icon     = item.querySelector('.tx-icon');
     colorInp.addEventListener('input', () => {
-      item.querySelector('.cat-chip-swatch').style.background = colorInp.value;
+      icon.style.background = colorInp.value + '22';
+      icon.style.color      = colorInp.value;
     });
 
     const nameInp = document.getElementById(`edit-name-${id}`);
@@ -134,15 +139,15 @@ const Categories = {
       const updated = await Data.updateCategory(id, newName, newColor);
       await this.render();
       await Expenses.refreshCategoryFilter();
-      await Dashboard.render();
       if (updated && updated.color.toLowerCase() !== newColor.toLowerCase()) {
-        UI.toast('El color ya estaba en uso — se asignó uno alternativo', 'info');
+        UI.toast('Ese color ya estaba en uso: se asignó otro', 'info');
       }
       UI.toast('Categoría actualizada', 'success');
+      Router.refresh();
     };
 
     document.getElementById(`btn-cat-save-${id}`).addEventListener('click', doSave);
-    nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') doSave(); });
+    nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSave(); } });
     document.getElementById(`btn-cat-cancel-${id}`).addEventListener('click', () => this.render());
   }
 };

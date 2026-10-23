@@ -34,7 +34,7 @@ const BudgetView = {
     const hintValEl = document.getElementById('budget-computed-value');
     const hintNoteEl = document.getElementById('budget-computed-note');
     if (computed) {
-      hintEl.style.display    = 'block';
+      hintEl.style.display    = 'flex';
       hintValEl.textContent   = Data.formatAmount(computed.budget);
       hintNoteEl.textContent  = `(basado en ${computed.monthsUsed} mes${computed.monthsUsed > 1 ? 'es' : ''} de historial)`;
     } else {
@@ -84,7 +84,7 @@ const BudgetView = {
     document.getElementById('budget-manual-section').style.display =
       mode === 'manual' ? 'block' : 'none';
     document.getElementById('budget-auto-section').style.display =
-      mode === 'auto' ? 'block' : 'none';
+      mode === 'auto' ? 'flex' : 'none';
   },
 
   /* ---------- Save ---------- */
@@ -124,7 +124,7 @@ const BudgetView = {
     if (n === 0) return;
 
     document.getElementById('budget-cat-months').textContent =
-      `últimos ${n} mes${n > 1 ? 'es' : ''}`;
+      `Últimos ${n} mes${n > 1 ? 'es' : ''}`;
 
     // Real expenses in those months
     const recentExp = expenses.filter(e =>
@@ -173,11 +173,11 @@ const BudgetView = {
               <span class="category-dot" style="background:${cat.color}"></span>
               ${this._esc(cat.name)}
             </span>
-            <span class="budget-cat-pct" style="color:${cat.color}">${r.pct.toFixed(1)}%</span>
+            <span class="budget-cat-pct">${r.pct.toFixed(1)}%</span>
           </div>
           <div class="budget-cat-bar-track">
             <div class="budget-cat-bar-fill"
-                 style="width:${barWidth}%;background:${cat.color}30;border-right:3px solid ${cat.color}99">
+                 style="width:${barWidth}%;background:${cat.color}">
             </div>
           </div>
           <div class="budget-cat-stats">
@@ -194,11 +194,11 @@ const BudgetView = {
   /* ---------- Monthly summary ---------- */
 
   _renderMonthlySummary(expenses) {
-    const settings    = Data.getSettings();
-    const budget      = settings.budgetMode === 'manual' && settings.budgetAmount != null
-      ? settings.budgetAmount : null;
-    const now         = new Date();
-    const rows        = [];
+    const settings = Data.getSettings();
+    const effective = Budget.getEffectiveBudget(expenses);
+    const budget = effective ? effective.budget : null;
+    const now    = new Date();
+    const rows   = [];
 
     for (let i = 0; i <= 6; i++) {
       const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -206,47 +206,33 @@ const BudgetView = {
       const mo  = expenses.filter(e => !e.isPlanned && e.date.startsWith(key));
       const total = mo.reduce((s, e) => s + e.amount, 0);
       if (total === 0 && i > 0) continue;
-
-      const raw   = d.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
-      const label = raw.charAt(0).toUpperCase() + raw.slice(1);
-
-      let vsStr = '—', vsClass = '';
-      if (budget != null) {
-        const diff = total - budget;
-        vsStr  = (diff >= 0 ? '+' : '') + Data.formatAmount(diff);
-        vsClass = diff >= 0 ? 'stat-neg' : 'stat-pos';
-      }
-
-      rows.push({ label, total, txCount: mo.length, isCurrent: i === 0, vsStr, vsClass });
+      rows.push({ label: UI.monthLabel(key), total, txCount: mo.length, isCurrent: i === 0 });
     }
 
+    const container = document.getElementById('budget-monthly-container');
     if (!rows.length) {
-      document.getElementById('budget-monthly-container').innerHTML =
-        '<p class="budget-empty-note">Sin datos aún.</p>';
+      container.innerHTML = '<p class="budget-empty-note">Sin datos aún.</p>';
       return;
     }
 
-    const hasVs = budget != null;
-    document.getElementById('budget-monthly-container').innerHTML = `
-      <table class="budget-monthly-table">
-        <thead>
-          <tr>
-            <th>Mes</th>
-            <th>Total gastado</th>
-            ${hasVs ? '<th>vs Presupuesto</th>' : ''}
-            <th>Transacciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r => `
-            <tr${r.isCurrent ? ' class="budget-row-current"' : ''}>
-              <td>${r.label}${r.isCurrent ? ' <span class="proj-now-badge">hoy</span>' : ''}</td>
-              <td>${Data.formatAmount(r.total)}</td>
-              ${hasVs ? `<td class="${r.vsClass}">${r.vsStr}</td>` : ''}
-              <td class="budget-tx-count">${r.txCount} tx</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
+    const isManual = settings.budgetMode === 'manual';
+    container.innerHTML = rows.map(r => {
+      let vsHTML = '', barHTML = '';
+      if (budget) {
+        const diff = r.total - budget;
+        const pct  = Math.min(100, r.total / budget * 100);
+        vsHTML  = `<div class="month-row-vs ${diff > 0 ? 'stat-neg' : 'stat-pos'}">${diff > 0 ? '+' : '−'}${Data.formatAmount(Math.abs(diff))} ${diff > 0 ? 'sobre' : 'bajo'} ${isManual ? 'presupuesto' : 'estimado'}</div>`;
+        barHTML = `<div class="month-row-bar"><span class="${diff > 0 ? 'over' : ''}" style="width:${pct.toFixed(1)}%"></span></div>`;
+      }
+      return `
+        <div class="month-row">
+          <div class="month-row-name">${r.label}${r.isCurrent ? ' <span class="now-badge">En curso</span>' : ''}</div>
+          <div class="month-row-total">${Data.formatAmount(r.total)}</div>
+          <div class="month-row-meta">${r.txCount} gasto${r.txCount !== 1 ? 's' : ''}</div>
+          ${vsHTML || '<div></div>'}
+          ${barHTML}
+        </div>`;
+    }).join('');
   },
 
   /* ---------- Helpers ---------- */

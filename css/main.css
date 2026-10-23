@@ -1048,35 +1048,61 @@ a { color: inherit; touch-action: manipulation; }
   transition: opacity 0.4s ease;
 }
 .splash-screen.splash-hidden { opacity: 0; pointer-events: none; }
-.splash-content { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+.splash-content { display: flex; flex-direction: column; align-items: center; gap: 1.75rem; }
 .splash-icon {
-  width: 84px; height: 84px;
-  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  width: 88px; height: 88px;
+  border-radius: 26px;
   background: var(--hero-gradient);
   color: var(--color-on-hero);
   display: grid;
   place-items: center;
   box-shadow: var(--hero-shadow);
-  animation: splash-pulse 1.6s ease-in-out infinite;
+  animation: splash-breathe 1.8s ease-in-out infinite;
 }
-.splash-icon .i { width: 40px; height: 40px; }
-.splash-dots { display: flex; gap: 6px; }
-.splash-dots span {
-  width: 6px; height: 6px;
-  border-radius: 50%;
+.splash-icon .i { width: 46px; height: 46px; position: relative; z-index: 1; }
+/* Brillo que cruza el ícono */
+.splash-icon::after {
+  content: '';
+  position: absolute;
+  top: -20%; bottom: -20%;
+  width: 45%;
+  left: -60%;
+  background: linear-gradient(100deg, transparent, var(--color-on-hero-soft) 45%, var(--color-on-hero-muted) 50%, var(--color-on-hero-soft) 55%, transparent);
+  transform: skewX(-18deg);
+  animation: splash-shine 1.8s ease-in-out infinite;
+}
+.splash-bar {
+  position: relative;
+  width: 120px; height: 4px;
+  border-radius: 99px;
+  background: var(--color-track);
+  overflow: hidden;
+}
+.splash-bar span {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40%;
+  border-radius: 99px;
   background: var(--color-primary);
-  opacity: 0.3;
-  animation: splash-dot 1.2s ease-in-out infinite;
+  animation: splash-progress 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
-.splash-dots span:nth-child(2) { animation-delay: 0.2s; }
-.splash-dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes splash-pulse {
+@keyframes splash-breathe {
   0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.05); }
+  50%      { transform: scale(1.08); }
 }
-@keyframes splash-dot {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50%      { opacity: 1;   transform: translateY(-4px); }
+@keyframes splash-shine {
+  0%       { left: -60%; }
+  55%, 100% { left: 130%; }
+}
+@keyframes splash-progress {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+@keyframes splash-fade {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
 }
 
 /* =====================================================================
@@ -1088,4 +1114,17 @@ a { color: inherit; touch-action: manipulation; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* La pantalla de carga siempre debe mostrar que está trabajando: con "Reducir movimiento"
+   se reemplaza el movimiento por un parpadeo suave de opacidad */
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen .splash-icon,
+  .splash-screen .splash-bar span {
+    animation: splash-fade 1.6s ease-in-out infinite !important;
+    animation-duration: 1.6s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .splash-screen .splash-bar span { left: 0; width: 100%; }
+  .splash-screen .splash-icon::after { display: none; }
 }

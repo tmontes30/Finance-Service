@@ -28,7 +28,7 @@
 
 /* Foco visible con teclado (Chrome) */
 :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.form-input:focus-visible, .form-select:focus-visible, .search-field input:focus-visible { outline: none; }
+.form-input:focus-visible, .form-select:focus-visible, .search-field input:focus-visible, .amount-input:focus-visible { outline: none; }
 
 /* ===== Pantallas muy angostas (iPhone SE / mini) ===== */
 @media (max-width: 375px) {

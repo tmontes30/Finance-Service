@@ -189,7 +189,7 @@ const Dashboard = {
         `<span class="hero-delta">${d >= 0 ? '▲' : '▼'} ${Data.formatAmount(Math.abs(d))}</span> vs fin de ${Analytics.monthName(keys[keys.length - 2])}`;
     }
     const t = this._theme();
-    this._spark('spark-patrimony', series, t.onHero, t.onHeroSoft, keys);
+    this._spark('spark-patrimony', series, t.accent, t.onHeroSoft, keys);
   },
 
   // Mini-gráfico de tendencia (sin ejes); el último punto marcado

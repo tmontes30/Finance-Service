@@ -904,7 +904,7 @@ button.settings-row:active { background: var(--color-surface-3); }
   place-items: center;
   box-shadow: var(--hero-shadow);
 }
-.app-icon .i { width: 34px; height: 34px; }
+.app-icon .i { width: 46px; height: 46px; }
 .auth-logo-name {
   font-family: var(--font-display);
   font-size: 2rem;

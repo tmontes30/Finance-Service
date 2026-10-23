@@ -255,7 +255,7 @@ a { color: inherit; touch-action: manipulation; }
   place-items: center;
   box-shadow: var(--hero-shadow);
 }
-.brand-icon .i { width: 20px; height: 20px; }
+.brand-icon .i { width: 24px; height: 24px; }
 .sidebar-add { margin-bottom: 1rem; }
 .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
@@ -1158,7 +1158,7 @@ a { color: inherit; touch-action: manipulation; }
   box-shadow: var(--hero-shadow);
   animation: splash-breathe 1.8s ease-in-out infinite;
 }
-.splash-icon .i { width: 46px; height: 46px; position: relative; z-index: 1; }
+.splash-icon .i { width: 56px; height: 56px; position: relative; z-index: 1; }
 /* Brillo que cruza el ícono */
 .splash-icon::after {
   content: '';

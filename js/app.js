@@ -91,7 +91,7 @@ const Theme = {
     // Los gráficos leen los colores al crearse: hay que reconstruirlos
     if (rerender && changed && Auth._ready) {
       Dashboard.resetCharts();
-      Projection.resetChart();
+      Plan.resetChart();
       Router.refresh();
     }
   }
@@ -99,34 +99,24 @@ const Theme = {
 
 /* ===== Router ===== */
 const Router = {
-  _views: ['dashboard', 'accounts', 'expenses', 'projection', 'budget'],
+  _views: ['dashboard', 'accounts', 'expenses', 'plan'],
   _current: null,
-  _lastPlan: 'budget',
-  _viewNames: {
-    dashboard: 'Resumen', accounts: 'Cuentas', expenses: 'Gastos',
-    projection: 'Proyección', budget: 'Presupuesto'
-  },
+  _viewNames: { dashboard: 'Resumen', accounts: 'Cuentas', expenses: 'Gastos', plan: 'Plan' },
 
   async navigate(viewName) {
     const same = this._current === viewName;
     if (Expenses._selecting && viewName !== 'expenses') Expenses._setSelecting(false);
     this._views.forEach(v => {
       const el = document.getElementById(`view-${v}`);
-      if (el) el.style.display = v === viewName ? 'block' : 'none';
+      if (el) el.style.display = v === viewName ? '' : 'none';
     });
-    const isPlan = viewName === 'budget' || viewName === 'projection';
-    if (isPlan) this._lastPlan = viewName;
-
     document.querySelectorAll('.nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.view === viewName);
     });
     document.querySelectorAll('.tab').forEach(tab => {
-      const active = tab.dataset.group === 'plan' ? isPlan : tab.dataset.view === viewName;
+      const active = tab.dataset.view === viewName;
       tab.classList.toggle('active', active);
       if (active) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
-    });
-    document.querySelectorAll('.plan-switch-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.view === viewName);
     });
 
     const mobileTitle = document.getElementById('mobile-view-name');
@@ -144,8 +134,7 @@ const Router = {
       if (v === 'dashboard')  await Dashboard.render();
       if (v === 'accounts')   await Accounts.render();
       if (v === 'expenses')   await Expenses.render();
-      if (v === 'projection') await Projection.render();
-      if (v === 'budget')     await BudgetView.render();
+      if (v === 'plan')       await Plan.render();
     } catch (err) {
       console.error(err);
       UI.toast('No se pudieron cargar los datos. Revisa tu conexión.', 'error');
@@ -179,6 +168,7 @@ function setUserProfile(name, email) {
   const nameEl  = document.getElementById('nav-user-email');
   const emailEl = document.getElementById('settings-user-email');
   if (nameEl)  nameEl.textContent  = display;
+  document.querySelectorAll('[data-user-name]').forEach(el => { el.textContent = name ? name.split(' ')[0] : (email || ''); });
   if (emailEl) emailEl.textContent = name ? email : '';
 
   const firstName = name ? name.split(' ')[0] : '';
@@ -196,8 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   Header.init();
 
   // Formato CLP en vivo para todos los campos de dinero
-  ['expense-amount', 'income-amount', 'proj-income', 'proj-expenses',
-   'budget-manual-amount', 'account-adjust-amount',
+  ['expense-amount', 'income-amount', 'budget-manual-amount', 'account-adjust-amount',
    'filter-amount-min', 'filter-amount-max'].forEach(id => UI.attachMoneyFormat(id));
   UI.attachMoneyFormat('account-balance', true); // permite negativos
 
@@ -376,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* ----- Navegación: navbar (escritorio), tab bar (iPhone) y selector de Plan ----- */
-  document.querySelectorAll('.nav-link[data-view], .plan-switch-btn').forEach(link => {
+  document.querySelectorAll('.nav-link[data-view]').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
       Router.navigate(link.dataset.view);
@@ -385,7 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.tab[data-view]').forEach(tab => {
     tab.addEventListener('click', e => {
       e.preventDefault();
-      const target = tab.dataset.group === 'plan' ? Router._lastPlan : tab.dataset.view;
+      const target = tab.dataset.view;
       // Tocar la pestaña activa vuelve arriba (como en iOS)
       if (tab.classList.contains('active')) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -395,6 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
   document.getElementById('navbar-brand').addEventListener('click', () => Router.navigate('dashboard'));
+  document.getElementById('navbar-brand').addEventListener('keydown', e => { if (e.key === 'Enter') Router.navigate('dashboard'); });
   document.getElementById('btn-see-all-expenses').addEventListener('click', () => Router.navigate('expenses'));
 
   /* ----- Agregar movimiento ----- */

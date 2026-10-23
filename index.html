@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-title" content="Finance">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237c5cff'/><text y='78' x='50' text-anchor='middle' font-size='68'>⚡</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232bc4f0'/><stop offset='.45' stop-color='%232f7bff'/><stop offset='1' stop-color='%231b3fae'/></linearGradient></defs><rect width='24' height='24' rx='5.5' fill='url(%23g)'/><path d='M7.94 4H18.94L18.29 7.6H10.89L10.35 10.6H15.25L14.68 13.8H9.78L8.66 20H5.06Z' fill='white' transform='translate(12 12) scale(.78) translate(-12 -12)'/></svg>">
   <!-- Aplica el tema antes de pintar para evitar el parpadeo -->
   <script>
     (function () {
@@ -71,6 +71,7 @@
       <symbol id="i-arrow-in" viewBox="0 0 24 24"><path d="M17 7 7 17M17 17H7V7"/></symbol>
       <symbol id="i-arrow-out" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
       <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+      <symbol id="i-logo" viewBox="0 0 24 24"><path d="M7.94 4H18.94L18.29 7.6H10.89L10.35 10.6H15.25L14.68 13.8H9.78L8.66 20H5.06Z" stroke-width="1.2" stroke-linejoin="round" stroke="currentColor"/></symbol>
       <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
       <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></symbol>
     </defs>
@@ -79,7 +80,7 @@
   <!-- ===== SPLASH SCREEN ===== -->
   <div id="splash-screen" class="splash-screen">
     <div class="splash-content">
-      <div class="splash-icon"><svg class="i i-fill"><use href="#i-zap"/></svg></div>
+      <div class="splash-icon"><svg class="i i-fill"><use href="#i-logo"/></svg></div>
       <div class="splash-dots"><span></span><span></span><span></span></div>
     </div>
   </div>
@@ -88,7 +89,7 @@
   <div id="auth-screen" class="auth-screen" style="display:none">
     <div class="auth-card" id="auth-card">
       <div class="auth-logo">
-        <div class="app-icon"><svg class="i i-fill"><use href="#i-zap"/></svg></div>
+        <div class="app-icon"><svg class="i i-fill"><use href="#i-logo"/></svg></div>
         <h1 class="auth-logo-name">Finance</h1>
         <p class="auth-logo-sub">Tus finanzas personales, claras y en un solo lugar</p>
       </div>
@@ -183,26 +184,30 @@
   <!-- ===== APP WRAPPER (oculto hasta iniciar sesión) ===== -->
   <div id="app-wrapper" style="display:none">
 
-    <!-- Navbar superior (escritorio) -->
-    <nav class="navbar" aria-label="Navegación principal">
-      <div class="navbar-brand" id="navbar-brand">
-        <span class="brand-icon"><svg class="i i-fill"><use href="#i-zap"/></svg></span>
+    <!-- Barra lateral (escritorio / Chrome) -->
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="sidebar-brand" id="navbar-brand" role="button" tabindex="0">
+        <span class="brand-icon"><svg class="i i-fill"><use href="#i-logo"/></svg></span>
         <span class="brand-name">Finance</span>
       </div>
-      <div class="navbar-nav" id="navbar-nav">
-        <a href="#" class="nav-link active" data-view="dashboard">Inicio</a>
-        <a href="#" class="nav-link" data-view="expenses">Gastos</a>
-        <a href="#" class="nav-link" data-view="accounts">Cuentas</a>
-        <a href="#" class="nav-link" data-view="budget">Presupuesto</a>
-        <a href="#" class="nav-link" data-view="projection">Proyección</a>
-      </div>
-      <button class="btn btn-primary btn-sm" id="btn-add-expense">
-        <svg class="i"><use href="#i-plus"/></svg> Agregar
+      <button class="btn btn-primary btn-block sidebar-add" id="btn-add-expense">
+        <svg class="i"><use href="#i-plus"/></svg> Agregar movimiento
       </button>
-      <button class="avatar-btn" id="btn-open-settings" aria-label="Ajustes y perfil">
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active" data-view="dashboard"><svg class="i"><use href="#i-home"/></svg><span>Inicio</span></a>
+        <a href="#" class="nav-link" data-view="expenses"><svg class="i"><use href="#i-receipt"/></svg><span>Gastos</span></a>
+        <a href="#" class="nav-link" data-view="accounts"><svg class="i"><use href="#i-wallet"/></svg><span>Cuentas</span></a>
+        <a href="#" class="nav-link" data-view="plan"><svg class="i"><use href="#i-pie"/></svg><span>Plan</span></a>
+      </nav>
+      <button class="sidebar-user" id="btn-open-settings" aria-label="Ajustes y perfil">
         <span class="avatar" data-avatar>·</span>
+        <span class="sidebar-user-info">
+          <span class="sidebar-user-name" data-user-name>—</span>
+          <span class="sidebar-user-sub">Ajustes</span>
+        </span>
+        <svg class="i settings-chevron"><use href="#i-chev-right"/></svg>
       </button>
-    </nav>
+    </aside>
 
     <!-- Header compacto (iPhone): aparece al hacer scroll, estilo iOS -->
     <header class="app-header" id="app-header">
@@ -406,167 +411,132 @@
         </div>
       </section>
 
-      <!-- ===== PROJECTION VIEW ===== -->
-      <section class="view" id="view-projection" style="display:none">
+      <!-- ===== PLAN VIEW (presupuesto + plan de flujo + seguimiento) ===== -->
+      <section class="view" id="view-plan" style="display:none">
         <div class="view-header">
           <div class="view-title-group">
-            <h1>Proyección</h1>
-            <p class="view-subtitle">Cómo crecerá tu patrimonio según tus ingresos y gastos típicos</p>
+            <h1>Plan</h1>
+            <p class="view-subtitle">Cuánto gastar este mes y hacia dónde va tu plata</p>
           </div>
-        </div>
-        <div class="segmented segmented-full plan-switch">
-          <button class="plan-switch-btn" data-view="budget">Presupuesto</button>
-          <button class="plan-switch-btn active" data-view="projection">Proyección</button>
         </div>
 
         <div class="plan-grid">
-          <!-- Parámetros -->
-          <div class="card projection-inputs">
-            <h3 class="card-title">Parámetros mensuales</h3>
+          <div class="plan-col">
+            <!-- 1. Presupuesto del mes -->
+            <div class="card" id="budget-card">
+              <div class="card-title-row">
+                <h3 class="card-title">Presupuesto mensual</h3>
+                <span class="pill" id="budget-source-pill">Automático</span>
+              </div>
+              <div class="big-amount" id="budget-amount">—</div>
+              <p class="card-note" id="budget-source-text"></p>
 
-            <div id="projection-avg-hint" class="callout callout-info" style="display:none">
-              <svg class="i"><use href="#i-info"/></svg>
-              <div>
-                Según tu historial, gastas en promedio <strong id="projection-avg-value"></strong> al mes.
-                <button class="link-btn" id="btn-use-avg">Usar este valor</button>
+              <div id="budget-progress">
+                <div class="budget-bar-track"><div class="budget-bar-fill" id="plan-budget-fill"></div></div>
+                <div class="budget-insight-row">
+                  <span id="plan-budget-spent"></span>
+                  <span id="plan-budget-left"></span>
+                </div>
+              </div>
+
+              <div id="budget-manual-editor" class="inline-editor" style="display:none">
+                <label for="budget-manual-amount" class="form-label">Monto mensual que quieres gastar</label>
+                <div class="money-input"><span>$</span><input type="text" id="budget-manual-amount" class="form-input" placeholder="0" inputmode="numeric" enterkeyhint="done"></div>
+                <div class="inline-editor-actions">
+                  <button class="btn btn-ghost btn-sm" id="btn-budget-cancel">Cancelar</button>
+                  <button class="btn btn-primary btn-sm" id="btn-save-budget">Guardar</button>
+                </div>
+              </div>
+
+              <div class="card-links" id="budget-links">
+                <button class="link-btn" id="btn-budget-edit"><svg class="i"><use href="#i-pencil"/></svg> <span>Fijar monto manual</span></button>
+                <button class="link-btn" id="btn-budget-auto" style="display:none"><svg class="i"><use href="#i-sparkle"/></svg> Volver a automático</button>
               </div>
             </div>
-            <div id="projection-no-hist" class="callout callout-muted" style="display:none"></div>
 
-            <div class="form-row-2-eq">
-              <div class="form-group">
-                <label for="proj-income">Ingreso mensual líquido</label>
-                <div class="money-input"><span>$</span><input type="text" id="proj-income" class="form-input" placeholder="0" inputmode="numeric"></div>
-              </div>
-              <div class="form-group">
-                <label for="proj-expenses">Gasto mensual aproximado</label>
-                <div class="money-input"><span>$</span><input type="text" id="proj-expenses" class="form-input" placeholder="0" inputmode="numeric"></div>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-block" id="btn-proj-save">Calcular proyección</button>
+            <!-- 2. Plan de flujo -->
+            <div class="card" id="plan-editor">
+              <h3 class="card-title">Plan de flujo</h3>
+              <p class="card-note card-note-top">¿Cuánto entra y cuánto sale al mes? Fija un plan y la app lo guarda para compararlo con lo que realmente pase.</p>
 
-            <div id="proj-snapshot-info" class="snapshot-row" style="display:none"></div>
-            <button class="btn btn-ghost btn-sm btn-block" id="btn-reset-snapshot" style="display:none">
-              <svg class="i"><use href="#i-refresh"/></svg> Actualizar base de proyección
-            </button>
-            <div id="proj-early-income-note" class="callout callout-warning" style="display:none">
-              <svg class="i"><use href="#i-alert"/></svg>
-              <div>Si recibiste ingresos por adelantado (ej: sueldo anticipado), la base puede estar sobreestimada. Actualiza la base al inicio de cada mes, cuando normalmente recibes tu ingreso.</div>
+              <div class="form-row-2-eq">
+                <div class="form-group">
+                  <label for="plan-income">Ingreso mensual</label>
+                  <div class="money-input"><span>$</span><input type="text" id="plan-income" class="form-input" placeholder="0" inputmode="numeric"></div>
+                  <button class="hint-btn" id="plan-income-hint" style="display:none"></button>
+                </div>
+                <div class="form-group">
+                  <label for="plan-expenses">Gasto mensual</label>
+                  <div class="money-input"><span>$</span><input type="text" id="plan-expenses" class="form-input" placeholder="0" inputmode="numeric"></div>
+                  <button class="hint-btn" id="plan-expenses-hint" style="display:none"></button>
+                </div>
+              </div>
+
+              <div class="plan-preview" id="plan-preview">
+                <div class="plan-preview-item">
+                  <span class="plan-preview-label">Ahorro al mes</span>
+                  <span class="plan-preview-value" id="plan-preview-net">—</span>
+                </div>
+                <div class="plan-preview-item">
+                  <span class="plan-preview-label">En 6 meses</span>
+                  <span class="plan-preview-value" id="plan-preview-6">—</span>
+                </div>
+                <div class="plan-preview-item">
+                  <span class="plan-preview-label">En 12 meses</span>
+                  <span class="plan-preview-value" id="plan-preview-12">—</span>
+                </div>
+              </div>
+              <p class="card-note" id="plan-preview-note"></p>
+
+              <button class="btn btn-primary btn-block" id="btn-plan-save">Fijar plan</button>
+              <p class="form-hint">Se guarda con tu patrimonio de hoy como punto de partida. Los planes anteriores quedan guardados para comparar.</p>
             </div>
           </div>
 
-          <!-- Resultados -->
-          <div>
-            <div id="projection-results" style="display:none">
-              <div class="proj-trend-card" id="proj-trend-card" style="display:none">
-                <span class="proj-trend-icon" id="proj-trend-icon"></span>
-                <span id="proj-trend-text"></span>
-              </div>
-
-              <div class="projection-summary">
-                <div class="proj-sum-card">
-                  <div class="stat-label">Base de hoy</div>
-                  <div class="proj-sum-value" id="proj-sum-inicio">$0</div>
-                </div>
-                <div class="proj-sum-card">
-                  <div class="stat-label">Balance mensual</div>
-                  <div class="proj-sum-value" id="proj-sum-balance">$0</div>
-                </div>
-              </div>
-
-              <div class="proj-horizons">
-                <div class="proj-horizon-card">
-                  <div class="proj-horizon-label">En 3 meses</div>
-                  <div class="proj-horizon-body">
-                    <div class="proj-horizon-value" id="proj-h3">—</div>
-                    <div class="proj-horizon-delta" id="proj-h3-delta"></div>
-                  </div>
-                  <div class="proj-horizon-note" id="proj-h3-note"></div>
-                </div>
-                <div class="proj-horizon-card">
-                  <div class="proj-horizon-label">En 6 meses</div>
-                  <div class="proj-horizon-body">
-                    <div class="proj-horizon-value" id="proj-h6">—</div>
-                    <div class="proj-horizon-delta" id="proj-h6-delta"></div>
-                  </div>
-                  <div class="proj-horizon-note" id="proj-h6-note"></div>
-                </div>
-                <div class="proj-horizon-card proj-horizon-featured">
-                  <div class="proj-horizon-label">En 12 meses</div>
-                  <div class="proj-horizon-body">
-                    <div class="proj-horizon-value" id="proj-h12">—</div>
-                    <div class="proj-horizon-delta" id="proj-h12-delta"></div>
-                  </div>
-                  <div class="proj-horizon-note" id="proj-h12-note"></div>
+          <div class="plan-col">
+            <!-- 3. Seguimiento -->
+            <div id="plan-tracking" style="display:none">
+              <div class="status-card" id="plan-status">
+                <span class="status-icon" id="plan-status-icon"></span>
+                <div class="status-body">
+                  <div class="status-title" id="plan-status-title"></div>
+                  <div class="status-sub" id="plan-status-sub"></div>
                 </div>
               </div>
 
               <div class="chart-card">
-                <div class="chart-card-head"><h3>Evolución proyectada</h3><span class="chart-card-hint">12 meses</span></div>
-                <div class="chart-wrapper chart-wrapper-tall"><canvas id="chart-projection"></canvas></div>
+                <div class="chart-card-head"><h3>Real vs planes</h3><span class="chart-card-hint">Patrimonio</span></div>
+                <div class="chart-wrapper chart-wrapper-tall"><canvas id="chart-plans"></canvas></div>
+                <div class="plan-legend" id="plan-legend"></div>
               </div>
+
+              <div class="card" id="plan-diff-card" style="display:none">
+                <h3 class="card-title">Qué cambió vs tu plan anterior</h3>
+                <p class="card-note card-note-top" id="plan-diff-summary"></p>
+                <div id="plan-diff-rows"></div>
+              </div>
+
+              <div class="section-header">
+                <h2 class="section-title">Planes guardados</h2>
+                <span class="section-hint" id="plans-count"></span>
+              </div>
+              <div class="list-group" id="plans-list"></div>
             </div>
 
-            <div id="projection-empty" class="empty-state" style="display:none">
+            <div id="plan-empty" class="empty-state card" style="display:none">
               <div class="empty-icon"><svg class="i"><use href="#i-trend-up"/></svg></div>
-              <h3>Ingresa tus parámetros</h3>
-              <p>Completa tu ingreso y gasto mensual para ver cómo evolucionará tu patrimonio en los próximos 12 meses.</p>
+              <h3>Fija tu primer plan</h3>
+              <p>Ingresa cuánto ganas y gastas al mes y toca “Fijar plan”. Cada vez que fijes uno nuevo podrás comparar si vas mejor o peor que lo planeado.</p>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- ===== BUDGET VIEW ===== -->
-      <section class="view" id="view-budget" style="display:none">
-        <div class="view-header">
-          <div class="view-title-group">
-            <h1>Presupuesto</h1>
-            <p class="view-subtitle">Define cuánto quieres gastar y analiza tus patrones</p>
+        <!-- Historial de gasto -->
+        <div id="budget-insights-section" style="display:none">
+          <div class="section-header">
+            <h2 class="section-title">Tu historial de gasto</h2>
           </div>
-        </div>
-        <div class="segmented segmented-full plan-switch">
-          <button class="plan-switch-btn active" data-view="budget">Presupuesto</button>
-          <button class="plan-switch-btn" data-view="projection">Proyección</button>
-        </div>
-
-        <div class="plan-grid">
-          <div>
-            <div class="card budget-setup-card">
-              <h3 class="card-title">Tu presupuesto mensual</h3>
-
-              <div class="segmented segmented-full budget-mode-toggle">
-                <button class="budget-mode-btn" id="btn-mode-auto" data-mode="auto">Automático</button>
-                <button class="budget-mode-btn" id="btn-mode-manual" data-mode="manual">Manual</button>
-              </div>
-
-              <div id="budget-manual-section" style="display:none">
-                <div class="form-group">
-                  <label for="budget-manual-amount">Monto mensual que quieres gastar</label>
-                  <div class="money-input"><span>$</span><input type="text" id="budget-manual-amount" class="form-input" placeholder="0" inputmode="numeric"></div>
-                </div>
-              </div>
-
-              <div id="budget-auto-section" class="callout callout-info" style="display:none">
-                <svg class="i"><use href="#i-sparkle"/></svg>
-                <div>Se calcula automáticamente con tus últimos meses de gasto real, ignorando compras excepcionales.</div>
-              </div>
-
-              <div id="budget-computed-hint" class="computed-row" style="display:none">
-                <span>Estimado según tu historial</span>
-                <strong id="budget-computed-value"></strong>
-                <span id="budget-computed-note" class="computed-note"></span>
-              </div>
-
-              <button class="btn btn-primary btn-block" id="btn-save-budget">Guardar presupuesto</button>
-            </div>
-
-            <div id="budget-no-history" class="callout callout-warning" style="display:none">
-              <svg class="i"><use href="#i-info"/></svg>
-              <span id="budget-no-history-text"></span>
-            </div>
-          </div>
-
-          <div id="budget-insights-section" style="display:none">
+          <div class="plan-grid">
             <div class="card">
               <div class="card-title-row">
                 <h3 class="card-title">Por categoría</h3>
@@ -574,18 +544,11 @@
               </div>
               <div id="budget-cat-container"></div>
             </div>
-
             <div class="card">
-              <h3 class="card-title">Resumen mensual</h3>
+              <h3 class="card-title">Últimos meses</h3>
               <div id="budget-monthly-container"></div>
             </div>
           </div>
-        </div>
-
-        <div id="budget-empty" class="empty-state" style="display:none">
-          <div class="empty-icon"><svg class="i"><use href="#i-pie"/></svg></div>
-          <h3>Sin datos aún</h3>
-          <p>Agrega tus primeros gastos para ver el análisis por categoría.</p>
         </div>
       </section>
 
@@ -652,7 +615,7 @@
       <a href="#" class="tab" data-view="accounts">
         <svg class="i"><use href="#i-wallet"/></svg><span>Cuentas</span>
       </a>
-      <a href="#" class="tab" data-view="budget" data-group="plan">
+      <a href="#" class="tab" data-view="plan">
         <svg class="i"><use href="#i-pie"/></svg><span>Plan</span>
       </a>
     </nav>
@@ -1021,8 +984,7 @@
   <script src="js/expenses.js"></script>
   <script src="js/budget.js"></script>
   <script src="js/dashboard.js"></script>
-  <script src="js/budget-view.js"></script>
-  <script src="js/projection.js"></script>
+  <script src="js/plan.js"></script>
   <script src="js/categories.js"></script>
   <script src="js/accounts.js"></script>
   <script src="js/app.js"></script>

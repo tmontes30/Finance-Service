@@ -51,6 +51,7 @@ const Data = {
     this._projSnapshotDate      = settings.projSnapshotDate;
     this._budgetAmount          = settings.budgetAmount != null ? settings.budgetAmount : null;
     this._budgetMode            = settings.budgetMode || 'auto';
+    this._plansMigrated         = settings.plansMigrated || false;
 
     // Sembrar categorías predefinidas si el usuario no tiene ninguna
     const cats = await Storage.getCategories();
@@ -73,7 +74,8 @@ const Data = {
       projSnapshotPatrimony: this._projSnapshotPatrimony,
       projSnapshotDate:      this._projSnapshotDate,
       budgetAmount:          this._budgetAmount,
-      budgetMode:            this._budgetMode || 'auto'
+      budgetMode:            this._budgetMode || 'auto',
+      plansMigrated:         this._plansMigrated || false
     };
   },
 
@@ -88,6 +90,7 @@ const Data = {
       projSnapshotDate:      this._projSnapshotDate,
       budgetAmount:          this._budgetAmount,
       budgetMode:            this._budgetMode || 'auto',
+      plansMigrated:         this._plansMigrated || false,
       ...partial
     };
     this._currency              = updated.currency;
@@ -98,14 +101,8 @@ const Data = {
     this._projSnapshotDate      = updated.projSnapshotDate;
     this._budgetAmount          = updated.budgetAmount != null ? updated.budgetAmount : null;
     this._budgetMode            = updated.budgetMode || 'auto';
+    this._plansMigrated         = !!updated.plansMigrated;
     await Storage.saveSettings(updated);
-  },
-
-  async resetProjectionSnapshot() {
-    const patrimony = await this.getTotalPatrimonio();
-    const date      = localISODate();
-    await this.updateSettings({ projSnapshotPatrimony: patrimony, projSnapshotDate: date });
-    return { patrimony, date };
   },
 
   /* ---------- Expenses ---------- */
@@ -288,6 +285,37 @@ const Data = {
   async getTotalIncomes() {
     const incomes = await this.getIncomes();
     return incomes.reduce((sum, i) => sum + i.amount, 0);
+  },
+
+  /* ---------- Plans ---------- */
+
+  async getPlans() {
+    return Storage.getPlans();
+  },
+
+  async addPlan({ date, base, income, expenses, points, createdAt }) {
+    return Storage.addPlan({ id: genId(), date, base, income, expenses, points, createdAt });
+  },
+
+  async deletePlan(id) {
+    await Storage.deletePlan(id);
+  },
+
+  async getSnapshots() {
+    return Storage.getSnapshots();
+  },
+
+  // Guarda el patrimonio real del mes en curso (1 doc por mes, se sobrescribe con el último valor visto)
+  async recordPatrimonySnapshot(value) {
+    const today = localISODate();
+    const key   = today.slice(0, 7);
+    const rounded = Math.round(value);
+    if (this._lastSnapshot === `${key}:${rounded}`) return;
+    const snaps = await Storage.getSnapshots();
+    const cur   = snaps.find(s => s.key === key);
+    this._lastSnapshot = `${key}:${rounded}`;
+    if (cur && Math.round(cur.value) === rounded) return;
+    await Storage.setSnapshot(key, rounded, today);
   },
 
   /* ---------- Helpers (síncronos — usan caché) ---------- */

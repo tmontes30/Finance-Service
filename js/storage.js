@@ -31,12 +31,12 @@ const Storage = {
   init(db, userId) {
     _db  = db;
     _uid = userId;
-    _invalidate('expenses', 'incomes', 'accounts', 'categories');
+    _invalidate('expenses', 'incomes', 'accounts', 'categories', 'plans', 'snapshots');
   },
 
   // Descarta el caché (p. ej. al volver a la app tras un rato, por cambios hechos desde otro dispositivo)
   invalidateAll() {
-    _invalidate('expenses', 'incomes', 'accounts', 'categories');
+    _invalidate('expenses', 'incomes', 'accounts', 'categories', 'plans', 'snapshots');
   },
 
   /* ---------- Expenses ---------- */
@@ -205,6 +205,50 @@ const Storage = {
     await _col('incomes').doc(id).delete();
   },
 
+  /* ---------- Plans (planes de flujo fijados) ---------- */
+
+  async getPlans() {
+    return _cached('plans', () => this._fetchPlans());
+  },
+
+  async _fetchPlans() {
+    const snap = await _col('plans').orderBy('createdAt', 'asc').get();
+    return snap.docs.map(d => {
+      const r = d.data();
+      return {
+        id: d.id, createdAt: r.createdAt || 0, date: r.date,
+        base: r.base, income: r.income, expenses: r.expenses,
+        points: r.points || []
+      };
+    });
+  },
+
+  async addPlan(r) {
+    const payload = {
+      date: r.date, base: r.base, income: r.income, expenses: r.expenses,
+      points: r.points, createdAt: r.createdAt || Date.now()
+    };
+    await _col('plans').doc(r.id).set(payload);
+    return { id: r.id, ...payload };
+  },
+
+  async deletePlan(id) {
+    await _col('plans').doc(id).delete();
+  },
+
+  /* ---------- Snapshots mensuales de patrimonio real (doc id = YYYY-MM) ---------- */
+
+  async getSnapshots() {
+    return _cached('snapshots', async () => {
+      const snap = await _col('snapshots').get();
+      return snap.docs.map(d => ({ key: d.id, value: d.data().value, date: d.data().date }));
+    });
+  },
+
+  async setSnapshot(key, value, date) {
+    await _col('snapshots').doc(key).set({ value, date });
+  },
+
   /* ---------- Settings ---------- */
 
   async getSettings() {
@@ -219,7 +263,8 @@ const Storage = {
       projSnapshotPatrimony: data.projSnapshotPatrimony != null ? data.projSnapshotPatrimony : null,
       projSnapshotDate:      data.projSnapshotDate || null,
       budgetAmount:          data.budgetAmount != null ? data.budgetAmount : null,
-      budgetMode:            data.budgetMode || 'auto'
+      budgetMode:            data.budgetMode || 'auto',
+      plansMigrated:         data.plansMigrated || false
     };
   },
 
@@ -229,7 +274,8 @@ const Storage = {
       dashboardPeriod:  s.dashboardPeriod,
       version:          s.version || 1,
       budgetMode:       s.budgetMode || 'auto',
-      budgetAmount:     s.budgetAmount != null ? s.budgetAmount : null
+      budgetAmount:     s.budgetAmount != null ? s.budgetAmount : null,
+      plansMigrated:    !!s.plansMigrated
     };
     if (s.projIncome            != null) payload.projIncome            = s.projIncome;
     if (s.projExpenses          != null) payload.projExpenses          = s.projExpenses;
@@ -245,7 +291,8 @@ const Storage = {
   ['addExpense', 'expenses'], ['updateExpense', 'expenses'], ['deleteExpense', 'expenses'], ['deleteExpenses', 'expenses'],
   ['addCategory', 'categories'], ['updateCategory', 'categories'], ['deleteCategory', 'categories'],
   ['addAccount', 'accounts'], ['updateAccount', 'accounts'], ['deleteAccount', 'accounts'], ['adjustAccountBalance', 'accounts'],
-  ['addIncome', 'incomes'], ['updateIncome', 'incomes'], ['deleteIncome', 'incomes']
+  ['addIncome', 'incomes'], ['updateIncome', 'incomes'], ['deleteIncome', 'incomes'],
+  ['addPlan', 'plans'], ['deletePlan', 'plans'], ['setSnapshot', 'snapshots']
 ].forEach(([fn, key]) => {
   const write = Storage[fn];
   Storage[fn] = async function (...args) {

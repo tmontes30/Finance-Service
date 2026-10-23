@@ -67,8 +67,7 @@ const Auth = {
       Accounts.init();
       Expenses.init();
       Categories.init();
-      Projection.init();
-      BudgetView.init();
+      Plan.init();
 
       let name = this._user.displayName || '';
       try {

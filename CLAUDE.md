@@ -21,7 +21,7 @@ The app is a vanilla JS single-page application backed by Firebase (Firestore + 
 1. `auth.js` — initializes the Firebase app, listens to `onAuthStateChanged`, calls `Storage.init` + `Data.init`, then navigates to dashboard
 2. `storage.js` — CRUD wrapper around the Firestore compat client; documents already use camelCase field names (no snake_case translation needed)
 3. `data.js` — Business logic on top of `storage.js`; handles balance side-effects for expenses/incomes
-4. Feature modules (`dashboard.js`, `expenses.js`, `accounts.js`, `categories.js`, `projection.js`, `export.js`, `budget-view.js`)
+4. Feature modules (`dashboard.js`, `expenses.js`, `accounts.js`, `categories.js`, `plan.js`, `export.js`); `budget.js` is the pure budget algorithm used by Dashboard and Plan
 
 **Data flow:** Feature modules call `Data.*` → `Storage.*` → Firestore API.
 
@@ -29,9 +29,9 @@ The app is a vanilla JS single-page application backed by Firebase (Firestore + 
 
 **Dates:** always use `localISODate(d?)` (defined in `data.js`) for `YYYY-MM-DD`. Never `toISOString()` — it is UTC, and in Chile after ~21:00 it returns tomorrow's date.
 
-**Firestore data model:** everything lives under `users/{uid}` — isolation is by document path, not a `user_id` filter column. `users/{uid}` itself holds the profile (`nombre`, `apellido`, `rut`, `telefono`, `email`) and the settings fields (`currency`, `dashboardPeriod`, `projIncome`, `projExpenses`, `projSnapshotPatrimony`, `projSnapshotDate`, `budgetAmount`, `budgetMode`). Subcollections `users/{uid}/expenses`, `.../incomes`, `.../accounts`, `.../categories` hold the corresponding records, same `id`s as `genId()` generates. Security rules (`firestore.rules`, must be published in Firebase Console → Firestore → Rules) allow read/write only when `request.auth.uid == uid`.
+**Firestore data model:** everything lives under `users/{uid}` — isolation is by document path, not a `user_id` filter column. `users/{uid}` itself holds the profile (`nombre`, `apellido`, `rut`, `telefono`, `email`) and the settings fields (`currency`, `dashboardPeriod`, `projIncome`, `projExpenses`, `projSnapshotPatrimony`, `projSnapshotDate`, `budgetAmount`, `budgetMode`). Subcollections `users/{uid}/expenses`, `.../incomes`, `.../accounts`, `.../categories`, `.../plans` (fixed cash-flow plans) and `.../snapshots` (monthly real patrimony, doc id `YYYY-MM`) hold the corresponding records, same `id`s as `genId()` generates. Security rules (`firestore.rules`, must be published in Firebase Console → Firestore → Rules) allow read/write only when `request.auth.uid == uid`.
 
-**Routing:** `Router` object in `app.js` shows/hides `#view-{name}` elements and calls each module's `render()`. Active view is `Router._current` (string). `Router.refresh()` re-renders only the current view — call it after any save/delete (other views render when navigated to).
+**Routing:** views are `dashboard`, `expenses`, `accounts`, `plan`. `Router` object in `app.js` shows/hides `#view-{name}` elements (shown view gets `style.display = ''` so CSS can make it a grid) and calls each module's `render()`. Active view is `Router._current` (string). `Router.refresh()` re-renders only the current view — call it after any save/delete (other views render when navigated to).
 
 **Account balance:** Stored directly on the `accounts` row and mutated by `Storage.adjustAccountBalance()` whenever an expense or income is added, updated, or deleted. There is no derived calculation. Planned expenses (`isPlanned: true`) do NOT adjust account balances.
 **Incomes:** A first-class entity (table: `incomes`) linked to an account. Adding income increases account balance; deleting reverses it. The `accounts.js` view renders both the account list and the income history for each account (`#income-history-section`).
@@ -49,6 +49,7 @@ The app is a vanilla JS single-page application backed by Firebase (Firestore + 
 - **Theme:** `Theme` object in `app.js`; preference `'dark' | 'light' | 'system'` persisted to `localStorage` (`financeTheme`), chosen in the Ajustes sheet (`#theme-segment`). An inline script in `<head>` applies it before first paint. Tokens are defined in `:root` (dark) and overridden in `[data-theme="light"]` in `css/main.css`, including `--chart-*` (charts) and `--hero-*` (purple hero card). **Never hardcode colors** — always use `var(--color-*)`. Chart.js reads colors via `Dashboard._theme()` (getComputedStyle); on theme change `Dashboard.resetCharts()` + `Projection.resetChart()` destroy the charts so they are rebuilt with the new colors. `meta[name=theme-color]` is synced to `--color-bg`.
 - **Predefined categories:** 8 default categories (`PREDEFINED_CATEGORIES` in `data.js`) are seeded into the database on first login. `ACCOUNT_TYPES` (6 types) is a client-side constant only, never stored in DB.
 - **`PatrimonioToggle`** in `app.js` persists wealth-masking state to `localStorage` (`patrimonioHidden`).
+- **Brand:** italic geometric "F" (`#i-logo` in the sprite; same path in the inline favicon and the PNG icons) on a cobalt→cyan gradient (`--hero-gradient`). Primary color is blue (`--color-primary`), deliberately not purple (that's the Momentum app).
 - **Favicon / PWA:** Inline SVG favicon in `<head>`. `icons/apple-touch-icon.png` (180), `icons/icon-192.png`, `icons/icon-512.png`, `icons/icon-maskable-512.png` + `manifest.webmanifest` let users "Agregar a pantalla de inicio" on iPhone and run it standalone (`apple-mobile-web-app-status-bar-style: black-translucent`, so safe-area padding matters). No service worker.
 
 ## Gastos Previstos
@@ -58,7 +59,7 @@ A "Gasto Previsto" is an expense the user knows will happen in a future month �
 Key behaviours:
 - Planned expenses do not deduct from account balances (money hasn't moved yet).
 - `updateExpense` compares old/new `isPlanned` state to correctly apply or reverse balance adjustments.
-- In `projection.js`, planned expenses for future months are subtracted as one-off deductions from the projected line (`plannedThisMonth` per month key); excluded from real-line reconstruction. Each month object carries `plannedThisMonth` so the detail table adds it to Gastos and Balance columns.
+- In `plan.js`, planned expenses in future months are subtracted as one-off deductions in that month of each plan's projection (frozen in `points` when the plan is fixed) and in the live preview; excluded from the real-line reconstruction.
 - **Dashboard filtering:** `dashboard.js` excludes planned expenses whose month ≠ selected month at the top of `render()`. Monthly stat uses `date.startsWith(selKey)` — never `>= monthFrom` — to prevent future dates leaking into current month totals.
 - In the expenses list, planned expenses are grouped under "Previsto · <Mes Año>" with a yellow `.planned-badge` ("Previsto"; flat lists and the dashboard show `Previsto MM/YYYY`).
 - The expense sheet toggle ("Gasto previsto") shows a hint explaining the concept; when on, a `type="month"` picker (labelled "¿En qué mes va a ocurrir?", defaults to next month) replaces the date field; `date` is set to `YYYY-MM-01` on save.
@@ -68,8 +69,8 @@ Key behaviours:
 ## Firestore Field Notes
 
 Firestore is schemaless — new fields just get written, no migration step needed (unlike the old Postgres `ALTER TABLE`). Fields currently expected on `users/{uid}` (settings, written via `Storage.saveSettings()`):
-- `projIncome`, `projExpenses` — projection monthly parameters
-- `projSnapshotPatrimony`, `projSnapshotDate` — frozen projection baseline
+- `projIncome`, `projExpenses`, `projSnapshotPatrimony`, `projSnapshotDate` — **legacy** (old Proyección tab). On first open of Plan, `Plan._migrateLegacy()` turns them into the first saved plan and sets `plansMigrated: true`. Not written anymore.
+- `plansMigrated` — boolean, see above
 - `budgetAmount` — user-defined monthly budget (`null` = not set)
 - `budgetMode` — `'manual'` or `'auto'` (default `'auto'`)
 
@@ -125,27 +126,26 @@ Firestore is schemaless — new fields just get written, no migration step neede
   - `'manual'`: uses `settings.budgetAmount` as the budget; recomputes `pct` and `delta` against that amount. Adds `isManual: true` and `computedBudget` (the auto estimate) to the result.
   - `'auto'`: returns `Budget.compute()` result unchanged.
   - Works even with no history (returns current-month spending vs manual amount).
+- **Plan integration:** the Plan tab shows/edits the budget (see Plan section).
 - **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` (inside the month card), `#budget-months-tag` and a "Te quedan $X / Te pasaste por $X" footer. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
 - **Progress bar color:** green < 51%, amber 51–84%, red ≥ 85%.
 
-## Presupuesto Tab (`js/budget-view.js`)
+## Plan (`js/plan.js`)
 
-- `#view-budget`, rendered by `BudgetView.render()`. On iPhone it shares the "Plan" tab with Proyección: both views have a `.plan-switch` segmented control (`.plan-switch-btn[data-view]`), and the tab remembers the last one used (`Router._lastPlan`).
-- **Budget mode toggle:** Manual (user sets amount) vs Automático (uses `Budget.compute()`). Saved to `settings.budgetMode` + `settings.budgetAmount`.
-- **Computed hint:** always shows the auto-computed estimate as a reference regardless of mode.
-- **Category insights** (`_renderCategoryInsights`): shows last ≤6 complete months of real expenses grouped by category. Per category: % of total, avg/month, last month value, and a peak-month note if a month had 1.5× the last month's spend. Sorted by avg desc.
-- **Monthly summary** (`_renderMonthlySummary`): rows (`.month-row`, not a table — tables overflowed on iPhone) for the last 7 months with total, count, and a progress bar + difference vs the effective budget (manual amount or auto estimate). Green = under, red = over.
+Single tab that replaced the old Presupuesto and Proyección tabs. `#view-plan`, rendered by `Plan.render()`. Three blocks:
 
-## Proyección Fija (Frozen Projection)
+1. **Presupuesto mensual** (`#budget-card`): shows `Budget.getEffectiveBudget()` — automatic from history (outlier removal in `budget.js`) or manual (`settings.budgetMode = 'manual'`, `budgetAmount`). Progress of the current month. "Fijar monto manual" opens an inline editor (`#budget-manual-editor`); "Volver a automático" sets `budgetMode: 'auto'`. With no history and no manual amount, the editor opens by itself.
+2. **Plan de flujo** (`#plan-editor`): monthly income (`#plan-income`, hint = average income of the last ≤3 complete months) and expense (`#plan-expenses`, hint = effective budget). Live preview of net/month and patrimony in 6 and 12 months (includes future planned expenses). "Fijar plan" saves a plan document.
+3. **Seguimiento** (`#plan-tracking`, needs ≥1 plan):
+   - Status card: real patrimony today vs what the latest plan expected today (`_expectedAt` interpolates by days). Plans <3 days old show a neutral "Plan fijado" message.
+   - Chart `#chart-plans`: real line (`--chart-real`) + up to 4 latest plans (`--chart-series-1..4`, latest solid, older dashed), HTML legend `#plan-legend`. X axis from the oldest shown plan (max 12 months back) to ≥6 months ahead.
+   - "Qué cambió vs tu plan anterior" (`#plan-diff-card`): latest vs previous plan — income/expense/net/base rows and the 6-month growth difference decomposed into income, expense and planned-expense effects.
+   - Saved plans list (`#plans-list`) with "vs real" difference and delete.
+4. **Historial de gasto** (`#budget-insights-section`, needs ≥1 complete month): category breakdown of the last ≤6 months and last-7-months rows vs the effective budget.
 
-- On first save of projection parameters, `Data.resetProjectionSnapshot()` stores current total patrimony + today's date in `settings` (`proj_snapshot_patrimony`, `proj_snapshot_date`).
-- `_renderProjection()` uses this frozen base for the projected line.
-- Reset manually via "↺ Actualizar base" button. Subsequent saves of income/expenses do NOT overwrite the snapshot.
-- **Horizon cards** (`#proj-h3`, `#proj-h6`, `#proj-h12`): show projected patrimony at 3, 6, 12 months with delta vs today. 12-month card has purple border. Replaces the old month-by-month detail table.
-- **Simplified chart:** single projected line only (no "Real" overlay). Canvas `#chart-projection`.
-- **Trend card** (`#proj-trend-card`): ↗ (green) or ↘ (red) with plain-language text — months until depletion if negative balance, 12-month target if positive.
-- **Early income warning** (`#proj-early-income-note`): shown when a snapshot exists. Warns about advance salary inflating the base.
-- **Projection subtitle:** `.view-subtitle` under the h1 header.
+**Plan document** (`users/{uid}/plans/{id}`): `{ date: 'YYYY-MM-DD', base, income, expenses, points: [{ key: 'YYYY-MM', value }] × 13, createdAt }`. `points` is the projection frozen at creation time (month of `date` + 12 months, planned expenses subtracted in their month) so old plans never change.
+
+**Real patrimony line:** `Data.recordPatrimonySnapshot()` (called on each Plan render) upserts `users/{uid}/snapshots/{YYYY-MM}` with the current total balance, so past months include investment adjustments. Months without a snapshot are reconstructed: current patrimony − incomes after that month + real expenses after that month.
 
 ## Categorías (`js/categories.js`)
 
@@ -158,13 +158,13 @@ Las categorías **no tienen pestaña propia**: se gestionan en una hoja (`#modal
 
 ## Responsive / Mobile (iPhone-first)
 
-The base CSS is **mobile-first** (designed for iPhone). `css/responsive.css` adds `≥600px` (tablet: centered dialogs instead of bottom sheets, 2-col charts) and `≥1024px` (desktop: top navbar, two-column dashboard/plan), plus a `≤375px` tweak for iPhone SE/mini. Hover styles only apply under `@media (hover: hover) and (pointer: fine)`.
+The base CSS is **mobile-first** (designed for iPhone). `css/responsive.css` adds `≥600px` (tablet: centered dialogs instead of bottom sheets, 2-col charts), `≥900px` (desktop/Chrome: fixed left sidebar, thin scrollbars, centered content) and `≥1200px` (two-column Dashboard, Plan and Cuentas), plus a `≤375px` tweak for iPhone SE/mini. Hover styles only apply under `@media (hover: hover) and (pointer: fine)`.
 
 - **Viewport:** `viewport-fit=cover`; safe areas via `--safe-top/bottom/left/right` (`env(safe-area-inset-*)`). Header, tab bar, sheets and toasts all pad for the notch / Dynamic Island and the home indicator.
 - **Inputs:** every input/select is ≥16px (`1rem`) — smaller sizes make iOS Safari zoom on focus. Money fields use `inputmode="numeric"` + `UI.attachMoneyFormat`. Touch targets are ≥44px.
-- **Tab bar** (`.tabbar`, phone/tablet only): Inicio · Gastos · ➕ (`#btn-fab`, opens the new-expense sheet) · Cuentas · Plan (`data-group="plan"` → Presupuesto/Proyección). Tapping the active tab scrolls to top.
-- **Header** (`#app-header`, phone/tablet only): transparent over the large view title; turns into a blurred bar with the compact title (`#mobile-view-name`, from `Router._viewNames`) after scrolling 36px (`Header` in `app.js`). Right side: avatar button → Ajustes.
-- **Desktop navbar** (`.navbar`, ≥1024px): links, "+ Agregar" (`#btn-add-expense`) and avatar (`#btn-open-settings`).
+- **Tab bar** (`.tabbar`, <900px): Inicio · Gastos · ➕ (`#btn-fab`, opens the new-expense sheet) · Cuentas · Plan. Tapping the active tab scrolls to top.
+- **Header** (`#app-header`, <900px): transparent over the large view title; turns into a blurred bar with the compact title (`#mobile-view-name`, from `Router._viewNames`) after scrolling 36px (`Header` in `app.js`). Right side: avatar button → Ajustes.
+- **Desktop sidebar** (`.sidebar`, ≥900px, width `--sidebar-width`): brand (`#navbar-brand`), "Agregar movimiento" (`#btn-add-expense`), nav links with icons (`.nav-link[data-view]`), and the user button (`#btn-open-settings`, name in `[data-user-name]`) that opens Ajustes.
 - **Ajustes sheet** (`#modal-settings`): profile, theme (Oscuro/Claro/Auto), "Ocultar patrimonio" (synced with `PatrimonioToggle`), Categorías, Exportar CSV, Cerrar sesión (`#btn-logout`, asks for confirmation).
 - **Sheets:** on phones every modal is a bottom sheet (`.modal` slides up, `.sheet-grabber`, drag the header down to dismiss). The overlay follows `visualViewport` (`--vvh`, `--vv-top`) so the sheet sits above the iOS keyboard. Footer buttons are full-width and padded for the home indicator. `UI.confirm` renders as an iOS action sheet.
 - **Keyboard on open:** iOS only shows the keyboard if `focus()` happens inside the tap. `UI.focusWithKeyboard(el)` focuses a hidden proxy input synchronously and then moves focus to the real field; `openExpenseModal` / `Accounts.openIncomeModal` do their synchronous setup first and only then await data.

@@ -225,118 +225,150 @@
 
       <!-- ===== DASHBOARD VIEW ===== -->
       <section class="view" id="view-dashboard">
-        <div class="view-header">
+        <div class="view-header view-header-wrap">
           <div class="view-title-group">
             <p class="view-eyebrow" id="dash-greeting">Hola</p>
             <h1>Resumen</h1>
           </div>
+          <div class="month-nav" id="month-nav">
+            <button class="month-nav-btn" id="btn-month-prev" aria-label="Mes anterior"><svg class="i"><use href="#i-chev-left"/></svg></button>
+            <span class="month-nav-label" id="month-nav-label">—</span>
+            <button class="month-nav-btn" id="btn-month-next" aria-label="Mes siguiente" disabled><svg class="i"><use href="#i-chev-right"/></svg></button>
+          </div>
         </div>
 
-        <div class="dash-grid">
-          <div class="dash-col">
-            <!-- Patrimonio -->
-            <div class="hero-card">
-              <div class="hero-top">
-                <span class="hero-label">Patrimonio total</span>
-                <button class="btn-toggle-patrimonio" aria-label="Ocultar patrimonio"></button>
-              </div>
-              <div class="hero-value" id="stat-patrimonio">$0</div>
-              <div class="hero-sub" id="hero-sub"></div>
+        <div class="dash" id="dash-body">
+          <!-- Patrimonio (cifra principal) -->
+          <div class="hero-card dash-hero">
+            <div class="hero-top">
+              <span class="hero-label">Patrimonio total</span>
+              <button class="btn-toggle-patrimonio" aria-label="Ocultar patrimonio"></button>
             </div>
+            <div class="hero-value" id="stat-patrimonio">$0</div>
+            <div class="hero-sub" id="hero-sub"></div>
+            <div class="hero-spark"><canvas id="spark-patrimony" aria-label="Evolución del patrimonio, últimos 12 meses"></canvas></div>
+          </div>
 
-            <!-- Navegación por mes -->
-            <div class="month-nav" id="month-nav">
-              <button class="month-nav-btn" id="btn-month-prev" aria-label="Mes anterior"><svg class="i"><use href="#i-chev-left"/></svg></button>
-              <span class="month-nav-label" id="month-nav-label">—</span>
-              <button class="month-nav-btn" id="btn-month-next" aria-label="Mes siguiente" disabled><svg class="i"><use href="#i-chev-right"/></svg></button>
+          <!-- KPIs del mes -->
+          <div class="kpi-grid dash-kpis" id="stat-cards">
+            <div class="kpi">
+              <div class="kpi-label">Gastado</div>
+              <div class="kpi-value" id="stat-month">$0</div>
+              <div class="kpi-delta" id="kpi-spent-delta"></div>
+              <div class="kpi-spark"><canvas id="spark-spent" aria-hidden="true"></canvas></div>
             </div>
-
-            <!-- Gasto del mes + presupuesto -->
-            <div class="card month-card" id="stat-cards">
-              <div class="month-card-top">
-                <div>
-                  <div class="stat-label">Gastado este mes</div>
-                  <div class="month-card-value" id="stat-month">$0</div>
-                </div>
-                <span class="budget-months-tag" id="budget-months-tag" style="display:none"></span>
-              </div>
-              <div id="budget-insight" class="budget-insight" style="display:none">
-                <div class="budget-bar-track"><div class="budget-bar-fill" id="budget-bar-fill"></div></div>
-                <div class="budget-insight-row">
-                  <span id="budget-text-spent"></span>
-                  <span id="budget-text-pct" class="budget-pct"></span>
-                </div>
-                <div id="budget-text-footer" class="budget-footer"></div>
-              </div>
-              <div class="mini-stats">
-                <div class="mini-stat">
-                  <span class="mini-stat-label">Hoy</span>
-                  <span class="mini-stat-value" id="stat-today">$0</span>
-                </div>
-                <div class="mini-stat">
-                  <span class="mini-stat-label">Ingresos del mes</span>
-                  <span class="mini-stat-value amount-pos" id="stat-month-income">$0</span>
-                </div>
-                <div class="mini-stat">
-                  <span class="mini-stat-label">En el año</span>
-                  <span class="mini-stat-value" id="stat-year">$0</span>
-                </div>
-              </div>
+            <div class="kpi">
+              <div class="kpi-label">Ingresos</div>
+              <div class="kpi-value" id="stat-month-income">$0</div>
+              <div class="kpi-delta" id="kpi-income-delta"></div>
+              <div class="kpi-spark"><canvas id="spark-income" aria-hidden="true"></canvas></div>
             </div>
+            <div class="kpi">
+              <div class="kpi-label">Tasa de ahorro</div>
+              <div class="kpi-value" id="kpi-rate">—</div>
+              <div class="kpi-delta" id="kpi-rate-delta"></div>
+              <div class="kpi-spark"><canvas id="spark-rate" aria-hidden="true"></canvas></div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Promedio diario</div>
+              <div class="kpi-value" id="kpi-daily">$0</div>
+              <div class="kpi-delta" id="kpi-daily-delta"></div>
+              <div class="kpi-spark"><canvas id="spark-daily" aria-hidden="true"></canvas></div>
+            </div>
+          </div>
 
-            <!-- Últimos movimientos -->
-            <div class="section-header">
+          <!-- Ritmo de gasto + presupuesto -->
+          <div class="chart-card dash-pace">
+            <div class="chart-card-head">
+              <h3>Ritmo de gasto</h3>
+              <span class="budget-months-tag" id="budget-months-tag" style="display:none"></span>
+            </div>
+            <p class="chart-summary" id="pace-summary"></p>
+            <div id="budget-insight" class="budget-insight" style="display:none">
+              <div class="budget-bar-track"><div class="budget-bar-fill" id="budget-bar-fill"></div></div>
+              <div class="budget-insight-row">
+                <span id="budget-text-spent"></span>
+                <span id="budget-text-pct" class="budget-pct"></span>
+              </div>
+              <div id="budget-text-footer" class="budget-footer"></div>
+            </div>
+            <div class="chart-wrapper"><canvas id="chart-pace" aria-label="Gasto acumulado del mes comparado con el mes anterior"></canvas></div>
+            <div class="chart-legend" id="pace-legend"></div>
+          </div>
+
+          <!-- Hallazgos -->
+          <div class="dash-insights">
+            <div class="section-header section-header-tight">
+              <h2 class="section-title">Lo que vemos en tus datos</h2>
+            </div>
+            <div class="insight-list" id="insight-list"></div>
+          </div>
+
+          <!-- Últimos gastos -->
+          <div class="dash-recent">
+            <div class="section-header section-header-tight">
               <h2 class="section-title">Últimos gastos</h2>
               <button class="link-btn" id="btn-see-all-expenses">Ver todos</button>
             </div>
             <div class="list-group" id="recent-list"></div>
           </div>
 
-          <div class="dash-col">
-            <div class="charts-grid" id="charts-grid">
-              <div class="chart-card">
-                <div class="chart-card-head">
-                  <h3>Por categoría</h3>
-                  <div class="segmented segmented-sm" id="period-selector">
-                    <button class="period-btn active" data-period="month">Mes</button>
-                    <button class="period-btn" data-period="3months">3M</button>
-                    <button class="period-btn" data-period="year">Año</button>
-                    <button class="period-btn" data-period="all">Todo</button>
-                  </div>
-                </div>
-                <div class="donut-wrap">
-                  <div class="chart-wrapper chart-wrapper-donut">
-                    <canvas id="chart-category"></canvas>
-                    <div class="donut-center">
-                      <span class="donut-center-label">Total</span>
-                      <span class="donut-center-value" id="donut-total">$0</span>
-                    </div>
-                  </div>
-                  <div class="category-legend" id="category-legend"></div>
-                </div>
-              </div>
-              <div class="chart-card">
-                <div class="chart-card-head"><h3>Gasto por mes</h3><span class="chart-card-hint">12 meses</span></div>
-                <div class="chart-wrapper"><canvas id="chart-monthly"></canvas></div>
-              </div>
-              <div class="chart-card">
-                <div class="chart-card-head"><h3>Ahorro neto</h3><span class="chart-card-hint">Ingresos − gastos</span></div>
-                <div class="chart-wrapper"><canvas id="chart-savings"></canvas></div>
-              </div>
+          <!-- Categorías vs promedio -->
+          <div class="card dash-cats">
+            <div class="chart-card-head">
+              <h3>Categorías vs tu promedio</h3>
+              <span class="chart-card-hint" id="cats-hint"></span>
             </div>
+            <div id="category-compare"></div>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-bar"></span>Este mes</span>
+              <span class="legend-item"><span class="legend-tick"></span>Tu promedio</span>
+            </div>
+          </div>
 
-            <div id="accounts-analysis-section" style="display:none">
-              <div class="charts-grid">
-                <div class="chart-card">
-                  <div class="chart-card-head"><h3>Ingresos vs gastos</h3><span class="chart-card-hint">6 meses</span></div>
-                  <div class="chart-wrapper"><canvas id="chart-flow"></canvas></div>
-                </div>
-                <div class="chart-card">
-                  <div class="chart-card-head"><h3>Saldo por cuenta</h3></div>
-                  <div class="chart-wrapper" id="accounts-chart-wrapper"><canvas id="chart-accounts-balance"></canvas></div>
-                </div>
-              </div>
+          <!-- Gasto por mes -->
+          <div class="chart-card dash-monthly">
+            <div class="chart-card-head"><h3>Gasto por mes</h3><span class="chart-card-hint">12 meses</span></div>
+            <div class="chart-wrapper"><canvas id="chart-monthly" aria-label="Gasto total por mes, últimos 12 meses"></canvas></div>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch legend-accent"></span>Mes seleccionado</span>
+              <span class="legend-item"><span class="legend-line legend-avg"></span>Promedio</span>
             </div>
+          </div>
+
+          <!-- Calendario -->
+          <div class="card dash-heat">
+            <div class="chart-card-head"><h3>Calendario de gasto</h3><span class="chart-card-hint" id="heat-hint"></span></div>
+            <div class="heat-weekdays"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+            <div class="heatmap" id="heatmap" role="grid"></div>
+            <div class="heat-footer">
+              <span class="heat-detail" id="heatmap-detail">Toca un día para ver el detalle</span>
+              <span class="heat-scale"><span>Menos</span><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i><i class="h5"></i><span>Más</span></span>
+            </div>
+          </div>
+
+          <!-- Día de la semana -->
+          <div class="chart-card dash-weekday">
+            <div class="chart-card-head"><h3>¿Qué día gastas más?</h3><span class="chart-card-hint">Últimos 90 días</span></div>
+            <div class="chart-wrapper chart-wrapper-sm"><canvas id="chart-weekday" aria-label="Gasto promedio por día de la semana"></canvas></div>
+          </div>
+
+          <!-- Ahorro neto -->
+          <div class="chart-card dash-savings">
+            <div class="chart-card-head"><h3>Ahorro neto</h3><span class="chart-card-hint">Ingresos − gastos</span></div>
+            <div class="chart-wrapper chart-wrapper-sm"><canvas id="chart-savings" aria-label="Ahorro neto por mes, últimos 12 meses"></canvas></div>
+          </div>
+
+          <!-- Recurrentes -->
+          <div class="card dash-recurring">
+            <div class="chart-card-head"><h3>Gastos recurrentes</h3><span class="chart-card-hint" id="recurring-hint"></span></div>
+            <div id="recurring-list"></div>
+          </div>
+
+          <!-- Top -->
+          <div class="card dash-top">
+            <div class="chart-card-head"><h3>¿En qué se va la plata?</h3><span class="chart-card-hint">Últimos 90 días</span></div>
+            <div id="top-list"></div>
           </div>
         </div>
 
@@ -983,6 +1015,7 @@
   <script src="js/export.js"></script>
   <script src="js/expenses.js"></script>
   <script src="js/budget.js"></script>
+  <script src="js/analytics.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/plan.js"></script>
   <script src="js/categories.js"></script>

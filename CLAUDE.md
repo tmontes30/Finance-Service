@@ -74,18 +74,25 @@ Firestore is schemaless — new fields just get written, no migration step neede
 - `budgetAmount` — user-defined monthly budget (`null` = not set)
 - `budgetMode` — `'manual'` or `'auto'` (default `'auto'`)
 
-## Dashboard
+## Dashboard (`js/dashboard.js` + `js/analytics.js`)
 
-- **Layout (mobile):** greeting + large title → purple hero card (patrimonio + net savings of the selected month in `#hero-sub`) → month navigator → "Gastado este mes" card (`#stat-cards`: big `#stat-month`, budget bar, mini stats Hoy / Ingresos del mes / En el año) → "Últimos gastos" (`#recent-list`, 5 most recent of the selected month, tap to edit) → charts. Desktop (≥1024px) splits into two columns (`.dash-grid`).
-- **Month navigation:** `Dashboard._monthOffset` (0 = current month, negative = past). `‹`/`›` arrows update offset and re-render. All stats filter to the selected month (`selKey = YYYY-MM`). The `›` arrow is disabled when on the current month. Charts shift their 12-month window based on `selDate`.
-- **Period selector** (Mes / 3M / Año / Todo, `#period-selector`) lives in the "Por categoría" card header because it only affects that chart. Hidden when `_monthOffset !== 0`.
-- **Category chart** uses `monthExpenses` (filtered to `selKey`) when `_monthOffset !== 0`. Doughnut with the total in the center (`#donut-total`) and an HTML legend (`#category-legend`, top 5 + "Otras").
-- **Chart axes** use `Dashboard._compact()` ($1,2M / $450k) so they fit on iPhone; tooltips show full amounts and full month names.
-- **Charts:**
-  - Monthly bar (12 months, shifts with `selDate`)
-  - Category doughnut (respects selected month)
-  - Net savings bar (`_renderSavingsChart`) — income minus real expenses per month for last 12 months, green/red per month. Always uses current date, not `selDate`. Canvas `#chart-savings`.
-  - Accounts section: income vs expenses (6 months) and balance per account (height grows with the number of accounts).
+`analytics.js` holds **pure computations** (no DB access); `dashboard.js` only draws. Charts follow the dataviz guide: bars ≤24px with 4px rounded ends, 2px lines, solid hairline grid, emphasis = `--chart-accent` (brand blue) and context = `--chart-muted` (gray). Categorical/sequential colors were validated with the dataviz `validate_palette.js` (light and dark surfaces) — re-run it if you change `--chart-series-*` or `--heat-*`.
+
+- **Month navigation:** `Dashboard._monthOffset` (0 = current month, negative = past) drives everything except the hero, savings chart and 90-day analyses. `›` disabled on the current month. Month nav sits in the view header.
+- **Blocks (mobile order; 12-col grid ≥1200px, 2-col ≥600px):**
+  - Hero patrimonio + 12-month sparkline (`Analytics.patrimonySeries`: monthly snapshots or reconstruction) and delta vs end of last month.
+  - KPI tiles (`Analytics.kpis`): Gastado (current month compares against last month **at the same day**), Ingresos, Tasa de ahorro (pts vs avg of 3 previous months), Promedio diario. Each with arrow + text delta (never color alone) and a 12-month sparkline; months before the user's first record are `null`, not 0.
+  - Ritmo de gasto (`Analytics.pace`): cumulative spend this month vs last month + dashed budget line, with the budget meter (`#budget-insight`, `Budget.getEffectiveBudget`). **No end-of-month extrapolation** (large one-offs cluster at month start).
+  - "Lo que vemos en tus datos" (`Analytics.insights`, max 5): budget overrun, pace vs last month, category above its average, savings rate, recurring total, weekday peak, standout expense.
+  - Últimos gastos (5 of the selected month, tap to edit).
+  - Categorías vs tu promedio (`categoryVsAverage`): bar = selected month, tick = average of up to 3 previous months, delta %.
+  - Gasto por mes: 12 columns, selected month in accent, dashed average line.
+  - Calendario de gasto (`heatmap`): 5 quantile levels (`--heat-1..5`), tap a day for the detail; defaults to the highest day.
+  - ¿Qué día gastas más? (`weekday`, last 90 days, peak in accent).
+  - Ahorro neto (12 months, positive/negative bars; tooltip shows % of income).
+  - Gastos recurrentes (`recurring`): same normalized description in ≥3 of the last 4 complete months with amounts within 1.6×; shows monthly median and whether it was paid this month.
+  - ¿En qué se va la plata? (`topSpending`, last 90 days, top 5 descriptions).
+- **Charts:** `Dashboard._chart(id, config)` creates once and then swaps data/options; `resetCharts()` destroys all (used on theme change). `Plan` reuses `Dashboard._theme/_tooltip/_axes/_compact`.
 
 ## Auth / Login
 
@@ -127,7 +134,7 @@ Firestore is schemaless — new fields just get written, no migration step neede
   - `'auto'`: returns `Budget.compute()` result unchanged.
   - Works even with no history (returns current-month spending vs manual amount).
 - **Plan integration:** the Plan tab shows/edits the budget (see Plan section).
-- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` (inside the month card), `#budget-months-tag` and a "Te quedan $X / Te pasaste por $X" footer. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
+- **Dashboard integration:** `Dashboard._renderBudgetInsight(data)` renders `#budget-insight` (inside the Ritmo de gasto card) and `#budget-months-tag`. Called with `Budget.getEffectiveBudget(_allExpenses)`. Shows `'manual'` badge or `'N mes(es)'` badge. **No daily-rate projection footer** — linear extrapolation is misleading since large one-off expenses (credit cards, subscriptions) cluster at month start. Hidden when `_monthOffset !== 0`.
 - **Progress bar color:** green < 51%, amber 51–84%, red ≥ 85%.
 
 ## Plan (`js/plan.js`)

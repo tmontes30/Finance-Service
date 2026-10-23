@@ -46,11 +46,9 @@
 @media (min-width: 600px) {
   :root { --gutter: 24px; }
 
-  .charts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .charts-grid > .chart-card:first-child { grid-column: 1 / -1; }
-  .donut-wrap { flex-direction: row; align-items: center; }
-  .chart-wrapper-donut { width: 210px; flex-shrink: 0; }
-  .category-legend { flex: 1; min-width: 0; }
+  .view-header-wrap .month-nav { width: auto; min-width: 280px; }
+  .dash { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .dash-hero, .dash-kpis, .dash-pace { grid-column: 1 / -1; }
 
   .accounts-breakdown { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
@@ -119,13 +117,21 @@
 
 /* ===== Escritorio ancho (≥1200px): dos columnas ===== */
 @media (min-width: 1200px) {
-  .dash-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
-    gap: 1.5rem;
-    align-items: start;
-  }
-  .dash-grid .charts-grid { margin-bottom: 1.5rem; }
+  .dash { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.25rem; }
+  .dash > * { grid-column: span 4; }
+  .dash-hero { grid-column: span 4; }
+  .dash-kpis { grid-column: span 8; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dash-pace { grid-column: span 8; }
+  .dash-insights { grid-column: span 4; }
+  .dash-recurring, .dash-top { grid-column: span 6; order: 2; }
+  .dash-recent { order: 1; }
+  .dash-hero .hero-spark { height: 70px; }
+  /* Las tarjetas de una fila se igualan en alto: los gráficos crecen para llenar el espacio */
+  .dash .chart-card, .dash .kpi, .dash-hero { display: flex; flex-direction: column; }
+  .dash .chart-card .chart-wrapper { flex: 1 1 0; height: auto; min-height: 210px; }
+  .dash .kpi-spark { flex: 1 1 0; min-height: 34px; max-height: 64px; margin-top: auto; }
+  .dash-hero .hero-spark { flex: 1 1 0; min-height: 70px; height: auto; }
+  .dash-heat { align-self: start; }
 
   .plan-grid {
     display: grid;

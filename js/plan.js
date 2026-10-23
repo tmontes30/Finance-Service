@@ -405,20 +405,8 @@ const Plan = {
     sub.textContent = `Según tu plan del ${Data.formatDate(plan.date)} deberías tener ${Data.formatAmount(expected)} hoy. Tienes ${Data.formatAmount(this._patrimony)}.`;
   },
 
-  // Patrimonio real por mes: snapshot guardado si existe; si no, reconstruido con ingresos/gastos
   _realSeries(keys, expenses, incomes, snapshots) {
-    const current = this._monthKey(new Date());
-    const snapMap = Object.fromEntries(snapshots.map(s => [s.key, s.value]));
-    const real    = expenses.filter(e => !e.isPlanned);
-    return keys.map(key => {
-      if (key > current) return null;
-      if (key === current) return Math.round(this._patrimony);
-      if (snapMap[key] != null) return snapMap[key];
-      const nextStart = `${this._addMonths(key, 1)}-01`;
-      const incAfter = incomes.filter(x => x.date >= nextStart).reduce((s, x) => s + x.amount, 0);
-      const expAfter = real.filter(x => x.date >= nextStart && x.date <= localISODate()).reduce((s, x) => s + x.amount, 0);
-      return Math.round(this._patrimony - incAfter + expAfter);
-    });
+    return Analytics.patrimonySeries(keys, this._patrimony, expenses, incomes, snapshots);
   },
 
   _renderChart(shown, colorOf, colors, expenses, incomes, snapshots) {

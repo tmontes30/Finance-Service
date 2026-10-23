@@ -41,6 +41,7 @@
   /* Hero (tarjeta de patrimonio) */
   --hero-gradient:        linear-gradient(140deg, #2bc4f0 0%, #2f7bff 45%, #1b3fae 100%);
   --hero-shadow:          0 12px 32px rgba(47, 123, 255, 0.3);
+  --logo-shadow:          0 10px 28px rgba(232, 145, 58, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.08);
   --color-on-hero:        #ffffff;
   --color-on-hero-muted:  rgba(255, 255, 255, 0.72);
   --color-on-hero-soft:   rgba(255, 255, 255, 0.16);
@@ -127,6 +128,7 @@
   --color-text-muted:     #8e8e9e;
 
   --hero-shadow:          0 12px 28px rgba(31, 107, 240, 0.22);
+  --logo-shadow:          0 10px 24px rgba(20, 20, 30, 0.22);
 
   --chart-grid:           rgba(0, 0, 0, 0.06);
   --chart-tick:           #8e8e9e;
@@ -249,13 +251,11 @@ a { color: inherit; touch-action: manipulation; }
 .brand-icon {
   width: 34px; height: 34px;
   border-radius: 10px;
-  background: var(--hero-gradient);
-  color: var(--color-on-hero);
-  display: grid;
-  place-items: center;
-  box-shadow: var(--hero-shadow);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--logo-shadow);
 }
-.brand-icon .i { width: 24px; height: 24px; }
+.logo-img { display: block; width: 100%; height: 100%; }
 .sidebar-add { margin-bottom: 1rem; }
 .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
@@ -1151,14 +1151,10 @@ a { color: inherit; touch-action: manipulation; }
   overflow: hidden;
   width: 88px; height: 88px;
   border-radius: 26px;
-  background: var(--hero-gradient);
-  color: var(--color-on-hero);
-  display: grid;
-  place-items: center;
-  box-shadow: var(--hero-shadow);
+  box-shadow: var(--logo-shadow);
   animation: splash-breathe 1.8s ease-in-out infinite;
 }
-.splash-icon .i { width: 56px; height: 56px; position: relative; z-index: 1; }
+.splash-icon .logo-img { position: relative; z-index: 0; }
 /* Brillo que cruza el ícono */
 .splash-icon::after {
   content: '';

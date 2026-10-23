@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Logo Finance "Pulso": una línea que late y termina subiendo. Negro + oro -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1b22"/>
+      <stop offset="1" stop-color="#0b0b0f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8913a"/>
+      <stop offset="1" stop-color="#ffd877"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <path d="M96 300 H186 L218 214 L262 352 L306 236 L330 276 L396 176"
+        fill="none" stroke="url(#gold)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="396" cy="176" r="30" fill="#ffd877"/>
+  <circle cx="396" cy="176" r="52" fill="none" stroke="#ffd877" stroke-width="6" opacity="0.35"/>
+</svg>

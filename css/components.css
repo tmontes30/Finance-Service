@@ -898,13 +898,9 @@ button.settings-row:active { background: var(--color-surface-3); }
   width: 72px; height: 72px;
   margin: 0 auto 0.9rem;
   border-radius: 20px;
-  background: var(--hero-gradient);
-  color: var(--color-on-hero);
-  display: grid;
-  place-items: center;
-  box-shadow: var(--hero-shadow);
+  overflow: hidden;
+  box-shadow: var(--logo-shadow);
 }
-.app-icon .i { width: 46px; height: 46px; }
 .auth-logo-name {
   font-family: var(--font-display);
   font-size: 2rem;

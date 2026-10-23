@@ -1073,21 +1073,15 @@ a { color: inherit; touch-action: manipulation; }
   transform: skewX(-18deg);
   animation: splash-shine 1.8s ease-in-out infinite;
 }
-.splash-bar {
-  position: relative;
-  width: 120px; height: 4px;
-  border-radius: 99px;
-  background: var(--color-track);
-  overflow: hidden;
-}
-.splash-bar span {
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 40%;
-  border-radius: 99px;
+.splash-dots { display: flex; gap: 10px; height: 24px; align-items: flex-end; }
+.splash-dots span {
+  width: 11px; height: 11px;
+  border-radius: 50%;
   background: var(--color-primary);
-  animation: splash-progress 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation: splash-bounce 1.1s ease-in-out infinite;
 }
+.splash-dots span:nth-child(2) { animation-delay: 0.15s; }
+.splash-dots span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes splash-breathe {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.08); }
@@ -1096,13 +1090,13 @@ a { color: inherit; touch-action: manipulation; }
   0%       { left: -60%; }
   55%, 100% { left: 130%; }
 }
-@keyframes splash-progress {
-  0%   { left: -40%; }
-  100% { left: 100%; }
+@keyframes splash-bounce {
+  0%, 60%, 100% { transform: translateY(0);     opacity: 0.35; }
+  30%           { transform: translateY(-12px); opacity: 1; }
 }
 @keyframes splash-fade {
   0%, 100% { opacity: 1; }
-  50%      { opacity: 0.45; }
+  50%      { opacity: 0.3; }
 }
 
 /* =====================================================================
@@ -1120,11 +1114,12 @@ a { color: inherit; touch-action: manipulation; }
    se reemplaza el movimiento por un parpadeo suave de opacidad */
 @media (prefers-reduced-motion: reduce) {
   .splash-screen .splash-icon,
-  .splash-screen .splash-bar span {
-    animation: splash-fade 1.6s ease-in-out infinite !important;
-    animation-duration: 1.6s !important;
+  .splash-screen .splash-dots span {
+    animation: splash-fade 1.1s ease-in-out infinite !important;
+    animation-duration: 1.1s !important;
     animation-iteration-count: infinite !important;
   }
-  .splash-screen .splash-bar span { left: 0; width: 100%; }
+  .splash-screen .splash-dots span:nth-child(2) { animation-delay: 0.2s !important; }
+  .splash-screen .splash-dots span:nth-child(3) { animation-delay: 0.4s !important; }
   .splash-screen .splash-icon::after { display: none; }
 }
